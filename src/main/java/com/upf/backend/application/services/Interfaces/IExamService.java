@@ -1,0 +1,37 @@
+package com.upf.backend.application.services.Interfaces;
+
+
+import com.upf.backend.application.model.entity.Exam;
+import com.upf.backend.application.model.enums.ExamType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import java.util.UUID;
+
+public interface IExamService {
+
+    Exam uploadExam(UUID uploaderId,
+                    UUID courseId,
+                    String subject,
+                    String academicYear,
+                    ExamType examType,
+                    String description,
+                    String originalFilename,
+                    String contentType,
+                    long size,
+                    byte[] content,
+                    String fileHash);
+
+    Page<Exam> listExams(String subject,
+                         String major,
+                         Integer courseYear,
+                         String academicYear,
+                         ExamType examType,
+                         UUID uploaderId,
+                         Pageable pageable);
+
+    Exam getExam(UUID examId);
+
+    void registerDownload(UUID examId);
+
+}

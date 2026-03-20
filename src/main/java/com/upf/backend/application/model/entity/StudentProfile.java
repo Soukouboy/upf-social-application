@@ -97,4 +97,10 @@ public class StudentProfile {
 
     public LocalDateTime getLastLoginAt() { return lastLoginAt; }
     public void setLastLoginAt(LocalDateTime lastLoginAt) { this.lastLoginAt = lastLoginAt; }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    
 }

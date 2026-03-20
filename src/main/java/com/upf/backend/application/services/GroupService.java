@@ -1,0 +1,184 @@
+package com.upf.backend.application.services;
+
+
+import com.upf.backend.application.model.entity.AcademicGroup;
+import com.upf.backend.application.model.entity.GroupMembership;
+import com.upf.backend.application.model.entity.StudentProfile;
+import com.upf.backend.application.model.enums.GroupType;
+import com.upf.backend.application.repository.GroupMembershipRepository;
+import com.upf.backend.application.repository.GroupRepository;
+import com.upf.backend.application.repository.StudentRepository;
+import com.upf.backend.application.services.Exceptions.AccessDeniedBusinessException;
+import com.upf.backend.application.services.Exceptions.BusinessException;
+import com.upf.backend.application.services.Exceptions.ResourceNotFoundException;
+import com.upf.backend.application.services.Interfaces.IGroupService;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
+
+@Service
+@Transactional
+public class GroupService implements IGroupService {
+
+    private final GroupRepository groupRepository;
+    private final GroupMembershipRepository membershipRepository;
+    private final StudentRepository studentRepository;
+
+    public GroupService(GroupRepository groupRepository,
+                            GroupMembershipRepository membershipRepository,
+                            StudentRepository studentRepository) {
+        this.groupRepository = groupRepository;
+        this.membershipRepository = membershipRepository;
+        this.studentRepository = studentRepository;
+    }
+
+    @Override
+    public AcademicGroup createGroup(UUID creatorId,
+                                     String name,
+                                     String description,
+                                     GroupType type,
+                                     String major,
+                                     String coverImageUrl) {
+
+        if (name == null || name.isBlank()) {
+            throw new BusinessException("Le nom du groupe est obligatoire.");
+        }
+        if (type == null) {
+            throw new BusinessException("Le type du groupe est obligatoire.");
+        }
+        if (groupRepository.existsByName(name.trim())) {
+            throw new BusinessException("Un groupe existe déjà avec ce nom.");
+        }
+
+        StudentProfile creator = studentRepository.findById(creatorId)
+                .orElseThrow(() -> new ResourceNotFoundException("Créateur introuvable."));
+
+        AcademicGroup group = new AcademicGroup();
+        group.setName(name.trim());
+        group.setDescription(description);
+        group.setType(type);
+        group.setMajor(major);
+        group.setCoverImageUrl(coverImageUrl);
+        group.setCreatedBy(creator.getId());
+        group.setActive(true);
+
+        GroupMembership ownerMembership = new GroupMembership();
+        ownerMembership.setStudentProfile(creator);
+
+        // Si ton entité GroupMembership expose un rôle/statut,
+        // tu peux faire ici :
+        // ownerMembership.setRole(GroupRole.OWNER);
+        group.addMembership(ownerMembership);
+
+        return groupRepository.save(group);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<AcademicGroup> listPublicGroups(String major,
+                                                String search,
+                                                Pageable pageable) {
+        return groupRepository.searchActiveGroups(
+                GroupType.PUBLIC,
+                normalize(major),
+                normalize(search),
+                pageable
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<AcademicGroup> listMyGroups(UUID studentId, Pageable pageable) {
+        studentRepository.findById(studentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Étudiant introuvable."));
+
+        return membershipRepository.findByStudentProfile_Id(studentId, pageable)
+                .map(GroupMembership::getGroup);
+    }
+
+    @Override
+    public GroupMembership joinGroup(UUID groupId, UUID studentId) {
+        AcademicGroup group = loadActiveGroup(groupId);
+
+        if (group.getType() != GroupType.PUBLIC) {
+            throw new BusinessException("Utilise requestToJoinPrivateGroup pour un groupe privé.");
+        }
+
+        return createMembershipIfAbsent(group, studentId);
+    }
+
+    @Override
+    public GroupMembership requestToJoinPrivateGroup(UUID groupId, UUID studentId) {
+        AcademicGroup group = loadActiveGroup(groupId);
+
+        if (group.getType() != GroupType.PRIVATE) {
+            throw new BusinessException("Cette opération est réservée aux groupes privés.");
+        }
+
+        // MVP :
+        // Si ton entité GroupMembership possède un champ status (PENDING/APPROVED),
+        // c'est ici qu'il faut créer l'adhésion en PENDING au lieu d'ajouter le membre directement.
+        throw new BusinessException(
+                "Le flux 'demande d’adhésion à un groupe privé' nécessite un statut PENDING dans GroupMembership. " +
+                "Ajoute ce champ puis implémente ici la création d'une demande."
+        );
+    }
+
+    @Override
+    public void removeMember(UUID groupId, UUID actorId, UUID memberId) {
+        AcademicGroup group = loadActiveGroup(groupId);
+
+        GroupMembership membership = membershipRepository
+                .findByGroup_IdAndStudentProfile_Id(groupId, memberId)
+                .orElseThrow(() -> new ResourceNotFoundException("Adhésion introuvable."));
+
+        boolean isGroupCreator = group.getCreatedBy().equals(actorId);
+        boolean isSelfRemoval = actorId.equals(memberId);
+
+        if (!isGroupCreator && !isSelfRemoval) {
+            throw new AccessDeniedBusinessException("Seul le créateur du groupe peut retirer un autre membre.");
+        }
+
+        group.removeMembership(membership);
+        groupRepository.save(group);
+    }
+
+    private AcademicGroup loadActiveGroup(UUID groupId) {
+        AcademicGroup group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable."));
+
+        if (!group.isActive()) {
+            throw new ResourceNotFoundException("Groupe introuvable ou inactif.");
+        }
+        return group;
+    }
+
+    private GroupMembership createMembershipIfAbsent(AcademicGroup group, UUID studentId) {
+        if (membershipRepository.existsByGroup_IdAndStudentProfile_Id(group.getId(), studentId)) {
+            throw new BusinessException("L'étudiant est déjà membre du groupe.");
+        }
+
+        StudentProfile student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Étudiant introuvable."));
+
+        GroupMembership membership = new GroupMembership();
+        membership.setStudentProfile(student);
+
+        // Si ton entité expose un rôle :
+        // membership.setRole(GroupRole.MEMBER);
+
+        group.addMembership(membership);
+        AcademicGroup savedGroup = groupRepository.save(group);
+
+        return savedGroup.getMemberships()
+                .get(savedGroup.getMemberships().size() - 1);
+    }
+
+    private String normalize(String value) {
+        return (value == null || value.isBlank()) ? null : value.trim();
+    }
+}
