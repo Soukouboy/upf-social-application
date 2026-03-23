@@ -11,6 +11,10 @@ import java.util.UUID;
 
 public interface StudentRepository extends JpaRepository<StudentProfile, UUID> {
 
+Optional<StudentProfile> findByUser_Id(UUID userId);
+
+boolean existsByUser_Id(UUID userId);
+
     // Authentification / unicité email (email porté par User)
     Optional<StudentProfile> findByUser_Email(String email);
 

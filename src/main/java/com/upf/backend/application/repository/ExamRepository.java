@@ -24,8 +24,8 @@ public interface ExamRepository extends JpaRepository<Exam, UUID> {
 
     Page<Exam> findByAcademicYearAndExamType(String academicYear, ExamType examType, Pageable pageable);
 
-    Page<Exam> findBySubjectAndAcademicYearAndExamType(
-            String subject,
+    Page<Exam> findByTitleAndAcademicYearAndExamType(
+            String title,
             String academicYear,
             ExamType examType,
             Pageable pageable
@@ -33,19 +33,18 @@ public interface ExamRepository extends JpaRepository<Exam, UUID> {
 
     List<Exam> findByIsHiddenFalse();
 
-    @Query("""
-           select e
-           from Exam e
-           where e.isHidden = false
-             and (:subject is null or lower(e.subject) like lower(concat('%', :subject, '%')))
-             and (:major is null or lower(e.course.major) = lower(:major))
-             and (:courseYear is null or e.course.year = :courseYear)
-             and (:academicYear is null or e.academicYear = :academicYear)
-             and (:examType is null or e.examType = :examType)
-             and (:uploaderId is null or e.uploader.id = :uploaderId)
-           """)
+   @Query("""
+select e from Exam e 
+where e.isHidden = false
+and (:title is null or lower(e.title) like lower(concat('%', :title, '%')))
+and (:major is null or lower(e.course.major) = lower(:major))
+and (:courseYear is null or e.course.year = :courseYear)
+and (:academicYear is null or e.academicYear = :academicYear)
+and (:examType is null or e.examType = :examType)
+and (:uploaderId is null or e.uploader.id = :uploaderId)
+""")
     Page<Exam> searchVisibleExams(
-            @Param("subject") String subject,
+            @Param("title") String title,
             @Param("major") String major,
             @Param("courseYear") Integer courseYear,
             @Param("academicYear") String academicYear,
