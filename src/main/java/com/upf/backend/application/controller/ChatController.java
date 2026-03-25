@@ -31,7 +31,7 @@ public class ChatController {
             @PathVariable UUID groupId,
             @RequestBody SendMessageRequest request
     ) {
-        Message created = chatService.sendGroupMessage(currentUser.getStudentId(), groupId, request.content());
+        Message created = chatService.sendGroupMessage(currentUser.getProfileId(), groupId, request.content());
         return ResponseEntity.status(201).body(created);
     }
 
@@ -62,7 +62,7 @@ public class ChatController {
             @RequestBody SendPrivateMessageRequest request
     ) {
         Message created = chatService.sendPrivateMessage(
-                currentUser.getStudentId(),
+                currentUser.getProfileId(),
                 request.recipientId(),
                 request.content()
         );
@@ -76,7 +76,7 @@ public class ChatController {
             Pageable pageable
     ) {
         Page<Message> page = chatService.getPrivateConversation(
-                currentUser.getStudentId(),
+                currentUser.getProfileId(),
                 otherUserId,
                 pageable
         );

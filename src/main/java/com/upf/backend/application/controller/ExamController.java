@@ -2,6 +2,7 @@ package com.upf.backend.application.controller;
 
 import com.upf.backend.application.model.entity.Exam;
 import com.upf.backend.application.model.enums.ExamType;
+import com.upf.backend.application.model.enums.FileType;
 import com.upf.backend.application.security.SecurityUser;
 import com.upf.backend.application.services.ExamService;
 import com.upf.backend.application.services.Interfaces.IFileStorageService;
@@ -51,14 +52,14 @@ public class ExamController {
         String fileHash = sha256(content);
 
         Exam created = examService.uploadExam(
-                currentUser.getStudentId(),
+                currentUser.getProfileId(),
                 courseId,
                 subject,
                 academicYear,
                 examType,
                 description,
                 file.getOriginalFilename(),
-                file.getContentType(),
+                FileType.fromContentType(file.getContentType()),
                 file.getSize(),
                 content,
                 fileHash

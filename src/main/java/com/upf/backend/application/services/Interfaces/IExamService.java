@@ -3,6 +3,8 @@ package com.upf.backend.application.services.Interfaces;
 
 import com.upf.backend.application.model.entity.Exam;
 import com.upf.backend.application.model.enums.ExamType;
+import com.upf.backend.application.model.enums.FileType;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -17,7 +19,7 @@ public interface IExamService {
                     ExamType examType,
                     String description,
                     String originalFilename,
-                    String contentType,
+                    FileType contentType,
                     long size,
                     byte[] content,
                     String fileHash);

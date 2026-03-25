@@ -38,7 +38,7 @@ public class JwtService {
     public String generateAccessToken(SecurityUser user) {
         return generateToken(
                 user.getUsername(),
-                Map.of("studentId", user.getStudentId().toString(), "type", "access"),
+                Map.of("studentId", user.getProfileId().toString(), "type", "access"),
                 accessTokenExpirationMs
         );
     }
@@ -46,7 +46,7 @@ public class JwtService {
     public String generateRefreshToken(SecurityUser user) {
         return generateToken(
                 user.getUsername(),
-                Map.of("studentId", user.getStudentId().toString(), "type", "refresh"),
+                Map.of("studentId", user.getProfileId().toString(), "type", "refresh"),
                 refreshTokenExpirationMs
         );
     }

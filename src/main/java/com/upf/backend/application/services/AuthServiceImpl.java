@@ -2,7 +2,9 @@ package com.upf.backend.application.services;
 
 import com.upf.backend.application.model.entity.StudentProfile;
 import com.upf.backend.application.model.entity.User;
+import com.upf.backend.application.model.enums.UserRole;
 import com.upf.backend.application.repository.StudentRepository;
+import com.upf.backend.application.repository.UserRepository;
 import com.upf.backend.application.security.JwtService;
 import com.upf.backend.application.security.SecurityUser;
 import com.upf.backend.application.services.Exceptions.BusinessException;
@@ -10,8 +12,12 @@ import com.upf.backend.application.services.Exceptions.ResourceNotFoundException
 import com.upf.backend.application.services.Interfaces.AuthTokens;
 import com.upf.backend.application.services.Interfaces.IAuthService;
 
+import java.util.List;
+import java.util.UUID;
+
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,18 +31,23 @@ public class AuthServiceImpl implements IAuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
 
+    private final UserRepository userRepository;
     public AuthServiceImpl(StudentRepository studentRepository,
                            PasswordEncoder passwordEncoder,
                            AuthenticationManager authenticationManager,
-                           JwtService jwtService) {
+                           JwtService jwtService,
+                           UserRepository userRepository) {
         this.studentRepository = studentRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
+        this.userRepository = userRepository;
     }
 
     @Override
-    public StudentProfile registerStudent(String email,
+    public StudentProfile registerStudent(String firstName,
+                                          String lastName,
+                                          String email,
                                           String rawPassword,
                                           String major,
                                           int currentYear) {
@@ -45,22 +56,29 @@ public class AuthServiceImpl implements IAuthService {
 
         String normalizedEmail = email.trim().toLowerCase();
 
-        if (studentRepository.existsByUser_Email(normalizedEmail)) {
+        if (userRepository.existsByEmail(normalizedEmail)) {
             throw new BusinessException("Un compte existe déjà avec cet email.");
         }
 
         User user = new User();
         user.setEmail(normalizedEmail);
         user.setPasswordHash(passwordEncoder.encode(rawPassword));
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setRole(UserRole.STUDENT);
         user.setActive(true);
 
+       
+
         StudentProfile profile = new StudentProfile();
-        profile.setUser(user);
+   
+        
         profile.setMajor(major);
         profile.setCurrentYear(currentYear);
         profile.setProfilePublic(true);
-
-        return studentRepository.save(profile);
+        user.setStudentProfile(profile);// important : le helper method dans User gère la relation bidirectionnelle
+         userRepository.save(user);
+        return profile;
     }
 
     @Override
@@ -79,46 +97,59 @@ public class AuthServiceImpl implements IAuthService {
                 jwtService.generateAccessToken(principal),
                 jwtService.generateRefreshToken(principal),
                 principal.getUserId(),
-                principal.getStudentId(),
+                principal.getProfileId(),
+                principal.getRole(),
                 principal.getUsername()
         );
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public AuthTokens refreshToken(String refreshToken) {
-        if (refreshToken == null || refreshToken.isBlank()) {
-            throw new BusinessException("Le refresh token est obligatoire.");
-        }
-
-        if (!jwtService.isRefreshToken(refreshToken)) {
-            throw new BusinessException("Le token fourni n'est pas un refresh token valide.");
-        }
-
-        String username = jwtService.extractUsername(refreshToken);
-
-        StudentProfile profile = studentRepository.findByUser_Email(username)
-                .orElseThrow(() -> new ResourceNotFoundException("Compte introuvable."));
-
-        SecurityUser securityUser = new SecurityUser(
-            profile.getUser().getId(),    
-            profile.getId(),
-                
-                profile.getUser().getEmail(),
-                profile.getUser().getPasswordHash(),
-                profile.getUser().isActive(),
-                java.util.List.of(() -> "ROLE_STUDENT")
-        );
-
-        return new AuthTokens(
-                jwtService.generateAccessToken(securityUser),
-                jwtService.generateRefreshToken(securityUser),
-                securityUser.getUserId(),
-                securityUser.getStudentId(),
-                securityUser.getUsername()
-        );
+  @Override
+@Transactional(readOnly = true)
+public AuthTokens refreshToken(String refreshToken) {
+    if (refreshToken == null || refreshToken.isBlank()) {
+        throw new BusinessException("Le refresh token est obligatoire.");
+    }
+    if (!jwtService.isRefreshToken(refreshToken)) {
+        throw new BusinessException("Le token fourni n'est pas un refresh token valide.");
     }
 
+    String username = jwtService.extractUsername(refreshToken);
+
+    User user = userRepository.findByEmail(username)
+            .orElseThrow(() -> new ResourceNotFoundException("Compte introuvable."));
+
+    // ✅ Switch sur l'enum pour profileId
+    UUID profileId = switch (user.getRole()) {
+        case STUDENT -> user.getStudentProfile() != null
+                ? user.getStudentProfile().getId()
+                : null;
+        case ADMIN -> user.getAdminProfile() != null
+                ? user.getAdminProfile().getId()
+                : null;
+    };
+
+    // ✅ Autorité depuis l'enum
+    String authority = "ROLE_" + user.getRole().name();
+
+    SecurityUser securityUser = new SecurityUser(
+            user.getId(),
+            profileId,
+            user.getEmail(),
+            user.getPasswordHash(),
+            user.isActive(),
+            user.getRole(),
+            List.of(new SimpleGrantedAuthority(authority))
+    );
+
+    return new AuthTokens(
+            jwtService.generateAccessToken(securityUser),
+            jwtService.generateRefreshToken(securityUser),
+            securityUser.getUserId(),
+            securityUser.getProfileId(),
+            securityUser.getRole(),
+            securityUser.getUsername()
+    );
+}
     private void validateInstitutionalEmail(String email) {
         if (email == null || email.isBlank()) {
             throw new BusinessException("L'email est obligatoire.");

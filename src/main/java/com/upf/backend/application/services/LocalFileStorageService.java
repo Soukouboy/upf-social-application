@@ -7,6 +7,7 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.upf.backend.application.model.enums.FileType;
 import com.upf.backend.application.services.Exceptions.BusinessException;
 import com.upf.backend.application.services.Exceptions.ResourceNotFoundException;
 import com.upf.backend.application.services.Interfaces.IFileStorageService;
@@ -49,7 +50,7 @@ public class LocalFileStorageService implements IFileStorageService {
 
     @Override
     public StoredFileDescriptor storeExamFile(String originalFilename,
-                                              String contentType,
+                                              FileType contentType,
                                               long size,
                                               byte[] content) {
         validateFilename(originalFilename);
@@ -62,7 +63,7 @@ public class LocalFileStorageService implements IFileStorageService {
 
     @Override
     public StoredFileDescriptor storeCourseResource(String originalFilename,
-                                                    String contentType,
+                                                    FileType contentType,
                                                     long size,
                                                     byte[] content) {
         validateFilename(originalFilename);
@@ -101,7 +102,7 @@ public class LocalFileStorageService implements IFileStorageService {
 
     private StoredFileDescriptor store(String folder,
                                        String originalFilename,
-                                       String contentType,
+                                       FileType fileType,
                                        long size,
                                        byte[] content) {
         try {
@@ -121,7 +122,7 @@ public class LocalFileStorageService implements IFileStorageService {
                     relativePath,
                     publicUrl,
                     originalFilename,
-                    contentType,
+                    fileType,
                     size
             );
         } catch (IOException e) {
@@ -159,11 +160,11 @@ public class LocalFileStorageService implements IFileStorageService {
         }
     }
 
-    private void validateContentType(String contentType,
+    private void validateContentType(FileType contentType,
                                      Set<String> allowedTypes,
                                      String message) {
-        if (contentType == null || contentType.isBlank()) {
-            throw new BusinessException("Le type MIME du fichier est obligatoire.");
+        if (contentType == null) {
+            throw new BusinessException("Le type de fichier est obligatoire.");
         }
         if (!allowedTypes.contains(contentType)) {
             throw new BusinessException(message);

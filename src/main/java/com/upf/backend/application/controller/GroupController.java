@@ -29,7 +29,7 @@ public class GroupController {
             @RequestBody CreateGroupRequest request
     ) {
         AcademicGroup created = groupService.createGroup(
-                currentUser.getStudentId(),
+                currentUser.getProfileId(),
                 request.name(),
                 request.description(),
                 request.type(),
@@ -58,7 +58,7 @@ public class GroupController {
             @AuthenticationPrincipal SecurityUser currentUser,
             Pageable pageable
     ) {
-        Page<AcademicGroup> page = groupService.listMyGroups(currentUser.getStudentId(), pageable);
+        Page<AcademicGroup> page = groupService.listMyGroups(currentUser.getProfileId(), pageable);
         return ResponseEntity.ok(page);
     }
 
@@ -67,7 +67,7 @@ public class GroupController {
             @AuthenticationPrincipal SecurityUser currentUser,
             @PathVariable UUID groupId
     ) {
-        GroupMembership membership = groupService.joinGroup(groupId, currentUser.getStudentId());
+        GroupMembership membership = groupService.joinGroup(groupId, currentUser.getProfileId());
         return ResponseEntity.status(201).body(membership);
     }
 
@@ -76,7 +76,7 @@ public class GroupController {
             @AuthenticationPrincipal SecurityUser currentUser,
             @PathVariable UUID groupId
     ) {
-        GroupMembership membership = groupService.requestToJoinPrivateGroup(groupId, currentUser.getStudentId());
+        GroupMembership membership = groupService.requestToJoinPrivateGroup(groupId, currentUser.getProfileId());
         return ResponseEntity.status(201).body(membership);
     }
 
@@ -86,7 +86,7 @@ public class GroupController {
             @PathVariable UUID groupId,
             @PathVariable UUID memberId
     ) {
-        groupService.removeMember(groupId, currentUser.getStudentId(), memberId);
+        groupService.removeMember(groupId, currentUser.getProfileId(), memberId);
         return ResponseEntity.noContent().build();
     }
 }

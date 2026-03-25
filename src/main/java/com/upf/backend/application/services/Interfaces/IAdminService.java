@@ -8,11 +8,15 @@ import java.util.UUID;
 
 public interface IAdminService {
 
-    AdminProfile bootstrapInitialAdmin(String email,
+    AdminProfile bootstrapInitialAdmin(String firstName,
+                                       String lastName,
+                                        String email,
                                        String rawPassword,
                                        AdminLevel adminLevel);
 
-    AdminProfile createAdminAccount(String email,
+    AdminProfile createAdminAccount(String firstName,
+                                    String lastName,
+                                    String email,
                                     String rawPassword,
                                     AdminLevel adminLevel);
 

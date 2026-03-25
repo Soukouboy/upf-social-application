@@ -5,6 +5,7 @@ import com.upf.backend.application.model.entity.Course;
 import com.upf.backend.application.model.entity.Exam;
 import com.upf.backend.application.model.entity.StudentProfile;
 import com.upf.backend.application.model.enums.ExamType;
+import com.upf.backend.application.model.enums.FileType;
 import com.upf.backend.application.repository.CourseRepository;
 import com.upf.backend.application.repository.ExamRepository;
 import com.upf.backend.application.repository.StudentRepository;
@@ -48,7 +49,7 @@ public class ExamService implements IExamService {
                            ExamType examType,
                            String description,
                            String originalFilename,
-                           String contentType,
+                           FileType contentType,
                            long size,
                            byte[] content,
                            String fileHash) {

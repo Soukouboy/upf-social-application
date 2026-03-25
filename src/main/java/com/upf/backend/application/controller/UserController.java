@@ -22,7 +22,7 @@ public class UserController {
     public ResponseEntity<StudentProfile> getCurrentUserProfile(
             @AuthenticationPrincipal SecurityUser currentUser
     ) {
-        StudentProfile profile = userService.getCurrentUserProfile(currentUser.getStudentId());
+        StudentProfile profile = userService.getCurrentUserProfile(currentUser.getProfileId());
         return ResponseEntity.ok(profile);
     }
 
@@ -32,7 +32,7 @@ public class UserController {
             @RequestBody UpdateProfilRequest request
     ) {
         StudentProfile updated = userService.updateProfile(
-                currentUser.getStudentId(),
+                currentUser.getProfileId(),
                 request.bio(),
                 request.profilePhotoUrl(),
                 request.major(),

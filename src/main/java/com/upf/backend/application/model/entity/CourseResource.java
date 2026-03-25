@@ -49,6 +49,8 @@ public class CourseResource {
     @Enumerated(EnumType.STRING)
     @Column(name = "file_type", nullable = false, length = 10)
     private FileType fileType;
+    @Column(name = "is_external", nullable = false)
+    private boolean isExternal = false;
 
     /**
      * Nullable : non applicable pour les ressources de type LINK.
@@ -113,6 +115,9 @@ public class CourseResource {
 
     public UUID getUploadedBy() { return uploadedBy; }
     public void setUploadedBy(UUID uploadedBy) { this.uploadedBy = uploadedBy; }
+
+    public boolean isExternal() { return isExternal; }
+    public void setExternal(boolean external) { isExternal = external; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
 }

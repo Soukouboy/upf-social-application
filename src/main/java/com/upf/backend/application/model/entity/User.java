@@ -62,9 +62,49 @@ public class User {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+
+    // 🔥 côté inverse (non propriétaire)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private StudentProfile studentProfile;
+
+    // helper method (important)
+    public void setStudentProfile(StudentProfile profile) {
+        this.studentProfile = profile;
+        if (profile != null) {
+            profile.setUser(this);
+        }
+    }
+
+
+    // 🔥 côté inverse (non propriétaire)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private AdminProfile adminProfile;
+
+    // helper method (important)
+    public void setAdminProfile(AdminProfile profile) {
+        this.adminProfile = profile;
+        if (profile != null) {
+            profile.setUser(this);
+        }
+    }
+
+   public StudentProfile getStudentProfile() {
+        return studentProfile;
+    }
+
+
+
+    public AdminProfile getAdminProfile() {
+        return adminProfile;
+    }
+
+    
     // -------------------------------------------------------------------------
     // Lifecycle
     // -------------------------------------------------------------------------
+
+ 
+
 
     @PrePersist
     protected void onCreate() {

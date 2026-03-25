@@ -32,6 +32,8 @@ public class AdminController {
             @RequestBody CreateAdminRequest request
     ) {
         AdminProfile created = adminService.bootstrapInitialAdmin(
+                request.firstName(),
+                request.lastName(),
                 request.email(),
                 request.password(),
                 request.adminLevel()
@@ -50,6 +52,8 @@ public class AdminController {
             @RequestBody CreateAdminRequest request
     ) {
         AdminProfile created = adminService.createAdminAccount(
+                request.firstName(),
+                request.lastName(),
                 request.email(),
                 request.password(),
                 request.adminLevel()

@@ -38,7 +38,7 @@ public class StudentProfile {
     @Column(name = "profile_picture_url", length = 500)
     private String profilePictureUrl;
 
-    @NotBlank(message = "La biographie ne peut pas être vide si renseignée")
+    
     @Size(max = 500)
     @Column(name = "bio", length = 500)
     private String bio;

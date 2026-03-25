@@ -23,6 +23,8 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<StudentProfile> register(@RequestBody RegisterStudentRequest request) {
         StudentProfile created = authService.registerStudent(
+                request.firstName(),
+                request.lastName(),
                 request.email(),
                 request.password(),
                 request.major(),

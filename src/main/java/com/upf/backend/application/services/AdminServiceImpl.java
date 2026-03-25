@@ -4,6 +4,7 @@ import com.upf.backend.application.model.entity.AdminProfile;
 import com.upf.backend.application.model.entity.StudentProfile;
 import com.upf.backend.application.model.entity.User;
 import com.upf.backend.application.model.enums.AdminLevel;
+import com.upf.backend.application.model.enums.UserRole;
 import com.upf.backend.application.repository.AdminProfileRepository;
 import com.upf.backend.application.repository.StudentRepository;
 import com.upf.backend.application.repository.UserRepository;
@@ -38,7 +39,9 @@ public class AdminServiceImpl implements IAdminService {
     }
 
     @Override
-    public AdminProfile bootstrapInitialAdmin(String email,
+    public AdminProfile bootstrapInitialAdmin(String firstName,
+                                              String lastName,
+                                              String email,
                                               String rawPassword,
                                               AdminLevel adminLevel) {
         if (adminProfileRepository.count() > 0) {
@@ -57,18 +60,25 @@ public class AdminServiceImpl implements IAdminService {
         user.setEmail(normalizedEmail);
         user.setPasswordHash(passwordEncoder.encode(rawPassword));
         user.setActive(true);
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setRole(UserRole.ADMIN); 
 
-        User savedUser = userRepository.save(user);
+   
 
         AdminProfile adminProfile = new AdminProfile();
-        adminProfile.setUser(savedUser);
         adminProfile.setAdminLevel(adminLevel);
-
-        return adminProfileRepository.save(adminProfile);
+        adminProfile.setUser(user); // Lien bidirectionnel
+          
+        user.setAdminProfile(adminProfile); // Lien bidirectionnel
+        userRepository.save(user);
+         return adminProfile;
     }
 
     @Override
-    public AdminProfile createAdminAccount(String email,
+    public AdminProfile createAdminAccount(String firstName,
+                                           String lastName,
+                                           String email,
                                            String rawPassword,
                                            AdminLevel adminLevel) {
         validateAdminCreationData(email, rawPassword, adminLevel);
@@ -83,14 +93,20 @@ public class AdminServiceImpl implements IAdminService {
         user.setEmail(normalizedEmail);
         user.setPasswordHash(passwordEncoder.encode(rawPassword));
         user.setActive(true);
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
 
-        User savedUser = userRepository.save(user);
+     
+        user.setRole(UserRole.ADMIN);
 
         AdminProfile adminProfile = new AdminProfile();
-        adminProfile.setUser(savedUser);
+     
         adminProfile.setAdminLevel(adminLevel);
-
-        return adminProfileRepository.save(adminProfile);
+          adminProfile.setUser(user); // Lien bidirectionnel
+        user.setAdminProfile(adminProfile); // Lien bidirectionnel
+        userRepository.save(user);
+      
+        return adminProfile;
     }
 
     @Override
@@ -109,15 +125,19 @@ public class AdminServiceImpl implements IAdminService {
 
         UUID userId = student.getUser().getId();
 
-        if (adminProfileRepository.existsByUser_Id(userId)) {
+        if (student.getUser().getAdminProfile() != null) {
             throw new BusinessException("Cet utilisateur possède déjà un profil administrateur.");
         }
 
+        User user = student.getUser();
+        user.setRole(UserRole.ADMIN);
         AdminProfile adminProfile = new AdminProfile();
-        adminProfile.setUser(student.getUser());
+        adminProfile.setUser(user); // Lien bidirectionnel
         adminProfile.setAdminLevel(adminLevel);
+            user.setAdminProfile(adminProfile); // Lien bidirectionnel
 
-        return adminProfileRepository.save(adminProfile);
+            userRepository.save(user); // Sauvegarde du user avec le nouveau rôle et le lien vers adminProfile
+        return adminProfile;
     }
 
     @Override
@@ -153,6 +173,9 @@ public class AdminServiceImpl implements IAdminService {
         AdminProfile adminProfile = adminProfileRepository.findById(adminProfileId)
                 .orElseThrow(() -> new ResourceNotFoundException("Profil administrateur introuvable."));
 
+        User user = adminProfile.getUser();
+        user.setRole(UserRole.STUDENT);    // ou un rôle par défaut
+        user.setAdminProfile(null);
         adminProfileRepository.delete(adminProfile);
     }
 
