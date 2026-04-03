@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.upf.backend.application.model.enums.NotificationStatus;
 import com.upf.backend.application.model.enums.NotificationType;
 
 /**
@@ -39,6 +40,23 @@ public class Notification {
     @Column(name = "type", nullable = false, length = 30)
     private NotificationType type;
 
+
+        @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 30)
+    private NotificationStatus status = NotificationStatus.PENDING;
+
+    public NotificationStatus getStatus() {
+            return status;
+        }
+
+    public void setId(UUID id) {
+            this.id = id;
+        }
+
+        public void setStatus(NotificationStatus status) {
+            this.status = status;
+        }
     @NotBlank
     @Size(max = 150)
     @Column(name = "title", nullable = false, length = 150)
@@ -102,4 +120,13 @@ public class Notification {
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getExpiresAt() { return expiresAt; }
     public void setExpiresAt(LocalDateTime expiresAt) { this.expiresAt = expiresAt; }
+
+    public void markAsSent() {
+        this.status = NotificationStatus.SENT;
+    }
+
+     public void markAsFailed() {
+        this.status = NotificationStatus.FAILED;
+    }
+    
 }

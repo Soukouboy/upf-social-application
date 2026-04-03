@@ -36,7 +36,7 @@ import com.upf.backend.application.model.enums.MessageType;
                 @Index(name = "idx_message_recipient_id",columnList = "recipient_id")
         }
 )
-public class Message {
+public class Messages {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -151,10 +151,10 @@ public class Message {
     // Constructeurs
     // -------------------------------------------------------------------------
 
-    public Message() {}
+    public Messages() {}
 
     /** Constructeur pour message de groupe */
-    public Message(AcademicGroup group, UUID senderId, String content, MessageType messageType) {
+    public Messages(AcademicGroup group, UUID senderId, String content, MessageType messageType) {
         this.context     = ContextMessage.GROUP;
         this.group       = group;
         this.senderId    = senderId;
@@ -163,7 +163,7 @@ public class Message {
     }
 
     /** Constructeur pour message privé */
-    public Message(UUID senderId, UUID recipientId, String content, MessageType messageType) {
+    public Messages(UUID senderId, UUID recipientId, String content, MessageType messageType) {
         this.context     = ContextMessage.PRIVATE;
         this.senderId    = senderId;
         this.recipientId = recipientId;

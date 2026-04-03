@@ -93,7 +93,7 @@ public class AcademicGroup {
             orphanRemoval = true,
             fetch         = FetchType.LAZY
     )
-    private List<Message> messages = new ArrayList<>();
+    private List<Messages> messages = new ArrayList<>();
 
     // -------------------------------------------------------------------------
     // Lifecycle
@@ -136,7 +136,7 @@ public class AcademicGroup {
         this.memberCount = Math.max(0, this.memberCount - 1);
     }
 
-    public void addMessage(Message message) {
+    public void addMessage(Messages message) {
         messages.add(message);
         message.setGroup(this);
         this.messageCount++;
@@ -179,5 +179,5 @@ public class AcademicGroup {
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 
     public List<GroupMembership> getMemberships() { return memberships; }
-    public List<Message> getMessages() { return messages; }
+    public List<Messages> getMessages() { return messages; }
 }

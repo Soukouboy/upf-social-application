@@ -2,7 +2,7 @@ package com.upf.backend.application.controller;
 
 import com.upf.backend.application.controller.request.SendMessageRequest;
 import com.upf.backend.application.controller.request.SendPrivateMessageRequest;
-import com.upf.backend.application.model.entity.Message;
+import com.upf.backend.application.model.entity.Messages;
 import com.upf.backend.application.security.SecurityUser;
 import com.upf.backend.application.services.ChatService;
 import org.springframework.data.domain.Page;
@@ -26,42 +26,42 @@ public class ChatController {
     }
 
     @PostMapping("/groups/{groupId}")
-    public ResponseEntity<Message> sendGroupMessage(
+    public ResponseEntity<Messages> sendGroupMessage(
             @AuthenticationPrincipal SecurityUser currentUser,
             @PathVariable UUID groupId,
             @RequestBody SendMessageRequest request
     ) {
-        Message created = chatService.sendGroupMessage(currentUser.getProfileId(), groupId, request.content());
+        Messages created = chatService.sendGroupMessage(currentUser.getProfileId(), groupId, request.content());
         return ResponseEntity.status(201).body(created);
     }
 
     @GetMapping("/groups/{groupId}")
-    public ResponseEntity<Page<Message>> getGroupMessages(
+    public ResponseEntity<Page<Messages>> getGroupMessages(
             @PathVariable UUID groupId,
             Pageable pageable
     ) {
-        Page<Message> page = chatService.getGroupMessages(groupId, pageable);
+        Page<Messages> page = chatService.getGroupMessages(groupId, pageable);
         return ResponseEntity.ok(page);
     }
 
-    @GetMapping("/groups/{groupId}/before")
-    public ResponseEntity<Page<Message>> getGroupMessagesBefore(
-            @PathVariable UUID groupId,
-            @RequestParam
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-            LocalDateTime before,
-            Pageable pageable
-    ) {
-        Page<Message> page = chatService.getGroupMessagesBefore(groupId, before, pageable);
-        return ResponseEntity.ok(page);
-    }
+    // @GetMapping("/groups/{groupId}/before")
+    // public ResponseEntity<Page<Messages>> getGroupMessagesBefore(
+    //         @PathVariable UUID groupId,
+    //         @RequestParam
+    //         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    //         LocalDateTime before,
+    //         Pageable pageable
+    // ) {
+    //     Page<Messages> page = chatService.getGroupMessagesBefore(groupId, before, pageable);
+    //     return ResponseEntity.ok(page);
+    // }
 
     @PostMapping("/private")
-    public ResponseEntity<Message> sendPrivateMessage(
+    public ResponseEntity<Messages> sendPrivateMessage(
             @AuthenticationPrincipal SecurityUser currentUser,
             @RequestBody SendPrivateMessageRequest request
     ) {
-        Message created = chatService.sendPrivateMessage(
+        Messages  created = chatService.sendPrivateMessage(
                 currentUser.getProfileId(),
                 request.recipientId(),
                 request.content()
@@ -70,12 +70,12 @@ public class ChatController {
     }
 
     @GetMapping("/private")
-    public ResponseEntity<Page<Message>> getPrivateConversation(
+    public ResponseEntity<Page<Messages>> getPrivateConversation(
             @AuthenticationPrincipal SecurityUser currentUser,
             @RequestParam UUID otherUserId,
             Pageable pageable
     ) {
-        Page<Message> page = chatService.getPrivateConversation(
+        Page<Messages> page = chatService.getPrivateConversation(
                 currentUser.getProfileId(),
                 otherUserId,
                 pageable

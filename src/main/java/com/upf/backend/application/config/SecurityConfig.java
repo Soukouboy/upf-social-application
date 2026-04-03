@@ -2,6 +2,9 @@ package com.upf.backend.application.config;
 
 import com.upf.backend.application.security.CustomUserDetailsService;
 import com.upf.backend.application.security.JwtAuthenticationFilter;
+
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -16,6 +19,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableMethodSecurity
@@ -32,7 +38,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
+        http .cors(cors -> cors.configurationSource(corsConfigurationSource())) 
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -90,5 +96,39 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+
+        // ✅ Origines autorisées — ton frontend React
+        config.setAllowedOrigins(List.of(
+            "http://localhost:5173"   // Vite dev server
+        ));
+
+        // ✅ Méthodes HTTP autorisées
+        config.setAllowedMethods(List.of(
+            "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
+        ));
+
+        // ✅ Headers autorisés — Authorization obligatoire pour JWT
+        config.setAllowedHeaders(List.of(
+            "Authorization",
+            "Content-Type",
+            "Accept"
+        ));
+
+        // ✅ Permettre l'envoi du cookie/token dans les requêtes
+        config.setAllowCredentials(true);
+
+        // ✅ Durée du cache preflight (évite une requête OPTIONS à chaque fois)
+        config.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config); // appliquer à tous les endpoints
+        return source;
     }
 }

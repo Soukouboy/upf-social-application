@@ -1,6 +1,6 @@
 package com.upf.backend.application.repository;
 
-import com.upf.backend.application.model.entity.Message;
+import com.upf.backend.application.model.entity.Messages;
 import com.upf.backend.application.model.enums.ContextMessage;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -9,53 +9,32 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
-public interface MessageRepository extends JpaRepository<Message, UUID> {
+public interface MessageRepository extends JpaRepository<Messages, UUID> {
 
-    Page<Message> findByGroup_IdOrderByCreatedAtDesc(UUID groupId, Pageable pageable);
+    // ✅ group est une relation → group_Id
+    Page<Messages> findByGroup_IdAndIsDeletedFalseOrderByCreatedAtAsc(UUID groupId, Pageable pageable);
 
-    Page<Message> findByGroup_IdAndCreatedAtLessThanOrderByCreatedAtDesc(
-            UUID groupId,
-            LocalDateTime before,
-            Pageable pageable
-    );
+    // ✅ senderId et recipientId sont des UUID bruts → pas de underscore
+    Page<Messages> findBySenderIdAndRecipientIdAndIsDeletedFalseOrderByCreatedAtAsc(
+            UUID senderId, UUID recipientId, Pageable pageable);
 
+    // Conversation privée dans les deux sens
+    // (A→B et B→A dans la même conversation)
     @Query("""
-           select m
-           from Message m
-           where m.context = :context
-             and (
-                   (m.senderId = :userA and m.recipientId = :userB)
-                   or
-                   (m.senderId = :userB and m.recipientId = :userA)
-                 )
-           order by m.createdAt desc
-           """)
-    Page<Message> findPrivateConversation(
+        SELECT m FROM Messages m
+        WHERE m.isDeleted = false
+        AND (
+            (m.senderId = :userA AND m.recipientId = :userB)
+            OR
+            (m.senderId = :userB AND m.recipientId = :userA)
+        )
+        ORDER BY m.createdAt ASC
+    """)
+    Page<Messages> findPrivateConversation(
             @Param("userA") UUID userA,
             @Param("userB") UUID userB,
-            @Param("context") ContextMessage context,
-            Pageable pageable
-    );
-
-    @Query("""
-           select m
-           from Message m
-           where m.context = :context
-             and (
-                   (m.senderId = :userA and m.recipientId = :userB)
-                   or
-                   (m.senderId = :userB and m.recipientId = :userA)
-                 )
-             and m.createdAt < :before
-           order by m.createdAt desc
-           """)
-    Page<Message> findPrivateConversationBefore(
-            @Param("userA") UUID userA,
-            @Param("userB") UUID userB,
-            @Param("context") ContextMessage context,
-            @Param("before") LocalDateTime before,
-            Pageable pageable
-    );
+            Pageable pageable);
 }

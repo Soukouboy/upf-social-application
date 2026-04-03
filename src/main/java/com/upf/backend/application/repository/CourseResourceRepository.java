@@ -13,5 +13,10 @@ public interface CourseResourceRepository extends JpaRepository<CourseResource, 
 
     Optional<CourseResource> findByIdAndCourse_Id(UUID resourceId, UUID courseId);
 
+    List<CourseResource> findByUploadedByProfessorProfileId(UUID professorId);
     long countByCourse_Id(UUID courseId);
+
+    // ✅ Fonctionne car uploadedBy est maintenant une entité User
+    List<CourseResource> findByUploadedBy_Id(UUID userId);
+
 }

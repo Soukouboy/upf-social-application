@@ -20,16 +20,18 @@ import java.util.UUID;
 @Transactional
 public class AdminCourseResourceServiceImpl implements IAdminCourseResourceService {
 
+    private final NotificationService notificationService;
     private final CourseRepository courseRepository;
     private final CourseResourceRepository courseResourceRepository;
     private final LocalFileStorageService fileStorageService;
 
     public AdminCourseResourceServiceImpl(CourseRepository courseRepository,
                                           CourseResourceRepository courseResourceRepository,
-                                          LocalFileStorageService fileStorageService) {
+                                          LocalFileStorageService fileStorageService, NotificationService notificationService) {
         this.courseRepository = courseRepository;
         this.courseResourceRepository = courseResourceRepository;
         this.fileStorageService = fileStorageService;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -64,6 +66,7 @@ public class AdminCourseResourceServiceImpl implements IAdminCourseResourceServi
         course.addResource(resource);
 
         Course savedCourse = courseRepository.save(course);
+        notificationService.notifyNewResource(resource);
         return savedCourse.getResources().get(savedCourse.getResources().size() - 1);
     }
 
@@ -93,6 +96,7 @@ public class AdminCourseResourceServiceImpl implements IAdminCourseResourceServi
         course.addResource(resource);
 
         Course savedCourse = courseRepository.save(course);
+        notificationService.notifyNewResource(resource);
         return savedCourse.getResources().get(savedCourse.getResources().size() - 1);
     }
 

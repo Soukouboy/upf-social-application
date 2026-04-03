@@ -23,18 +23,14 @@ import java.util.Set;
 import java.util.UUID;
 
 @Service
-@Transactional
 public class LocalFileStorageService implements IFileStorageService {
 
     private static final long MAX_EXAM_FILE_SIZE = 20L * 1024 * 1024;       // 20 Mo
     private static final long MAX_COURSE_RESOURCE_SIZE = 50L * 1024 * 1024; // 50 Mo
 
-    private static final Set<String> EXAM_ALLOWED_TYPES = Set.of(
-            "application/pdf",
-            "application/msword",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            "image/png",
-            "image/jpeg"
+    private static final Set<FileType> EXAM_ALLOWED_TYPES = Set.of(
+            FileType.PDF, FileType.DOCX, FileType.ZIP
+            
     );
 
     private final Path rootPath;
@@ -82,6 +78,10 @@ public class LocalFileStorageService implements IFileStorageService {
 
             if (!resource.exists() || !resource.isReadable()) {
                 throw new ResourceNotFoundException("Fichier introuvable ou illisible.");
+            }
+             // Vérification essentielle
+            if (!filePath.startsWith(rootPath)) {
+                throw new BusinessException("Accès refusé : chemin non autorisé.");
             }
 
             return resource;
@@ -161,7 +161,7 @@ public class LocalFileStorageService implements IFileStorageService {
     }
 
     private void validateContentType(FileType contentType,
-                                     Set<String> allowedTypes,
+                                     Set<FileType> allowedTypes,
                                      String message) {
         if (contentType == null) {
             throw new BusinessException("Le type de fichier est obligatoire.");

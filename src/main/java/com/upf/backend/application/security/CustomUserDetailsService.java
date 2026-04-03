@@ -1,4 +1,5 @@
 package com.upf.backend.application.security;
+import com.upf.backend.application.repository.ProfessorRepository;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -18,16 +19,18 @@ import com.upf.backend.application.repository.UserRepository;
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
+    private final ProfessorRepository professorRepository;
     private final UserRepository userRepository;
     private final StudentRepository studentRepository;
     private final AdminProfileRepository adminProfileRepository;
 
     public CustomUserDetailsService(UserRepository userRepository,
                                     StudentRepository studentRepository,
-                                    AdminProfileRepository adminProfileRepository) {
+                                    AdminProfileRepository adminProfileRepository, ProfessorRepository professorRepository) {
         this.userRepository = userRepository;
         this.studentRepository = studentRepository;
         this.adminProfileRepository = adminProfileRepository;
+        this.professorRepository = professorRepository;
     }
 
     @Override
@@ -50,6 +53,9 @@ public UserDetails loadUserByUsername(String username) throws UsernameNotFoundEx
         case ADMIN   -> user.getAdminProfile() != null
                 ? user.getAdminProfile().getId()
                 : null;
+        case PROFESSOR -> user.getProfessorProfile() != null
+                ? user.getProfessorProfile().getId()
+                : null;        
     };
 
     // ✅ SecurityUser contient tout : ce que Spring veut + ce que toi tu veux
@@ -73,6 +79,9 @@ public UserDetails loadUserByUsername(String username) throws UsernameNotFoundEx
             case ADMIN -> adminProfileRepository.findByUser_Id(user.getId())
                     .map(AdminProfile::getId)
                     .orElse(null);
+            case PROFESSOR -> professorRepository.findByUser_Id(user.getId())
+                    .map(professor -> professor.getId())
+                    .orElse(null); 
         };
     }
 
@@ -80,10 +89,12 @@ public UserDetails loadUserByUsername(String username) throws UsernameNotFoundEx
     private List<SimpleGrantedAuthority> resolveAuthorities(User user) {
         return switch (user.getRole()) {
             case STUDENT -> List.of(new SimpleGrantedAuthority("ROLE_STUDENT"));
+            case PROFESSOR -> List.of(new SimpleGrantedAuthority("ROLE_PROFESSOR"));
             case ADMIN -> adminProfileRepository.findByUser_Id(user.getId())
                     .map(adminProfile -> List.of(
                             new SimpleGrantedAuthority(mapAdminLevelToAuthority(adminProfile))
                     ))
+                 
                     .orElse(List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())));
         };
     }

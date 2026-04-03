@@ -1,7 +1,7 @@
 package com.upf.backend.application.services.Interfaces;
 
 
-import com.upf.backend.application.model.entity.Message;
+import com.upf.backend.application.model.entity.Messages;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -10,17 +10,17 @@ import java.util.UUID;
 
 public interface IChatService {
 
-    Message sendGroupMessage(UUID senderId, UUID groupId, String content);
+    Messages sendGroupMessage(UUID senderId, UUID groupId, String content);
 
-    Page<Message> getGroupMessages(UUID groupId, Pageable pageable);
+    Page<Messages> getGroupMessages(UUID groupId, Pageable pageable);
 
-    Page<Message> getGroupMessagesBefore(UUID groupId,
-                                         LocalDateTime before,
-                                         Pageable pageable);
+    // Page<Messages> getGroupMessagesBefore(UUID groupId,
+    //                                      LocalDateTime before,
+    //                                      Pageable pageable);
 
-    Message sendPrivateMessage(UUID senderId, UUID recipientId, String content);
+    Messages sendPrivateMessage(UUID senderId, UUID recipientId, String content);
 
-    Page<Message> getPrivateConversation(UUID userA,
+    Page<Messages> getPrivateConversation(UUID userA,
                                          UUID userB,
                                          Pageable pageable);
 

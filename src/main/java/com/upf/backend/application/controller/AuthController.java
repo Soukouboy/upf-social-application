@@ -3,6 +3,8 @@ package com.upf.backend.application.controller;
 import com.upf.backend.application.controller.request.LoginRequest;
 import com.upf.backend.application.controller.request.RefreshTokenRequest;
 import com.upf.backend.application.controller.request.RegisterStudentRequest;
+import com.upf.backend.application.dto.student.StudentProfileResponse;
+import com.upf.backend.application.mapper.StudentMapper;
 import com.upf.backend.application.model.entity.StudentProfile;
 import com.upf.backend.application.services.Interfaces.IAuthService;
 import com.upf.backend.application.services.Interfaces.AuthTokens;
@@ -21,7 +23,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<StudentProfile> register(@RequestBody RegisterStudentRequest request) {
+    public ResponseEntity<StudentProfileResponse> register(@RequestBody RegisterStudentRequest request) {
         StudentProfile created = authService.registerStudent(
                 request.firstName(),
                 request.lastName(),
@@ -30,7 +32,7 @@ public class AuthController {
                 request.major(),
                 request.currentYear()
         );
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        return ResponseEntity.status(HttpStatus.CREATED).body(StudentMapper.toResponse(created));
     }
 
     @PostMapping("/login")

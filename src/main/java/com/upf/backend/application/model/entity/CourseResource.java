@@ -61,8 +61,10 @@ public class CourseResource {
     @Column(name = "download_count", nullable = false)
     private int downloadCount = 0;
 
-    @Column(name = "uploaded_by")
-    private UUID uploadedBy;
+    // ✅ Après — relation vers l'entité User ou ProfessorProfile
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "uploaded_by")
+    private User uploadedBy;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -113,8 +115,8 @@ public class CourseResource {
     public int getDownloadCount() { return downloadCount; }
     public void setDownloadCount(int downloadCount) { this.downloadCount = downloadCount; }
 
-    public UUID getUploadedBy() { return uploadedBy; }
-    public void setUploadedBy(UUID uploadedBy) { this.uploadedBy = uploadedBy; }
+    public User getUploadedBy() { return uploadedBy; }
+    public void setUploadedBy(User uploadedBy) { this.uploadedBy = uploadedBy; }
 
     public boolean isExternal() { return isExternal; }
     public void setExternal(boolean external) { isExternal = external; }

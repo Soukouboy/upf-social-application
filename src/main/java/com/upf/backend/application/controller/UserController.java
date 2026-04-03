@@ -1,6 +1,8 @@
 package com.upf.backend.application.controller;
 
 import com.upf.backend.application.controller.request.UpdateProfilRequest;
+import com.upf.backend.application.dto.student.StudentProfileResponse;
+import com.upf.backend.application.mapper.StudentMapper;
 import com.upf.backend.application.model.entity.StudentProfile;
 import com.upf.backend.application.security.SecurityUser;
 import com.upf.backend.application.services.Interfaces.IUserService;
@@ -19,15 +21,15 @@ public class UserController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<StudentProfile> getCurrentUserProfile(
+    public ResponseEntity<StudentProfileResponse> getCurrentUserProfile(
             @AuthenticationPrincipal SecurityUser currentUser
     ) {
         StudentProfile profile = userService.getCurrentUserProfile(currentUser.getProfileId());
-        return ResponseEntity.ok(profile);
+        return ResponseEntity.ok(StudentMapper.toResponse(profile));
     }
 
     @PutMapping("/me")
-    public ResponseEntity<StudentProfile> updateMyProfile(
+    public ResponseEntity<StudentProfileResponse> updateMyProfile(
             @AuthenticationPrincipal SecurityUser currentUser,
             @RequestBody UpdateProfilRequest request
     ) {
@@ -39,6 +41,6 @@ public class UserController {
                 request.currentYear(),
                 request.profilePublic()
         );
-        return ResponseEntity.ok(updated);
+        return ResponseEntity.ok(StudentMapper.toResponse(updated));
     }
 }

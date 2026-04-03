@@ -80,6 +80,30 @@ public class Course {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+
+        // ✅ Ajouter — relation vers le vrai professeur
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "professor_id")
+    private ProfessorProfile professor;
+
+ 
+    // ✅ Ajouter — annonces du cours
+    @OneToMany(
+        mappedBy = "course",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true,
+        fetch = FetchType.LAZY
+    )
+    private List<Announcement> announcements = new ArrayList<>();
+
+    // Getters/Setters à ajouter
+    public ProfessorProfile getProfessor() { return professor; }
+    public void setProfessor(ProfessorProfile professor) { this.professor = professor; }
+
+   
+    public List<Announcement> getAnnouncements() { return announcements; }
+
+
     /**
      * Composition : les ressources appartiennent au cours.
      * Suppression en cascade si le cours est supprimé.

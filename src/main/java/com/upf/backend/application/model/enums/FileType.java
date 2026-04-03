@@ -5,6 +5,7 @@ public enum FileType {
     IMAGE,
     ZIP,
     DOCX,
+    PPT,
     LINK;
 
     /**
@@ -22,6 +23,9 @@ public enum FileType {
             case "application/zip", "application/x-zip-compressed"                 -> ZIP;
             case "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                  "application/msword"                                               -> DOCX;
+            case "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                 "application/vnd.ms-powerpoint"                                            -> PPT;
+            case "text/uri-list", "text/plain" -> LINK;     
             default -> throw new IllegalArgumentException(
                 "Type de fichier non supporté : " + contentType
             );

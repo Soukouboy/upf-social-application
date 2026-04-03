@@ -3,6 +3,7 @@ package com.upf.backend.application.services;
 import com.upf.backend.application.model.entity.StudentProfile;
 import com.upf.backend.application.model.entity.User;
 import com.upf.backend.application.model.enums.UserRole;
+import com.upf.backend.application.repository.ProfessorRepository;
 import com.upf.backend.application.repository.StudentRepository;
 import com.upf.backend.application.repository.UserRepository;
 import com.upf.backend.application.security.JwtService;
@@ -11,6 +12,7 @@ import com.upf.backend.application.services.Exceptions.BusinessException;
 import com.upf.backend.application.services.Exceptions.ResourceNotFoundException;
 import com.upf.backend.application.services.Interfaces.AuthTokens;
 import com.upf.backend.application.services.Interfaces.IAuthService;
+import com.upf.backend.application.services.NotificationService;
 
 import java.util.List;
 import java.util.UUID;
@@ -30,18 +32,24 @@ public class AuthServiceImpl implements IAuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final ProfessorRepository professorRepository;
+    private final NotificationService notificationService;
 
     private final UserRepository userRepository;
     public AuthServiceImpl(StudentRepository studentRepository,
                            PasswordEncoder passwordEncoder,
                            AuthenticationManager authenticationManager,
                            JwtService jwtService,
-                           UserRepository userRepository) {
+                           UserRepository userRepository,
+                           ProfessorRepository professorRepository,
+                           NotificationService notificationService) {
         this.studentRepository = studentRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.userRepository = userRepository;
+        this.professorRepository = professorRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -78,6 +86,7 @@ public class AuthServiceImpl implements IAuthService {
         profile.setProfilePublic(true);
         user.setStudentProfile(profile);// important : le helper method dans User gère la relation bidirectionnelle
          userRepository.save(user);
+         notificationService.notifyWelcome(user);
         return profile;
     }
 
@@ -126,6 +135,10 @@ public AuthTokens refreshToken(String refreshToken) {
         case ADMIN -> user.getAdminProfile() != null
                 ? user.getAdminProfile().getId()
                 : null;
+        case PROFESSOR -> user.getProfessorProfile() != null
+                ? user.getProfessorProfile().getId()
+                : null;
+        default -> null;
     };
 
     // ✅ Autorité depuis l'enum

@@ -1,9 +1,21 @@
 package com.upf.backend.application.controller;
 
 import com.upf.backend.application.controller.request.CreateAdminRequest;
+import com.upf.backend.application.controller.request.CreateProfessorRequest;
 import com.upf.backend.application.controller.request.PromoteStudentRequest;
 import com.upf.backend.application.controller.request.UpdateAdminLevelRequest;
+import com.upf.backend.application.dto.admin.AdminProfileResponse;
+import com.upf.backend.application.dto.enrollment.EnrollmentResponse;
+import com.upf.backend.application.dto.professor.ProfessorProfileResponse;
+import com.upf.backend.application.dto.student.StudentProfileSummary;
+import com.upf.backend.application.mapper.AdminMapper;
+import com.upf.backend.application.mapper.EnrollmentMapper;
+import com.upf.backend.application.mapper.ProfessorMapper;
+import com.upf.backend.application.mapper.StudentMapper;
 import com.upf.backend.application.model.entity.AdminProfile;
+import com.upf.backend.application.model.entity.Enrollment;
+import com.upf.backend.application.model.entity.ProfessorProfile;
+import com.upf.backend.application.model.entity.StudentProfile;
 import com.upf.backend.application.security.SecurityUser;
 import com.upf.backend.application.services.Interfaces.IAdminService;
 import org.springframework.http.HttpStatus;
@@ -28,7 +40,7 @@ public class AdminController {
      * Endpoint public, utilisable uniquement si aucun admin n'existe encore.
      */
     @PostMapping("/bootstrap/initial")
-    public ResponseEntity<AdminProfile> bootstrapInitialAdmin(
+    public ResponseEntity<AdminProfileResponse> bootstrapInitialAdmin(
             @RequestBody CreateAdminRequest request
     ) {
         AdminProfile created = adminService.bootstrapInitialAdmin(
@@ -39,7 +51,7 @@ public class AdminController {
                 request.adminLevel()
         );
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        return ResponseEntity.status(HttpStatus.CREATED).body(AdminMapper.toResponse(created));
     }
 
     /**
@@ -48,7 +60,7 @@ public class AdminController {
      */
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/accounts")
-    public ResponseEntity<AdminProfile> createAdminAccount(
+    public ResponseEntity<AdminProfileResponse> createAdminAccount(
             @RequestBody CreateAdminRequest request
     ) {
         AdminProfile created = adminService.createAdminAccount(
@@ -59,7 +71,7 @@ public class AdminController {
                 request.adminLevel()
         );
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        return ResponseEntity.status(HttpStatus.CREATED).body(AdminMapper.toResponse(created));
     }
 
     /**
@@ -67,7 +79,7 @@ public class AdminController {
      */
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/students/{studentId}/promote")
-    public ResponseEntity<AdminProfile> promoteStudentToAdmin(
+    public ResponseEntity<AdminProfileResponse> promoteStudentToAdmin(
             @PathVariable UUID studentId,
             @RequestBody PromoteStudentRequest request
     ) {
@@ -76,26 +88,28 @@ public class AdminController {
                 request.adminLevel()
         );
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        return ResponseEntity.status(HttpStatus.CREATED).body(AdminMapper.toResponse(created));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/accounts")
-    public ResponseEntity<List<AdminProfile>> listAdmins() {
-        return ResponseEntity.ok(adminService.listAdmins());
+    public ResponseEntity<List<AdminProfileResponse>> listAdmins() {
+        return ResponseEntity.ok(adminService.listAdmins().stream()
+                .map(AdminMapper::toResponse)
+                .toList());
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/accounts/{adminProfileId}")
-    public ResponseEntity<AdminProfile> getAdminProfile(
+    public ResponseEntity<AdminProfileResponse> getAdminProfile(
             @PathVariable UUID adminProfileId
     ) {
-        return ResponseEntity.ok(adminService.getAdminProfile(adminProfileId));
+        return ResponseEntity.ok(AdminMapper.toResponse(adminService.getAdminProfile(adminProfileId)));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/accounts/{adminProfileId}/level")
-    public ResponseEntity<AdminProfile> updateAdminLevel(
+    public ResponseEntity<AdminProfileResponse> updateAdminLevel(
             @PathVariable UUID adminProfileId,
             @RequestBody UpdateAdminLevelRequest request
     ) {
@@ -103,7 +117,7 @@ public class AdminController {
                 adminProfileId,
                 request.adminLevel()
         );
-        return ResponseEntity.ok(updated);
+        return ResponseEntity.ok(AdminMapper.toResponse(updated));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -114,4 +128,50 @@ public class AdminController {
         adminService.revokeAdminRights(adminProfileId);
         return ResponseEntity.noContent().build();
     }
+
+      // ─── Professeurs ───────────────
+      @PostMapping("/professors")
+    public ResponseEntity<ProfessorProfileResponse> createProfessor(
+            @RequestBody CreateProfessorRequest request) {
+
+       
+           ProfessorProfile created = adminService.createProfessorAccount(
+                request.firstName(), request.lastName(),
+                request.email(), request.password(),
+                request.department(), request.title(),
+                request.courseIds());
+        return ResponseEntity.status(HttpStatus.CREATED).body(ProfessorMapper.toResponse(created));
+
+            }
+
+              @PutMapping("/professors/{professorId}/courses/{courseId}")
+    public ResponseEntity<ProfessorProfileResponse> assignCourse(@PathVariable UUID professorId,
+                                                          @PathVariable UUID courseId) {
+        return ResponseEntity.ok(ProfessorMapper.toResponse(adminService.assignCourseToProfessor(professorId, courseId)));
+    }
+
+ // ─── Étudiants ───────────────────────────────────────────────────────────
+
+    @GetMapping("/students")
+    public ResponseEntity<List<StudentProfileSummary>> listStudents() {
+    
+        return ResponseEntity.ok(adminService.listStudents().stream()
+                .map(StudentMapper::toSummary)
+                .toList());
+    }
+
+    @PostMapping("/students/{studentId}/enroll/{courseId}")
+    public ResponseEntity<EnrollmentResponse> enrollStudent(@PathVariable UUID studentId,
+                                                     @PathVariable UUID courseId) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+            EnrollmentMapper.toResponse(adminService.enrollStudentToCourse(studentId, courseId)));
+    }
+
+    @DeleteMapping("/students/{studentId}/enroll/{courseId}")
+    public ResponseEntity<Void> unenrollStudent(@PathVariable UUID studentId,
+                                                 @PathVariable UUID courseId) {
+        adminService.unenrollStudentFromCourse(studentId, courseId);
+        return ResponseEntity.noContent().build();
+    }
+
 }

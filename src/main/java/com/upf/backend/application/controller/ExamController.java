@@ -1,5 +1,9 @@
 package com.upf.backend.application.controller;
 
+import com.upf.backend.application.dto.exam.ExamDetails;
+import com.upf.backend.application.dto.exam.ExamResponse;
+import com.upf.backend.application.dto.exam.ExamSummary;
+import com.upf.backend.application.mapper.ExamMapper;
 import com.upf.backend.application.model.entity.Exam;
 import com.upf.backend.application.model.enums.ExamType;
 import com.upf.backend.application.model.enums.FileType;
@@ -39,7 +43,7 @@ public class ExamController {
     }
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Exam> uploadExam(
+    public ResponseEntity<ExamResponse> uploadExam(
              @AuthenticationPrincipal SecurityUser currentUser,
             @RequestParam UUID courseId,
             @RequestParam String subject,
@@ -65,11 +69,11 @@ public class ExamController {
                 fileHash
         );
 
-        return ResponseEntity.status(201).body(created);
+        return ResponseEntity.status(201).body(ExamMapper.toResponse(created));
     }
 
-    @GetMapping
-    public ResponseEntity<Page<Exam>> listExams(
+ @GetMapping("/listExams")
+    public ResponseEntity<Page<ExamSummary>> listExams(
             @RequestParam(required = false) String subject,
             @RequestParam(required = false) String major,
             @RequestParam(required = false) Integer courseYear,
@@ -87,13 +91,13 @@ public class ExamController {
                 uploaderId,
                 pageable
         );
-        return ResponseEntity.ok(page);
+        return ResponseEntity.ok(page.map(ExamMapper::toSummary));
     }
 
     @GetMapping("/{examId}")
-    public ResponseEntity<Exam> getExam(@PathVariable UUID examId) {
+    public ResponseEntity<ExamDetails> getExam(@PathVariable UUID examId) {
         Exam exam = examService.getExam(examId);
-        return ResponseEntity.ok(exam);
+        return ResponseEntity.ok(ExamMapper.toDetails(exam));
     }
 
     @GetMapping("/{examId}/download")

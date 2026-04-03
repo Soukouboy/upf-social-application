@@ -88,6 +88,23 @@ public class User {
         }
     }
 
+
+    
+    // 🔥 côté inverse (non propriétaire)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private ProfessorProfile professorProfile;
+
+    // helper method (important)
+    public void setProfessorProfile(ProfessorProfile profile) {
+        this.professorProfile = profile;
+        if (profile != null) {
+            profile.setUser(this);
+        }
+    }
+    public ProfessorProfile getProfessorProfile() {
+        return professorProfile;
+    }
+
    public StudentProfile getStudentProfile() {
         return studentProfile;
     }

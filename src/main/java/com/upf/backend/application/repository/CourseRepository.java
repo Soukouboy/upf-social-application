@@ -58,4 +58,6 @@ public interface CourseRepository extends JpaRepository<Course, UUID> {
             @Param("search") String search,
             Pageable pageable
     );
+
+    List<Course> findByProfessor_Id(UUID professorId);
 }

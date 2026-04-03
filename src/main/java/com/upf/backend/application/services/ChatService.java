@@ -2,7 +2,7 @@ package com.upf.backend.application.services;
 
 
 import com.upf.backend.application.model.entity.AcademicGroup;
-import com.upf.backend.application.model.entity.Message;
+import com.upf.backend.application.model.entity.Messages;
 import com.upf.backend.application.model.enums.ContextMessage;
 import com.upf.backend.application.repository.GroupMembershipRepository;
 import com.upf.backend.application.repository.GroupRepository;
@@ -25,6 +25,7 @@ import java.util.UUID;
 @Transactional
 public class ChatService implements IChatService {
 
+    private final NotificationService notificationService;
     private final MessageRepository messageRepository;
     private final GroupRepository groupRepository;
     private final GroupMembershipRepository membershipRepository;
@@ -33,15 +34,16 @@ public class ChatService implements IChatService {
     public ChatService(MessageRepository messageRepository,
                            GroupRepository groupRepository,
                            GroupMembershipRepository membershipRepository,
-                           StudentRepository studentRepository) {
+                           StudentRepository studentRepository, NotificationService notificationService) {
         this.messageRepository = messageRepository;
         this.groupRepository = groupRepository;
         this.membershipRepository = membershipRepository;
         this.studentRepository = studentRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
-    public Message sendGroupMessage(UUID senderId, UUID groupId, String content) {
+    public Messages sendGroupMessage(UUID senderId, UUID groupId, String content) {
         if (content == null || content.isBlank()) {
             throw new BusinessException("Le contenu du message est obligatoire.");
         }
@@ -60,7 +62,7 @@ public class ChatService implements IChatService {
             throw new AccessDeniedBusinessException("L'étudiant n'est pas membre du groupe.");
         }
 
-        Message message = new Message();
+        Messages message = new Messages();
         message.setSenderId(senderId);
         message.setContent(content.trim());
         message.setContext(ContextMessage.GROUP);
@@ -74,34 +76,34 @@ public class ChatService implements IChatService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<Message> getGroupMessages(UUID groupId, Pageable pageable) {
+    public Page<Messages> getGroupMessages(UUID groupId, Pageable pageable) {
         groupRepository.findById(groupId)
                 .orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable."));
 
-        return messageRepository.findByGroup_IdOrderByCreatedAtDesc(groupId, pageable);
+        return messageRepository.findByGroup_IdAndIsDeletedFalseOrderByCreatedAtAsc(groupId, pageable);
     }
 
+//     @Override
+//     @Transactional(readOnly = true)
+//     public Page<Messages> getGroupMessagesBefore(UUID groupId,
+//                                                 LocalDateTime before,
+//                                                 Pageable pageable) {
+//         if (before == null) {
+//             throw new BusinessException("La borne temporelle 'before' est obligatoire.");
+//         }
+
+//         groupRepository.findById(groupId)
+//                 .orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable."));
+
+//         return messageRepository.findByGroup_IdAndCreatedAtLessThanOrderByCreatedAtDesc(
+//                 groupId,
+//                 before,
+//                 pageable
+//         );
+//     }
+
     @Override
-    @Transactional(readOnly = true)
-    public Page<Message> getGroupMessagesBefore(UUID groupId,
-                                                LocalDateTime before,
-                                                Pageable pageable) {
-        if (before == null) {
-            throw new BusinessException("La borne temporelle 'before' est obligatoire.");
-        }
-
-        groupRepository.findById(groupId)
-                .orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable."));
-
-        return messageRepository.findByGroup_IdAndCreatedAtLessThanOrderByCreatedAtDesc(
-                groupId,
-                before,
-                pageable
-        );
-    }
-
-    @Override
-    public Message sendPrivateMessage(UUID senderId, UUID recipientId, String content) {
+    public Messages sendPrivateMessage(UUID senderId, UUID recipientId, String content) {
         if (content == null || content.isBlank()) {
             throw new BusinessException("Le contenu du message est obligatoire.");
         }
@@ -112,18 +114,19 @@ public class ChatService implements IChatService {
         studentRepository.findById(recipientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Destinataire introuvable."));
 
-        Message message = new Message();
+        Messages message = new Messages();
         message.setSenderId(senderId);
         message.setRecipientId(recipientId);
         message.setContent(content.trim());
         message.setContext(ContextMessage.PRIVATE);
 
+       
         return messageRepository.save(message);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<Message> getPrivateConversation(UUID userA,
+    public Page<Messages> getPrivateConversation(UUID userA,
                                                 UUID userB,
                                                 Pageable pageable) {
         studentRepository.findById(userA)
@@ -134,7 +137,6 @@ public class ChatService implements IChatService {
         return messageRepository.findPrivateConversation(
                 userA,
                 userB,
-                ContextMessage.PRIVATE,
                 pageable
         );
     }
