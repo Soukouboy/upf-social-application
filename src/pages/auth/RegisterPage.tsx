@@ -76,8 +76,8 @@ const RegisterPage: React.FC = () => {
     lastName: '',
     email: '',
     password: '',
-    filiere: '',
-    annee: 1,
+    major: '',
+    currentYear: 1,
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,7 +95,7 @@ const RegisterPage: React.FC = () => {
     setError(null);
 
     // Validation
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.filiere) {
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.major) {
       setError('Veuillez remplir tous les champs obligatoires.');
       return;
     }
@@ -112,8 +112,9 @@ const RegisterPage: React.FC = () => {
 
     setLoading(true);
     try {
-      await register(formData);
-      navigate('/dashboard', { replace: true });
+      const registeredUser = await register(formData);
+      const rolePrefix = registeredUser.role === 'ADMIN' ? '/admin' : registeredUser.role === 'PROFESSOR' ? '/professor' : '/student';
+      navigate(`${rolePrefix}/dashboard`, { replace: true });
     } catch {
       setError('Erreur lors de l\'inscription. Cet e-mail est peut-être déjà utilisé.');
     } finally {
@@ -335,7 +336,7 @@ const RegisterPage: React.FC = () => {
                 <TextField
                   id="register-filiere"
                   label="Filière"
-                  value={formData.filiere}
+                  value={formData.major}
                   onChange={handleChange('filiere')}
                   fullWidth
                   required
@@ -352,7 +353,7 @@ const RegisterPage: React.FC = () => {
                 <TextField
                   id="register-annee"
                   label="Année"
-                  value={formData.annee}
+                  value={formData.currentYear}
                   onChange={handleChange('annee')}
                   fullWidth
                   required

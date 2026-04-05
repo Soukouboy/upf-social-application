@@ -14,13 +14,14 @@ export const getUsers = async (search?: string): Promise<PaginatedResponse<Stude
 /**
  * S'abonne (suit) un étudiant
  */
-export const followUser = async (userId: number): Promise<void> => {
+export const followUser = async (userId: string | number): Promise<void> => {
   await api.post(`/users/${userId}/follow`);
 };
 
 /**
  * Se désabonne d'un étudiant
  */
-export const unfollowUser = async (userId: number): Promise<void> => {
+export const unfollowUser = async (userId: string | number): Promise<void> => {
   await api.delete(`/users/${userId}/follow`);
 };
+

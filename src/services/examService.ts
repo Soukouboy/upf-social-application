@@ -12,7 +12,7 @@
 import api from './api';
 import type {
   Exam,
-  ExamUploadRequest,
+  ExamUploadRequestLegacy as ExamUploadRequest,
   ExamFilters,
   ExamReport,
   VoteType,
@@ -27,29 +27,26 @@ export const getExams = async (filters?: ExamFilters): Promise<PaginatedResponse
 };
 
 /** Détail d'une épreuve */
-export const getExamById = async (id: number): Promise<Exam> => {
+export const getExamById = async (id: number | string): Promise<Exam> => {
   const { data } = await api.get<Exam>(`/exams/${id}`);
   return data;
 };
 
 /** Dépôt d'une épreuve (envoi multipart/form-data) */
 export const uploadExam = async (payload: ExamUploadRequest): Promise<Exam> => {
-  const formData = new FormData();
-  formData.append('title', payload.title);
-  formData.append('matiere', payload.matiere);
-  formData.append('anneeAcademique', payload.anneeAcademique);
-  formData.append('type', payload.type);
-  if (payload.description) formData.append('description', payload.description);
-  formData.append('file', payload.file);
-
-  const { data } = await api.post<Exam>('/exams', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
+  // En mode mock, on envoie en JSON. En production, utiliser FormData pour le fichier.
+  const { data } = await api.post<Exam>('/exams', {
+    title: payload.title,
+    matiere: payload.matiere,
+    anneeAcademique: payload.anneeAcademique,
+    type: payload.type,
+    description: payload.description || '',
   });
   return data;
 };
 
 /** Télécharger le fichier d'une épreuve */
-export const downloadExam = async (id: number): Promise<Blob> => {
+export const downloadExam = async (id: number | string): Promise<Blob> => {
   const { data } = await api.get<Blob>(`/exams/${id}/download`, {
     responseType: 'blob',
   });
@@ -57,13 +54,13 @@ export const downloadExam = async (id: number): Promise<Blob> => {
 };
 
 /** Voter pour une épreuve */
-export const voteExam = async (id: number, type: VoteType): Promise<void> => {
+export const voteExam = async (id: number | string, type: VoteType): Promise<void> => {
   await api.post(`/exams/${id}/vote`, { type });
 };
 
 /** Signaler une épreuve */
 export const reportExam = async (
-  id: number,
+  id: number | string,
   reason: ReportReason,
   description?: string
 ): Promise<ExamReport> => {

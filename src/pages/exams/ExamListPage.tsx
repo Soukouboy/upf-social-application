@@ -5,9 +5,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Grid, MenuItem, TextField, Pagination,
-  Skeleton, useTheme, alpha,
+  Skeleton,
 } from '@mui/material';
-import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
+
 import ThumbUpAltRoundedIcon from '@mui/icons-material/ThumbUpAltRounded';
 import ThumbDownAltRoundedIcon from '@mui/icons-material/ThumbDownAltRounded';
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
@@ -40,7 +40,6 @@ const typeColorMap: Record<string, 'primary' | 'secondary' | 'success' | 'error'
 };
 
 const ExamListPage: React.FC = () => {
-  const theme = useTheme();
   const navigate = useNavigate();
   const [exams, setExams] = useState<Exam[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,8 +54,8 @@ const ExamListPage: React.FC = () => {
       try {
         const filters: ExamFilters = {
           page: page - 1, size: 12,
-          search: search || undefined,
-          type: (type as ExamType) || undefined,
+          subject: search || undefined,
+          examType: (type as ExamType) || undefined,
         };
         const result = await getExams(filters);
         setExams(result.content);
@@ -80,7 +79,7 @@ const ExamListPage: React.FC = () => {
             Partagez et retrouvez les épreuves de vos matières
           </Typography>
         </Box>
-        <UPFButton variant="contained" startIcon={<AddRoundedIcon />} onClick={() => navigate('/exams/upload')}>
+        <UPFButton variant="contained" startIcon={<AddRoundedIcon />} onClick={() => navigate('/student/exams/upload')}>
           Déposer une épreuve
         </UPFButton>
       </Box>
@@ -101,13 +100,13 @@ const ExamListPage: React.FC = () => {
           ))}
         </Grid>
       ) : exams.length === 0 ? (
-        <EmptyState title="Aucune épreuve trouvée" description="Soyez le premier à partager une épreuve !" actionLabel="Déposer une épreuve" onAction={() => navigate('/exams/upload')} />
+        <EmptyState title="Aucune épreuve trouvée" description="Soyez le premier à partager une épreuve !" actionLabel="Déposer une épreuve" onAction={() => navigate('/student/exams/upload')} />
       ) : (
         <>
           <Grid container spacing={2.5}>
             {exams.map((exam) => (
               <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={exam.id}>
-                <UPFCard sx={{ cursor: 'pointer', height: '100%' }} onClick={() => navigate(`/exams/${exam.id}`)}>
+                <UPFCard sx={{ cursor: 'pointer', height: '100%' }} onClick={() => navigate(`/student/exams/${exam.id}`)}>
                   <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
                     <UPFChip label={exam.type} size="small" colorVariant={typeColorMap[exam.type] || 'primary'} />
                     <UPFChip label={exam.anneeAcademique} size="small" colorVariant="secondary" />
@@ -156,12 +155,12 @@ const ExamListPage: React.FC = () => {
 };
 
 const MOCK_EXAMS: Exam[] = [
-  { id: 1, title: 'Examen Final Algorithmique', matiere: 'Algorithmique', anneeAcademique: '2024-2025', type: 'FINAL', description: 'Examen final couvrant les chapitres 1 à 8.', fileUrl: '#', fileName: 'algo_final.pdf', fileSizeBytes: 3200000, downloadCount: 87, upvotes: 24, downvotes: 2, uploadedBy: { id: 1, firstName: 'Amina', lastName: 'Benali', avatarUrl: undefined }, createdAt: '2025-06-15' },
-  { id: 2, title: 'Partiel BDD Avancées', matiere: 'Base de Données', anneeAcademique: '2024-2025', type: 'PARTIEL', description: 'Partiel S1 — SQL avancé et normalisation.', fileUrl: '#', fileName: 'bdd_partiel.pdf', fileSizeBytes: 1800000, downloadCount: 56, upvotes: 15, downvotes: 1, uploadedBy: { id: 2, firstName: 'Youssef', lastName: 'Karimi', avatarUrl: undefined }, createdAt: '2025-01-20' },
-  { id: 3, title: 'CC1 Marketing Digital', matiere: 'Marketing Digital', anneeAcademique: '2024-2025', type: 'CC', fileUrl: '#', fileName: 'mkt_cc1.pdf', fileSizeBytes: 950000, downloadCount: 32, upvotes: 8, downvotes: 0, uploadedBy: { id: 3, firstName: 'Sara', lastName: 'Moussaoui', avatarUrl: undefined }, createdAt: '2024-11-10' },
-  { id: 4, title: 'TP Réseau — Config Routeurs', matiere: 'Réseaux Informatiques', anneeAcademique: '2024-2025', type: 'TP', description: 'TP noté sur la configuration des routeurs Cisco.', fileUrl: '#', fileName: 'reseau_tp.pdf', fileSizeBytes: 2100000, downloadCount: 41, upvotes: 12, downvotes: 3, uploadedBy: { id: 1, firstName: 'Amina', lastName: 'Benali', avatarUrl: undefined }, createdAt: '2024-12-05' },
-  { id: 5, title: 'Rattrapage Maths Discrètes', matiere: 'Mathématiques Discrètes', anneeAcademique: '2023-2024', type: 'RATTRAPAGE', fileUrl: '#', fileName: 'maths_ratt.pdf', fileSizeBytes: 1500000, downloadCount: 28, upvotes: 6, downvotes: 1, uploadedBy: { id: 4, firstName: 'Omar', lastName: 'Tazi', avatarUrl: undefined }, createdAt: '2024-07-20' },
-  { id: 6, title: 'Final Droit des Affaires', matiere: 'Droit des Affaires', anneeAcademique: '2024-2025', type: 'FINAL', description: 'Cas pratique + questions de cours.', fileUrl: '#', fileName: 'droit_final.pdf', fileSizeBytes: 2800000, downloadCount: 45, upvotes: 18, downvotes: 0, uploadedBy: { id: 5, firstName: 'Leila', lastName: 'Fassi', avatarUrl: undefined }, createdAt: '2025-06-20' },
+  { id: 1, title: 'Examen Final Algorithmique', matiere: 'Algorithmique', anneeAcademique: '2024-2025', type: 'FINAL', description: 'Examen final couvrant les chapitres 1 à 8.', fileUrl: '#', fileName: 'algo_final.pdf', fileSizeBytes: 3200000, downloadCount: 87, upvotes: 24, downvotes: 2, uploadedBy: { id: 1, firstName: 'Amina', lastName: 'Benali' }, createdAt: '2025-06-15' },
+  { id: 2, title: 'Partiel BDD Avancées', matiere: 'Base de Données', anneeAcademique: '2024-2025', type: 'PARTIEL', description: 'Partiel S1 — SQL avancé et normalisation.', fileUrl: '#', fileName: 'bdd_partiel.pdf', fileSizeBytes: 1800000, downloadCount: 56, upvotes: 15, downvotes: 1, uploadedBy: { id: 2, firstName: 'Youssef', lastName: 'Karimi' }, createdAt: '2025-01-20' },
+  { id: 3, title: 'CC1 Marketing Digital', matiere: 'Marketing Digital', anneeAcademique: '2024-2025', type: 'CC', fileUrl: '#', fileName: 'mkt_cc1.pdf', fileSizeBytes: 950000, downloadCount: 32, upvotes: 8, downvotes: 0, uploadedBy: { id: 3, firstName: 'Sara', lastName: 'Moussaoui' }, createdAt: '2024-11-10' },
+  { id: 4, title: 'TP Réseau — Config Routeurs', matiere: 'Réseaux Informatiques', anneeAcademique: '2024-2025', type: 'TP', description: 'TP noté sur la configuration des routeurs Cisco.', fileUrl: '#', fileName: 'reseau_tp.pdf', fileSizeBytes: 2100000, downloadCount: 41, upvotes: 12, downvotes: 3, uploadedBy: { id: 1, firstName: 'Amina', lastName: 'Benali' }, createdAt: '2024-12-05' },
+  { id: 5, title: 'Rattrapage Maths Discrètes', matiere: 'Mathématiques Discrètes', anneeAcademique: '2023-2024', type: 'RATTRAPAGE', fileUrl: '#', fileName: 'maths_ratt.pdf', fileSizeBytes: 1500000, downloadCount: 28, upvotes: 6, downvotes: 1, uploadedBy: { id: 4, firstName: 'Omar', lastName: 'Tazi' }, createdAt: '2024-07-20' },
+  { id: 6, title: 'Final Droit des Affaires', matiere: 'Droit des Affaires', anneeAcademique: '2024-2025', type: 'FINAL', description: 'Cas pratique + questions de cours.', fileUrl: '#', fileName: 'droit_final.pdf', fileSizeBytes: 2800000, downloadCount: 45, upvotes: 18, downvotes: 0, uploadedBy: { id: 5, firstName: 'Leila', lastName: 'Fassi' }, createdAt: '2025-06-20' },
 ];
 
 export default ExamListPage;

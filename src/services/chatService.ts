@@ -1,5 +1,5 @@
 /**
- * Service de messagerie (chat)
+ * Service de messagerie (chat de groupe)
  *
  * Fallback REST :
  *   GET /messages?groupId=X&page=Y — historique paginé
@@ -11,7 +11,7 @@ import type { Message, PaginatedResponse } from '../types';
 
 /** Récupérer l'historique des messages d'un groupe (REST fallback) */
 export const getMessages = async (
-  groupId: number,
+  groupId: number | string,
   page: number = 0,
   size: number = 30
 ): Promise<PaginatedResponse<Message>> => {

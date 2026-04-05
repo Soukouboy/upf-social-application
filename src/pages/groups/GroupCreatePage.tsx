@@ -1,0 +1,163 @@
+/**
+ * GroupCreatePage — Création d'un nouveau groupe
+ */
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Box, Typography, TextField, MenuItem, IconButton,
+  Breadcrumbs, Link, useTheme, alpha,
+} from '@mui/material';
+import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
+import AddPhotoAlternateRoundedIcon from '@mui/icons-material/AddPhotoAlternateRounded';
+import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
+import UPFCard from '../../components/ui/UPFCard';
+import UPFButton from '../../components/ui/UPFButton';
+import type { GroupVisibility } from '../../types';
+import { createGroup } from '../../services/groupService';
+
+const GroupCreatePage: React.FC = () => {
+  const theme = useTheme();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [visibility, setVisibility] = useState<GroupVisibility>('PUBLIC');
+  const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [error, setError] = useState('');
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setCoverImage(file);
+      setCoverPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) {
+      setError('Le nom du groupe est requis');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const group = await createGroup({
+        name: name.trim(),
+        description: description.trim(),
+        visibility,
+        coverImage: coverImage || undefined,
+      });
+      navigate(`/student/groups/${group.id}`);
+    } catch {
+      setError('Erreur lors de la création du groupe. Veuillez réessayer.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+        <IconButton onClick={() => navigate('/student/groups')}>
+          <ArrowBackRoundedIcon />
+        </IconButton>
+        <Breadcrumbs>
+          <Link component="button" variant="body2" onClick={() => navigate('/student/groups')} underline="hover" color="text.secondary">
+            Groupes
+          </Link>
+          <Typography variant="body2" color="text.primary" fontWeight={500}>Créer un groupe</Typography>
+        </Breadcrumbs>
+      </Box>
+
+      {/* Header */}
+      <Box sx={{
+        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
+        borderRadius: 4, p: 4, mb: 4, color: '#fff', position: 'relative', overflow: 'hidden',
+      }}>
+        <Box sx={{ position: 'absolute', top: -30, right: -30, width: 180, height: 180, borderRadius: '50%', bgcolor: alpha('#fff', 0.05) }} />
+        <Box sx={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 2 }}>
+          <GroupsRoundedIcon sx={{ fontSize: 40 }} />
+          <Box>
+            <Typography variant="h4" fontWeight={700}>Créer un nouveau groupe</Typography>
+            <Typography variant="body1" sx={{ opacity: 0.85 }}>
+              Rassemblez vos camarades autour d'un sujet commun
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
+
+      <UPFCard noHover>
+        <Box component="form" onSubmit={handleSubmit}>
+          {/* Image de couverture */}
+          <Box
+            sx={{
+              width: '100%', height: 180, borderRadius: 3, mb: 3,
+              border: `2px dashed ${theme.palette.divider}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', position: 'relative', overflow: 'hidden',
+              bgcolor: alpha(theme.palette.primary.main, 0.03),
+              transition: 'all 0.2s',
+              '&:hover': { borderColor: theme.palette.primary.main, bgcolor: alpha(theme.palette.primary.main, 0.06) },
+            }}
+            onClick={() => document.getElementById('cover-input')?.click()}
+          >
+            {coverPreview ? (
+              <Box component="img" src={coverPreview} alt="Cover" sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <Box sx={{ textAlign: 'center' }}>
+                <AddPhotoAlternateRoundedIcon sx={{ fontSize: 40, color: 'text.secondary', mb: 1 }} />
+                <Typography variant="body2" color="text.secondary">
+                  Cliquez pour ajouter une image de couverture
+                </Typography>
+              </Box>
+            )}
+            <input id="cover-input" type="file" accept="image/*" hidden onChange={handleImageChange} />
+          </Box>
+
+          {/* Champs du formulaire */}
+          <TextField
+            label="Nom du groupe"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            fullWidth required
+            placeholder="Ex: Dev Web S4 — Révisions"
+            sx={{ mb: 2.5 }}
+          />
+
+          <TextField
+            label="Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            fullWidth multiline rows={3}
+            placeholder="Décrivez l'objectif du groupe, les sujets abordés…"
+            sx={{ mb: 2.5 }}
+          />
+
+          <TextField
+            label="Visibilité"
+            value={visibility}
+            onChange={(e) => setVisibility(e.target.value as GroupVisibility)}
+            select fullWidth
+            sx={{ mb: 3 }}
+          >
+            <MenuItem value="PUBLIC">🌐 Public — Tout le monde peut rejoindre</MenuItem>
+            <MenuItem value="PRIVATE">🔒 Privé — Sur demande uniquement</MenuItem>
+          </TextField>
+
+          {error && (
+            <Typography variant="body2" color="error" sx={{ mb: 2 }}>{error}</Typography>
+          )}
+
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+            <UPFButton variant="outlined" onClick={() => navigate('/student/groups')}>Annuler</UPFButton>
+            <UPFButton variant="contained" type="submit" loading={loading}>Créer le groupe</UPFButton>
+          </Box>
+        </Box>
+      </UPFCard>
+    </Box>
+  );
+};
+
+export default GroupCreatePage;

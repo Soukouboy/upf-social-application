@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Box, Typography, Avatar, useTheme, alpha } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import PersonAddRoundedIcon from '@mui/icons-material/PersonAddRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import ChatRoundedIcon from '@mui/icons-material/ChatRounded';
 import UPFCard from '../ui/UPFCard';
 import UPFButton from '../ui/UPFButton';
 import type { StudentNetwork } from '../../types';
@@ -13,6 +15,7 @@ interface StudentCardProps {
 
 const StudentCard: React.FC<StudentCardProps> = ({ student }) => {
   const theme = useTheme();
+  const navigate = useNavigate();
   const [isFollowing, setIsFollowing] = useState(student.isFollowing);
   const [loading, setLoading] = useState(false);
 
@@ -31,6 +34,10 @@ const StudentCard: React.FC<StudentCardProps> = ({ student }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleMessage = () => {
+    navigate(`/student/messages/${student.id}`);
   };
 
   return (
@@ -68,19 +75,36 @@ const StudentCard: React.FC<StudentCardProps> = ({ student }) => {
         </Box>
       </Box>
 
-      <UPFButton
-        fullWidth
-        variant={isFollowing ? "outlined" : "contained"}
-        color={isFollowing ? "inherit" : "primary"}
-        startIcon={isFollowing ? <CheckRoundedIcon /> : <PersonAddRoundedIcon />}
-        onClick={handleFollowToggle}
-        loading={loading}
-        sx={{
-          borderRadius: 50,
-        }}
-      >
-        {isFollowing ? 'Abonné' : 'Suivre'}
-      </UPFButton>
+      <Box sx={{ display: 'flex', gap: 1 }}>
+        <UPFButton
+          fullWidth
+          variant={isFollowing ? "outlined" : "contained"}
+          color={isFollowing ? "inherit" : "primary"}
+          startIcon={isFollowing ? <CheckRoundedIcon /> : <PersonAddRoundedIcon />}
+          onClick={handleFollowToggle}
+          loading={loading}
+          sx={{
+            borderRadius: 50,
+          }}
+        >
+          {isFollowing ? 'Abonné' : 'Suivre'}
+        </UPFButton>
+
+        {isFollowing && (
+          <UPFButton
+            variant="outlined"
+            color="primary"
+            onClick={handleMessage}
+            sx={{
+              borderRadius: 50,
+              minWidth: 44,
+              px: 1.5,
+            }}
+          >
+            <ChatRoundedIcon sx={{ fontSize: 18 }} />
+          </UPFButton>
+        )}
+      </Box>
     </UPFCard>
   );
 };

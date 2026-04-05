@@ -1,10 +1,10 @@
 /**
- * ProfileEditPage — Modification du profil
+ * ProfileEditPage — Modification du profil avec upload photo
  */
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Box, Typography, TextField, Alert, useTheme, alpha, Avatar, IconButton,
+  Box, Typography, TextField, Alert, useTheme, Avatar, IconButton,
 } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import CameraAltRoundedIcon from '@mui/icons-material/CameraAltRounded';
@@ -18,6 +18,7 @@ const ProfileEditPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     bio: user?.bio || '',
@@ -28,19 +29,54 @@ const ProfileEditPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  // Avatar state
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatarUrl || null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+
   const competenceList = formData.competences.split(',').map((c) => c.trim()).filter(Boolean);
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAvatarFile(file);
+      setAvatarPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleAvatarUpload = async () => {
+    if (!avatarFile) return;
+    setAvatarUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('avatar', avatarFile);
+      await api.post('/users/me/avatar', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setAvatarFile(null);
+    } catch {
+      setError('Erreur lors de l\'upload de la photo.');
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     try {
+      // Upload avatar first if changed
+      if (avatarFile) {
+        await handleAvatarUpload();
+      }
+      // Update profile data
       await api.put('/users/me', {
         bio: formData.bio,
         competences: competenceList,
       });
       setSuccess(true);
-      setTimeout(() => navigate('/profile'), 1500);
+      setTimeout(() => navigate('/student/profile'), 1500);
     } catch {
       setError('Erreur lors de la mise à jour du profil.');
     } finally {
@@ -51,7 +87,7 @@ const ProfileEditPage: React.FC = () => {
   return (
     <Box sx={{ maxWidth: 600, mx: 'auto' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-        <IconButton onClick={() => navigate('/profile')}><ArrowBackRoundedIcon /></IconButton>
+        <IconButton onClick={() => navigate('/student/profile')}><ArrowBackRoundedIcon /></IconButton>
         <Typography variant="h5" fontWeight={700}>Modifier mon profil</Typography>
       </Box>
 
@@ -59,22 +95,34 @@ const ProfileEditPage: React.FC = () => {
       {success && <Alert severity="success" sx={{ mb: 3, borderRadius: 2 }}>Profil mis à jour ! Redirection…</Alert>}
 
       <UPFCard noHover>
-        {/* Avatar */}
+        {/* Avatar with working upload */}
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
           <Box sx={{ position: 'relative' }}>
             <Avatar
-              src={user?.avatarUrl}
+              src={avatarPreview || undefined}
               sx={{
                 width: 96, height: 96,
                 bgcolor: theme.palette.primary.main,
                 fontSize: '2rem',
                 fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'opacity 0.2s',
+                '&:hover': { opacity: 0.8 },
               }}
+              onClick={() => avatarInputRef.current?.click()}
             >
               {user ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase() : '?'}
             </Avatar>
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={handleAvatarChange}
+            />
             <IconButton
               size="small"
+              onClick={() => avatarInputRef.current?.click()}
               sx={{
                 position: 'absolute', bottom: 0, right: 0,
                 bgcolor: theme.palette.secondary.main,
@@ -86,6 +134,12 @@ const ProfileEditPage: React.FC = () => {
             </IconButton>
           </Box>
         </Box>
+
+        {avatarFile && (
+          <Typography variant="caption" color="primary.main" sx={{ display: 'block', textAlign: 'center', mb: 2 }}>
+            📷 Nouvelle photo sélectionnée — elle sera uploadée à l'enregistrement
+          </Typography>
+        )}
 
         <Box component="form" onSubmit={handleSubmit} noValidate>
           {/* Info non modifiable */}
@@ -146,8 +200,8 @@ const ProfileEditPage: React.FC = () => {
             </UPFButton>
           </Box>
 
-          <UPFButton type="submit" variant="contained" fullWidth size="large" loading={loading} sx={{ py: 1.5 }}>
-            Enregistrer les modifications
+          <UPFButton type="submit" variant="contained" fullWidth size="large" loading={loading || avatarUploading} sx={{ py: 1.5 }}>
+            {avatarUploading ? 'Upload de la photo…' : 'Enregistrer les modifications'}
           </UPFButton>
         </Box>
       </UPFCard>

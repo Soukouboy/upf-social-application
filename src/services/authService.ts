@@ -8,7 +8,7 @@
  *   POST /auth/logout   — déconnexion
  */
 import api from './api';
-import type { AuthTokens, LoginRequest, RegisterRequest, Student } from '../types';
+import type { AuthTokens, LoginRequest, RegisterStudentRequest, Student } from '../types';
 
 /** Connexion — retourne les tokens JWT */
 export const login = async (credentials: LoginRequest): Promise<AuthTokens> => {
@@ -17,7 +17,7 @@ export const login = async (credentials: LoginRequest): Promise<AuthTokens> => {
 };
 
 /** Inscription — retourne les tokens JWT */
-export const register = async (payload: RegisterRequest): Promise<AuthTokens> => {
+export const register = async (payload: RegisterStudentRequest): Promise<AuthTokens> => {
   const { data } = await api.post<AuthTokens>('/auth/register', payload);
   return data;
 };

@@ -11,7 +11,7 @@
  *   - Gestion d'erreurs avec feedback visuel
  */
 import React, { useState } from 'react';
-import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
   Box,
   TextField,
@@ -38,7 +38,6 @@ import { useAuth } from '../../hooks/useAuth';
 const LoginPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const location = useLocation();
   const { login } = useAuth();
 
   const [email, setEmail] = useState('');
@@ -46,9 +45,6 @@ const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  // Redirection vers la page demandée après login
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,8 +63,10 @@ const LoginPage: React.FC = () => {
 
     setLoading(true);
     try {
-      await login({ email, password });
-      navigate(from, { replace: true });
+      const loggedUser = await login({ email, password });
+      // Redirection basée sur le rôle
+      const rolePrefix = loggedUser.role === 'ADMIN' ? '/admin' : loggedUser.role === 'PROFESSOR' ? '/professor' : '/student';
+      navigate(`${rolePrefix}/dashboard`, { replace: true });
     } catch {
       setError('Identifiants incorrects. Veuillez réessayer.');
     } finally {

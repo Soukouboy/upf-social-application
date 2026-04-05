@@ -66,9 +66,9 @@ const GroupDetailPage: React.FC = () => {
   return (
     <Box>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-        <IconButton onClick={() => navigate('/groups')}><ArrowBackRoundedIcon /></IconButton>
+        <IconButton onClick={() => navigate('/student/groups')}><ArrowBackRoundedIcon /></IconButton>
         <Breadcrumbs>
-          <Link component="button" variant="body2" onClick={() => navigate('/groups')} underline="hover" color="text.secondary">Groupes</Link>
+          <Link component="button" variant="body2" onClick={() => navigate('/student/groups')} underline="hover" color="text.secondary">Groupes</Link>
           <Typography variant="body2" color="text.primary" fontWeight={500}>{group.name}</Typography>
         </Breadcrumbs>
       </Box>

@@ -82,10 +82,10 @@ const CourseDetailPage: React.FC = () => {
           createdAt: '2025-09-01',
         });
         setResources([
-          { id: 1, courseId: Number(id), title: 'Cours - Chapitre 1 : Complexité', type: 'PDF', url: '#', sizeBytes: 2400000 },
-          { id: 2, courseId: Number(id), title: 'TP - Arbres binaires', type: 'PDF', url: '#', sizeBytes: 1200000 },
-          { id: 3, courseId: Number(id), title: 'Vidéo - Algorithmes de tri', type: 'VIDEO', url: '#' },
-          { id: 4, courseId: Number(id), title: 'Références externes', type: 'LINK', url: '#' },
+          { id: 1, courseId: Number(id), title: 'Cours - Chapitre 1 : Complexité', type: 'PDF', url: '#', sizeBytes: 2400000, downloadCount: 15 },
+          { id: 2, courseId: Number(id), title: 'TP - Arbres binaires', type: 'PDF', url: '#', sizeBytes: 1200000, downloadCount: 8 },
+          { id: 3, courseId: Number(id), title: 'Vidéo - Algorithmes de tri', type: 'VIDEO', url: '#', downloadCount: 42 },
+          { id: 4, courseId: Number(id), title: 'Références externes', type: 'LINK', url: '#', downloadCount: 0 },
         ]);
       } finally {
         setLoading(false);

@@ -30,14 +30,11 @@ export const getGroupById = async (id: number): Promise<Group> => {
 export const createGroup = async (
   payload: Pick<Group, 'name' | 'description' | 'visibility'> & { coverImage?: File }
 ): Promise<Group> => {
-  const formData = new FormData();
-  formData.append('name', payload.name);
-  if (payload.description) formData.append('description', payload.description);
-  formData.append('visibility', payload.visibility);
-  if (payload.coverImage) formData.append('coverImage', payload.coverImage);
-
-  const { data } = await api.post<Group>('/groups', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
+  // NOTE: coverImage upload sera géré séparément en production
+  const { data } = await api.post<Group>('/groups', {
+    name: payload.name,
+    description: payload.description || '',
+    visibility: payload.visibility,
   });
   return data;
 };

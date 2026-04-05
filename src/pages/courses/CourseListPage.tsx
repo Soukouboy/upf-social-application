@@ -13,8 +13,6 @@ import {
   MenuItem,
   TextField,
   Pagination,
-  useTheme,
-  alpha,
   Skeleton,
   Chip,
 } from '@mui/material';
@@ -34,7 +32,6 @@ const FILIERES = ['Toutes', 'Informatique', 'Gestion', 'Finance', 'Marketing', '
 const SEMESTRES = [0, 1, 2]; // 0 = tous
 
 const CourseListPage: React.FC = () => {
-  const theme = useTheme();
   const navigate = useNavigate();
 
   const [courses, setCourses] = useState<Course[]>([]);
@@ -53,8 +50,8 @@ const CourseListPage: React.FC = () => {
           page: page - 1,
           size: 12,
           search: search || undefined,
-          filiere: filiere !== 'Toutes' ? filiere : undefined,
-          semestre: semestre || undefined,
+          major: filiere !== 'Toutes' ? filiere : undefined,
+          semester: semestre || undefined,
         };
         const result = await getCourses(filters);
         setCourses(result.content);
@@ -147,7 +144,7 @@ const CourseListPage: React.FC = () => {
               <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={course.id}>
                 <UPFCard
                   sx={{ cursor: 'pointer', height: '100%' }}
-                  onClick={() => navigate(`/courses/${course.id}`)}
+                  onClick={() => navigate(`/student/courses/${course.id}`)}
                 >
                   <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
                     <UPFChip label={course.filiere} size="small" colorVariant="primary" />
@@ -225,27 +222,27 @@ const CourseListPage: React.FC = () => {
 const MOCK_COURSES: Course[] = [
   {
     id: 1, title: 'Algorithmique et Structures de Données', description: 'Étude des algorithmes fondamentaux : tri, recherche, graphes. Analyse de complexité et structures de données avancées.',
-    filiere: 'Informatique', annee: 2, semestre: 1, professorName: 'Prof. Ahmed', createdAt: '2025-09-01',
+    filiere: 'Informatique', annee: 2, semestre: 1, professorName: 'Prof. Ahmed', isActive: true, createdAt: '2025-09-01',
   },
   {
     id: 2, title: 'Base de Données Avancées', description: 'SQL avancé, optimisation de requêtes, NoSQL, transactions distribuées et réplication.',
-    filiere: 'Informatique', annee: 3, semestre: 1, professorName: 'Prof. Fatima', createdAt: '2025-09-01',
+    filiere: 'Informatique', annee: 3, semestre: 1, professorName: 'Prof. Fatima', isActive: true, createdAt: '2025-09-01',
   },
   {
     id: 3, title: 'Développement Web Full Stack', description: 'React, Node.js, REST API, authentification JWT, déploiement cloud.',
-    filiere: 'Informatique', annee: 3, semestre: 2, professorName: 'Prof. Karim', createdAt: '2025-09-01',
+    filiere: 'Informatique', annee: 3, semestre: 2, professorName: 'Prof. Karim', isActive: true, createdAt: '2025-09-01',
   },
   {
     id: 4, title: 'Comptabilité Analytique', description: 'Méthodes de calcul des coûts, budgets prévisionnels, contrôle de gestion.',
-    filiere: 'Gestion', annee: 2, semestre: 1, professorName: 'Prof. Nadia', createdAt: '2025-09-01',
+    filiere: 'Gestion', annee: 2, semestre: 1, professorName: 'Prof. Nadia', isActive: true, createdAt: '2025-09-01',
   },
   {
     id: 5, title: 'Marketing Digital', description: 'SEO, SEA, réseaux sociaux, content marketing, analytics et KPIs.',
-    filiere: 'Marketing', annee: 2, semestre: 2, professorName: 'Prof. Hassan', createdAt: '2025-09-01',
+    filiere: 'Marketing', annee: 2, semestre: 2, professorName: 'Prof. Hassan', isActive: true, createdAt: '2025-09-01',
   },
   {
     id: 6, title: 'Droit des Affaires', description: 'Contrats commerciaux, droit des sociétés, propriété intellectuelle.',
-    filiere: 'Droit', annee: 3, semestre: 1, professorName: 'Prof. Salma', createdAt: '2025-09-01',
+    filiere: 'Droit', annee: 3, semestre: 1, professorName: 'Prof. Salma', isActive: true, createdAt: '2025-09-01',
   },
 ];
 

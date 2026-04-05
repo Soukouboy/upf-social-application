@@ -11,25 +11,25 @@
  */
 import { createTheme, alpha } from '@mui/material/styles';
 
-const UPF_PRIMARY = '#ad0591ff';
-const UPF_SECONDARY = '#1b0a66ff';
+const UPF_PRIMARY = '#003366';
+const UPF_SECONDARY = '#FF9933';
 
 const theme = createTheme({
   palette: {
     primary: {
       main: UPF_PRIMARY,
-      light: '#1a5276',
+      light: '#f7f7f7ff',
       dark: '#001a33',
       contrastText: '#FFFFFF',
     },
     secondary: {
       main: UPF_SECONDARY,
       light: '#FFD470',
-      dark: '#E5A620',
+      dark: '#FF9933',
       contrastText: '#003366',
     },
     background: {
-      default: '#F5F6FA',
+      default: '#F5F7FA',
       paper: '#FFFFFF',
     },
     text: {

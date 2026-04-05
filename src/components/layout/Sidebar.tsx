@@ -1,11 +1,10 @@
 /**
- * Sidebar — Navigation principale
+ * Sidebar — Navigation principale (role-aware)
  *
- * Éléments :
- *   - Logo UPF
- *   - Liens : Dashboard, Cours, Épreuves, Groupes, Profil
- *   - Indicateur de route active (couleur secondary)
- *   - Version mobile : drawer temporaire
+ * Affiche les nav items en fonction du rôle de l'utilisateur :
+ *   STUDENT   : Dashboard, Cours, Épreuves, Groupes, Messages, Réseau, Profil
+ *   PROFESSOR : Dashboard, Mes cours, Mes étudiants, Documents, Annonces, Profil
+ *   ADMIN     : Dashboard, Utilisateurs, Admins, Cours, Signalements
  */
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -29,6 +28,14 @@ import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
 import PersonSearchRoundedIcon from '@mui/icons-material/PersonSearchRounded';
+import ChatRoundedIcon from '@mui/icons-material/ChatRounded';
+import AdminPanelSettingsRoundedIcon from '@mui/icons-material/AdminPanelSettingsRounded';
+import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded';
+import FlagRoundedIcon from '@mui/icons-material/FlagRounded';
+import FolderRoundedIcon from '@mui/icons-material/FolderRounded';
+import CampaignRoundedIcon from '@mui/icons-material/CampaignRounded';
+import { useAuth } from '../../hooks/useAuth';
+import type { UserRole } from '../../types';
 
 export const SIDEBAR_WIDTH = 260;
 
@@ -38,14 +45,46 @@ interface NavItem {
   icon: React.ReactNode;
 }
 
-const navItems: NavItem[] = [
-  { label: 'Dashboard', path: '/dashboard', icon: <DashboardRoundedIcon /> },
-  { label: 'Cours', path: '/courses', icon: <MenuBookRoundedIcon /> },
-  { label: 'Épreuves', path: '/exams', icon: <DescriptionRoundedIcon /> },
-  { label: 'Groupes', path: '/groups', icon: <GroupsRoundedIcon /> },
-  { label: 'Réseau', path: '/network', icon: <PersonSearchRoundedIcon /> },
-  { label: 'Profil', path: '/profile', icon: <PersonRoundedIcon /> },
+const studentNav: NavItem[] = [
+  { label: 'Dashboard', path: '/student/dashboard', icon: <DashboardRoundedIcon /> },
+  { label: 'Cours', path: '/student/courses', icon: <MenuBookRoundedIcon /> },
+  { label: 'Épreuves', path: '/student/exams', icon: <DescriptionRoundedIcon /> },
+  { label: 'Groupes', path: '/student/groups', icon: <GroupsRoundedIcon /> },
+  { label: 'Messages', path: '/student/messages', icon: <ChatRoundedIcon /> },
+  { label: 'Réseau', path: '/student/network', icon: <PersonSearchRoundedIcon /> },
+  { label: 'Profil', path: '/student/profile', icon: <PersonRoundedIcon /> },
 ];
+
+const professorNav: NavItem[] = [
+  { label: 'Dashboard', path: '/professor/dashboard', icon: <DashboardRoundedIcon /> },
+  { label: 'Mes cours', path: '/professor/courses', icon: <MenuBookRoundedIcon /> },
+  { label: 'Mes étudiants', path: '/professor/students', icon: <PeopleRoundedIcon /> },
+  { label: 'Annonces', path: '/professor/announcements', icon: <CampaignRoundedIcon /> },
+  { label: 'Profil', path: '/professor/profile', icon: <PersonRoundedIcon /> },
+];
+
+const adminNav: NavItem[] = [
+  { label: 'Dashboard', path: '/admin/dashboard', icon: <AdminPanelSettingsRoundedIcon /> },
+  { label: 'Utilisateurs', path: '/admin/users', icon: <PeopleRoundedIcon /> },
+  { label: 'Professeurs', path: '/admin/professors', icon: <SchoolRoundedIcon /> },
+  { label: 'Admins', path: '/admin/admins', icon: <AdminPanelSettingsRoundedIcon /> },
+  { label: 'Cours', path: '/admin/courses', icon: <FolderRoundedIcon /> },
+  { label: 'Signalements', path: '/admin/reports', icon: <FlagRoundedIcon /> },
+];
+
+const navByRole: Record<UserRole, NavItem[]> = {
+  STUDENT: studentNav,
+  PROFESSOR: professorNav,
+  ADMIN: adminNav,
+  SUPER_ADMIN: adminNav,
+};
+
+const roleLabels: Record<UserRole, string> = {
+  STUDENT: 'Étudiant',
+  PROFESSOR: 'Professeur',
+  ADMIN: 'Administrateur',
+  SUPER_ADMIN: 'Super Admin',
+};
 
 interface SidebarProps {
   open: boolean;
@@ -57,6 +96,10 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, dashboardPath } = useAuth();
+
+  const role: UserRole = user?.role || 'STUDENT';
+  const navItems = navByRole[role];
 
   const handleNavigate = (path: string) => {
     navigate(path);
@@ -83,7 +126,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
           py: 3,
           cursor: 'pointer',
         }}
-        onClick={() => handleNavigate('/dashboard')}
+        onClick={() => handleNavigate(dashboardPath)}
       >
         <Box
           sx={{
@@ -103,7 +146,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
             UPF Social
           </Typography>
           <Typography variant="caption" sx={{ opacity: 0.7 }}>
-            Campus Rabat
+            {roleLabels[role]}
           </Typography>
         </Box>
       </Box>
@@ -113,7 +156,10 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
       {/* Liens de navigation */}
       <List sx={{ flex: 1, px: 1, py: 2 }}>
         {navItems.map((item) => {
-          const isActive = location.pathname.startsWith(item.path);
+          const isActive =
+            item.path.endsWith('/dashboard')
+              ? location.pathname === item.path
+              : location.pathname.startsWith(item.path);
           return (
             <ListItemButton
               key={item.path}
@@ -141,12 +187,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
                 transition: 'all 0.2s ease',
               }}
             >
-              <ListItemIcon
-                sx={{
-                  color: 'inherit',
-                  minWidth: 40,
-                }}
-              >
+              <ListItemIcon sx={{ color: 'inherit', minWidth: 40 }}>
                 {item.icon}
               </ListItemIcon>
               <ListItemText
@@ -156,7 +197,6 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
                   fontSize: '0.9rem',
                 }}
               />
-              {/* Indicateur actif */}
               {isActive && (
                 <Box
                   sx={{
@@ -181,7 +221,6 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
     </Box>
   );
 
-  // Mobile : Drawer temporaire
   if (isMobile) {
     return (
       <Drawer
@@ -189,19 +228,13 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
         open={open}
         onClose={onClose}
         ModalProps={{ keepMounted: true }}
-        sx={{
-          '& .MuiDrawer-paper': {
-            width: SIDEBAR_WIDTH,
-            border: 'none',
-          },
-        }}
+        sx={{ '& .MuiDrawer-paper': { width: SIDEBAR_WIDTH, border: 'none' } }}
       >
         {drawerContent}
       </Drawer>
     );
   }
 
-  // Desktop : Drawer permanent
   return (
     <Drawer
       variant="permanent"

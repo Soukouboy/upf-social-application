@@ -80,7 +80,7 @@ const ExamUploadPage: React.FC = () => {
     try {
       await uploadExam({ ...formData, file });
       setSuccess(true);
-      setTimeout(() => navigate('/exams'), 2000);
+      setTimeout(() => navigate('/student/exams'), 2000);
     } catch {
       setError('Erreur lors du dépôt. Veuillez réessayer.');
     } finally {

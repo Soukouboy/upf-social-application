@@ -56,7 +56,7 @@ const GroupListPage: React.FC = () => {
             Rejoignez des groupes d'étude et collaborez avec vos camarades
           </Typography>
         </Box>
-        <UPFButton variant="contained" startIcon={<AddRoundedIcon />}>
+        <UPFButton variant="contained" startIcon={<AddRoundedIcon />} onClick={() => navigate('/student/groups/create')}>
           Créer un groupe
         </UPFButton>
       </Box>
@@ -81,7 +81,7 @@ const GroupListPage: React.FC = () => {
             <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={group.id}>
               <UPFCard
                 sx={{ cursor: 'pointer', height: '100%', position: 'relative', overflow: 'hidden' }}
-                onClick={() => navigate(`/groups/${group.id}`)}
+                onClick={() => navigate(`/student/groups/${group.id}`)}
               >
                 {/* Bande de couleur en haut */}
                 <Box sx={{

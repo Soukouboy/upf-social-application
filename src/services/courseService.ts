@@ -16,13 +16,13 @@ export const getCourses = async (filters?: CourseFilters): Promise<PaginatedResp
 };
 
 /** Détail d'un cours */
-export const getCourseById = async (id: number): Promise<Course> => {
+export const getCourseById = async (id: number | string): Promise<Course> => {
   const { data } = await api.get<Course>(`/courses/${id}`);
   return data;
 };
 
 /** Ressources associées à un cours */
-export const getCourseResources = async (courseId: number): Promise<CourseResource[]> => {
+export const getCourseResources = async (courseId: number | string): Promise<CourseResource[]> => {
   const { data } = await api.get<CourseResource[]>(`/courses/${courseId}/resources`);
   return data;
 };

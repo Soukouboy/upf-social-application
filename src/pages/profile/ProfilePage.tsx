@@ -89,7 +89,7 @@ const ProfilePage: React.FC = () => {
               <UPFButton
                 variant="contained"
                 startIcon={<EditRoundedIcon />}
-                onClick={() => navigate('/profile/edit')}
+                onClick={() => navigate('/student/profile/edit')}
                 sx={{ bgcolor: alpha('#fff', 0.2), color: '#fff', '&:hover': { bgcolor: alpha('#fff', 0.3), boxShadow: 'none' } }}
               >
                 Modifier
