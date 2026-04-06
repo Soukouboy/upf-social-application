@@ -12,5 +12,6 @@ public record StudentProfileSummary(
     String lastName,
     String major,
     int currentYear,
-    String profilePictureUrl
+    String profilePictureUrl,
+    int followersCount
 ) {}

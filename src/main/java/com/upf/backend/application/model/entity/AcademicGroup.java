@@ -42,7 +42,7 @@ public class AcademicGroup {
     private String description;
 
     @Column(name = "cover_image_url", length = 500)
-    private String coverImageUrl;
+    private String coverImageUrl="https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
 
     @NotNull
     @Enumerated(EnumType.STRING)

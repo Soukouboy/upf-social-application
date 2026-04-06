@@ -75,10 +75,7 @@ public class ProfessorController {
     @GetMapping("/me/courses/{courseId}/students")
     public ResponseEntity<List<StudentProfileSummary>> getStudents(Authentication auth,
                                                              @PathVariable UUID courseId) {
-       List<StudentProfileSummary> summaries = professorService.getStudentsInCourse(profileId(auth), courseId)
-                .stream()
-                .map(StudentMapper::toSummary)
-                .toList();
+       List<StudentProfileSummary> summaries = professorService.getStudentsInCourse(profileId(auth), courseId);
         return ResponseEntity.ok(summaries);
     }
 
@@ -135,8 +132,21 @@ public ResponseEntity<CourseResourceResponse> uploadResource(
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/me/announcements")
+    public ResponseEntity<List<AnnouncementResponse>> getMyAnnouncements(Authentication auth) {
+        List<AnnouncementResponse> responses = professorService.getAnnouncementsByProfessor(profileId(auth))
+                .stream()
+                .map(AnnouncementMapper::toResponse)
+                .toList();
+        if (responses.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(responses);
+    }
+
     // HELPER METHODS
      private UUID profileId(Authentication auth) {
         return ((SecurityUser) auth.getPrincipal()).getProfileId();
     }
 }
+

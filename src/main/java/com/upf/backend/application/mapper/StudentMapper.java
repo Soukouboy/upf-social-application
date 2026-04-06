@@ -33,6 +33,7 @@ public class StudentMapper {
             studentProfile.getBio(),
             studentProfile.isProfilePublic(),
             studentProfile.getLastLoginAt()
+            ,user.getRole()
         );
     }
 
@@ -63,7 +64,28 @@ public class StudentMapper {
             studentProfile.getUser().getLastName(),
             studentProfile.getMajor(),
             studentProfile.getCurrentYear(),
-            studentProfile.getProfilePictureUrl()
+            studentProfile.getProfilePictureUrl(),
+            0 // followersCount will be set by service
+        );
+    }
+
+    /**
+     * Convertit une entité StudentProfile en StudentProfileSummary avec le nombre de followers.
+     * Utilisé pour les listes et relations imbriquées.
+     */
+    public static StudentProfileSummary toSummaryWithFollowers(StudentProfile studentProfile, int followersCount) {
+        if (studentProfile == null) {
+            return null;
+        }
+
+        return new StudentProfileSummary(
+            studentProfile.getId(),
+            studentProfile.getUser().getFirstName(),
+            studentProfile.getUser().getLastName(),
+            studentProfile.getMajor(),
+            studentProfile.getCurrentYear(),
+            studentProfile.getProfilePictureUrl(),
+            followersCount
         );
     }
 

@@ -64,6 +64,10 @@ public class SecurityConfig {
                 // Admin
                 .requestMatchers("/admin/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
 
+                // WebSocket — l'authentification JWT se fait au niveau STOMP (WebSocketConfig)
+                // permettre l'accès HTTP pour le handshake initial de SockJS
+                .requestMatchers("/ws", "/ws/**").permitAll()
+
                 // Exemples endpoints métiers
                 .requestMatchers(HttpMethod.GET, "/courses/**").authenticated()
                 .requestMatchers(HttpMethod.GET, "/exams/**").authenticated()

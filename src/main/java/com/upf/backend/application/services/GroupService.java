@@ -5,6 +5,7 @@ import com.upf.backend.application.model.entity.AcademicGroup;
 import com.upf.backend.application.model.entity.GroupMembership;
 import com.upf.backend.application.model.entity.StudentProfile;
 import com.upf.backend.application.model.enums.GroupType;
+import com.upf.backend.application.model.enums.RoleMember;
 import com.upf.backend.application.repository.GroupMembershipRepository;
 import com.upf.backend.application.repository.GroupRepository;
 import com.upf.backend.application.repository.StudentRepository;
@@ -41,8 +42,8 @@ public class GroupService implements IGroupService {
                                      String name,
                                      String description,
                                      GroupType type,
-                                     String major,
-                                     String coverImageUrl) {
+                                     String major
+                                     ) {
 
         if (name == null || name.isBlank()) {
             throw new BusinessException("Le nom du groupe est obligatoire.");
@@ -62,19 +63,23 @@ public class GroupService implements IGroupService {
         group.setDescription(description);
         group.setType(type);
         group.setMajor(major);
-        group.setCoverImageUrl(coverImageUrl);
         group.setCreatedBy(creator.getId());
+       
         group.setActive(true);
 
+        // Créer et sauvegarder le groupe d'abord
+        AcademicGroup savedGroup = groupRepository.save(group);
+
+        // Ajouter le créateur comme administrateur
         GroupMembership ownerMembership = new GroupMembership();
         ownerMembership.setStudentProfile(creator);
+        ownerMembership.setGroup(savedGroup);
+        ownerMembership.setRole(RoleMember.ADMIN);
 
-        // Si ton entité GroupMembership expose un rôle/statut,
-        // tu peux faire ici :
-        // ownerMembership.setRole(GroupRole.OWNER);
-        group.addMembership(ownerMembership);
+        membershipRepository.save(ownerMembership);
+        savedGroup.setMemberCount(1);
 
-        return groupRepository.save(group);
+        return groupRepository.save(savedGroup);
     }
 
     @Override
@@ -147,6 +152,21 @@ public class GroupService implements IGroupService {
         groupRepository.save(group);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Page<GroupMembership> listGroupMembers(UUID groupId, Pageable pageable) {
+        // Vérifier que le groupe existe et est actif
+        loadActiveGroup(groupId);
+        
+        return membershipRepository.findByGroup_IdWithUserFetch(groupId, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AcademicGroup getGroupById(UUID groupId) {
+        return loadActiveGroup(groupId);
+    }
+
     private AcademicGroup loadActiveGroup(UUID groupId) {
         AcademicGroup group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable."));
@@ -167,15 +187,14 @@ public class GroupService implements IGroupService {
 
         GroupMembership membership = new GroupMembership();
         membership.setStudentProfile(student);
-
-        // Si ton entité expose un rôle :
-        // membership.setRole(GroupRole.MEMBER);
+        membership.setRole(RoleMember.MEMBER);
 
         group.addMembership(membership);
-        AcademicGroup savedGroup = groupRepository.save(group);
 
-        return savedGroup.getMemberships()
-                .get(savedGroup.getMemberships().size() - 1);
+        // Sauvegarder le groupe avec cascade pour persister le membership
+        groupRepository.save(group);
+
+        return membership;
     }
 
     private String normalize(String value) {

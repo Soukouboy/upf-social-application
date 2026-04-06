@@ -15,8 +15,8 @@ public interface IGroupService {
                               String name,
                               String description,
                               GroupType type,
-                              String major,
-                              String coverImageUrl);
+                              String major
+                           );
 
     Page<AcademicGroup> listPublicGroups(String major,
                                          String search,
@@ -29,5 +29,9 @@ public interface IGroupService {
     GroupMembership requestToJoinPrivateGroup(UUID groupId, UUID studentId);
 
     void removeMember(UUID groupId, UUID actorId, UUID memberId);
+
+    Page<GroupMembership> listGroupMembers(UUID groupId, Pageable pageable);
+
+    AcademicGroup getGroupById(UUID groupId);
 
 }

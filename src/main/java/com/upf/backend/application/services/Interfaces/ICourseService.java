@@ -30,5 +30,6 @@ public interface ICourseService {
     Enrollment enrollStudent(UUID courseId, UUID studentId);
     void unenrollStudent(UUID courseId, UUID studentId);
     List<Course> getCoursesForStudent(UUID studentId);
+    boolean hasStudentAccess(UUID courseId, UUID studentId);
 
 }

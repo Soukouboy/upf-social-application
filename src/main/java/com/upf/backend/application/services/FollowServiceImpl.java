@@ -6,6 +6,8 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.upf.backend.application.dto.student.StudentProfileSummary;
+import com.upf.backend.application.mapper.StudentMapper;
 import com.upf.backend.application.model.entity.Follow;
 import com.upf.backend.application.model.entity.StudentProfile;
 import com.upf.backend.application.repository.FollowRepository;
@@ -67,19 +69,21 @@ public class FollowServiceImpl implements IFollowService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<StudentProfile> getFollowers(UUID studentId) {
+    public List<StudentProfileSummary> getFollowers(UUID studentId) {
         return followRepository.findByFollowing_Id(studentId)
                 .stream()
                 .map(Follow::getFollower)
+                .map(student -> StudentMapper.toSummaryWithFollowers(student, (int) countFollowers(student.getId())))
                 .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<StudentProfile> getFollowing(UUID studentId) {
+    public List<StudentProfileSummary> getFollowing(UUID studentId) {
         return followRepository.findByFollower_Id(studentId)
                 .stream()
                 .map(Follow::getFollowing)
+                .map(student -> StudentMapper.toSummaryWithFollowers(student, (int) countFollowers(student.getId())))
                 .toList();
     }
 

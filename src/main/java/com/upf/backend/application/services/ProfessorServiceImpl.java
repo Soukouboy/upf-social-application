@@ -7,6 +7,9 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.upf.backend.application.dto.student.StudentProfileSummary;
+import com.upf.backend.application.mapper.StudentMapper;
+import com.upf.backend.application.services.Interfaces.IFollowService;
 import com.upf.backend.application.model.entity.Announcement;
 import com.upf.backend.application.model.entity.Course;
 import com.upf.backend.application.model.entity.CourseResource;
@@ -36,19 +39,22 @@ public class ProfessorServiceImpl implements IProfessorService {
     private final AnnouncementRepository announcementRepository;
     private final EnrollmentRepository enrollmentRepository;
     private final NotificationService notificationService;
+    private final IFollowService followService;
 
     public ProfessorServiceImpl(ProfessorRepository professorRepository,
                                 CourseRepository courseRepository,
                                 CourseResourceRepository courseResourceRepository,
                                 AnnouncementRepository announcementRepository,
                                 EnrollmentRepository enrollmentRepository,
-                                NotificationService notificationService) {
+                                NotificationService notificationService,
+                                IFollowService followService) {
         this.professorRepository = professorRepository;
         this.courseRepository = courseRepository;
         this.courseResourceRepository = courseResourceRepository;
         this.announcementRepository = announcementRepository;
         this.enrollmentRepository = enrollmentRepository;
         this.notificationService = notificationService;
+        this.followService = followService;
     }
 
     
@@ -83,6 +89,12 @@ public class ProfessorServiceImpl implements IProfessorService {
         return courseRepository.save(course);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public ProfessorProfile getProfessorProfile(UUID professorId) {
+        return findProfessorOrThrow(professorId);
+    }
+
 
     // ─── Méthodes utilitaires ─────────────────────────────────────────────── 
     // ─── Helpers ─────────────────────────────────────────────────────────────
@@ -107,14 +119,15 @@ public class ProfessorServiceImpl implements IProfessorService {
 
 @Override
     @Transactional(readOnly = true)
-    public List<StudentProfile> getStudentsInCourse(UUID professorId, UUID courseId) {
+    public List<StudentProfileSummary> getStudentsInCourse(UUID professorId, UUID courseId) {
         Course course = findCourseOrThrow(courseId);
         validateProfessorOwnsCourse(course, professorId);
- 
+
         return enrollmentRepository
                 .findByCourse_IdAndStatus(courseId, EnrollmentStatus.ACTIVE)
                 .stream()
                 .map(Enrollment::getStudentProfile)
+                .map(student -> StudentMapper.toSummaryWithFollowers(student, (int) followService.countFollowers(student.getId())))
                 .toList();
     }
 
@@ -243,7 +256,11 @@ public class ProfessorServiceImpl implements IProfessorService {
         findCourseOrThrow(courseId); // valider l'existence du cours
         return announcementRepository.findByCourse_IdOrderByCreatedAtDesc(courseId);
     }
- 
 
-
+    @Override
+    @Transactional(readOnly = true)
+    public List<Announcement> getAnnouncementsByProfessor(UUID professorId) {
+        findProfessorOrThrow(professorId); // valider l'existence du prof
+        return announcementRepository.findByProfessor_Id(professorId);
+    }
 }

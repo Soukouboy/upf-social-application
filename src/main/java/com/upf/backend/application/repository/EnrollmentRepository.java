@@ -21,4 +21,5 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, UUID> {
     List<Enrollment> findByCourse_IdAndStatus(UUID courseId, EnrollmentStatus status);
     List<Enrollment> findByCourse_IdAndCourse_Professor_Id(UUID courseId, UUID professorId);
       List<Enrollment> findByStudentProfile_IdAndStatus(UUID studentId, EnrollmentStatus status);
+      boolean existsByStudentProfile_IdAndCourse_IdAndStatus(UUID studentId, UUID courseId, EnrollmentStatus active);
 }

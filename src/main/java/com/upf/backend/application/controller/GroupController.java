@@ -1,6 +1,10 @@
 package com.upf.backend.application.controller;
 
 import com.upf.backend.application.controller.request.CreateGroupRequest;
+import com.upf.backend.application.dto.group.AcademicGroupResponse;
+import com.upf.backend.application.dto.group.GroupDetailResponse;
+import com.upf.backend.application.dto.group.GroupMembershipResponse;
+import com.upf.backend.application.mapper.GroupMapper;
 import com.upf.backend.application.model.entity.AcademicGroup;
 import com.upf.backend.application.model.entity.GroupMembership;
 import com.upf.backend.application.security.SecurityUser;
@@ -24,7 +28,7 @@ public class GroupController {
     }
 
     @PostMapping
-    public ResponseEntity<AcademicGroup> createGroup(
+    public ResponseEntity<AcademicGroupResponse> createGroup(
              @AuthenticationPrincipal SecurityUser currentUser,
             @RequestBody CreateGroupRequest request
     ) {
@@ -33,51 +37,51 @@ public class GroupController {
                 request.name(),
                 request.description(),
                 request.type(),
-                request.major(),
-                request.coverImageUrl()
+                request.major()
         );
-        return ResponseEntity.status(201).body(created);
+        return ResponseEntity.status(201).body(GroupMapper.toResponse(created));
     }
 
     @GetMapping("/public")
-    public ResponseEntity<Page<AcademicGroup>> listPublicGroups(
+    public ResponseEntity<Page<AcademicGroupResponse>> listPublicGroups(
             @RequestParam(required = false) String major,
             @RequestParam(required = false) String search,
             Pageable pageable
     ) {
-        Page<AcademicGroup> page = groupService.listPublicGroups(
+        Page<AcademicGroupResponse> page = groupService.listPublicGroups(
                 major,
                 search,
                 pageable
-        );
+        ).map(GroupMapper::toResponse);
         return ResponseEntity.ok(page);
     }
 
     @GetMapping("/me")
-    public ResponseEntity<Page<AcademicGroup>> listMyGroups(
+    public ResponseEntity<Page<AcademicGroupResponse>> listMyGroups(
             @AuthenticationPrincipal SecurityUser currentUser,
             Pageable pageable
     ) {
-        Page<AcademicGroup> page = groupService.listMyGroups(currentUser.getProfileId(), pageable);
+        Page<AcademicGroupResponse> page = groupService.listMyGroups(currentUser.getProfileId(), pageable)
+                .map(GroupMapper::toResponse);
         return ResponseEntity.ok(page);
     }
 
     @PostMapping("/{groupId}/join")
-    public ResponseEntity<GroupMembership> joinPublicGroup(
+    public ResponseEntity<GroupMembershipResponse> joinPublicGroup(
             @AuthenticationPrincipal SecurityUser currentUser,
             @PathVariable UUID groupId
     ) {
         GroupMembership membership = groupService.joinGroup(groupId, currentUser.getProfileId());
-        return ResponseEntity.status(201).body(membership);
+        return ResponseEntity.status(201).body(GroupMapper.toResponse(membership));
     }
 
     @PostMapping("/{groupId}/request-join")
-    public ResponseEntity<GroupMembership> requestJoinPrivateGroup(
+    public ResponseEntity<GroupMembershipResponse> requestJoinPrivateGroup(
             @AuthenticationPrincipal SecurityUser currentUser,
             @PathVariable UUID groupId
     ) {
         GroupMembership membership = groupService.requestToJoinPrivateGroup(groupId, currentUser.getProfileId());
-        return ResponseEntity.status(201).body(membership);
+        return ResponseEntity.status(201).body(GroupMapper.toResponse(membership));
     }
 
     @DeleteMapping("/{groupId}/members/{memberId}")
@@ -88,5 +92,23 @@ public class GroupController {
     ) {
         groupService.removeMember(groupId, currentUser.getProfileId(), memberId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{groupId}")
+    public ResponseEntity<GroupDetailResponse> getGroupById(
+            @PathVariable UUID groupId
+    ) {
+        AcademicGroup group = groupService.getGroupById(groupId);
+        return ResponseEntity.ok(GroupMapper.toDetailResponse(group));
+    }
+
+    @GetMapping("/{groupId}/members")
+    public ResponseEntity<Page<GroupMembershipResponse>> listGroupMembers(
+            @PathVariable UUID groupId,
+            Pageable pageable
+    ) {
+        Page<GroupMembershipResponse> page = groupService.listGroupMembers(groupId, pageable)
+                .map(GroupMapper::toResponse);
+        return ResponseEntity.ok(page);
     }
 }

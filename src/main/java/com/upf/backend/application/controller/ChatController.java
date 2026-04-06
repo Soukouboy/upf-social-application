@@ -2,6 +2,9 @@ package com.upf.backend.application.controller;
 
 import com.upf.backend.application.controller.request.SendMessageRequest;
 import com.upf.backend.application.controller.request.SendPrivateMessageRequest;
+import com.upf.backend.application.dto.ChatMessageResponse;
+import com.upf.backend.application.dto.PrivateConversationSummaryResponse;
+import com.upf.backend.application.mapper.ChatMapper;
 import com.upf.backend.application.model.entity.Messages;
 import com.upf.backend.application.security.SecurityUser;
 import com.upf.backend.application.services.ChatService;
@@ -26,22 +29,22 @@ public class ChatController {
     }
 
     @PostMapping("/groups/{groupId}")
-    public ResponseEntity<Messages> sendGroupMessage(
+    public ResponseEntity<ChatMessageResponse> sendGroupMessage(
             @AuthenticationPrincipal SecurityUser currentUser,
             @PathVariable UUID groupId,
             @RequestBody SendMessageRequest request
     ) {
         Messages created = chatService.sendGroupMessage(currentUser.getProfileId(), groupId, request.content());
-        return ResponseEntity.status(201).body(created);
+        return ResponseEntity.status(201).body(ChatMapper.toResponse(created));
     }
 
     @GetMapping("/groups/{groupId}")
-    public ResponseEntity<Page<Messages>> getGroupMessages(
+    public ResponseEntity<Page<ChatMessageResponse>> getGroupMessages(
             @PathVariable UUID groupId,
             Pageable pageable
     ) {
         Page<Messages> page = chatService.getGroupMessages(groupId, pageable);
-        return ResponseEntity.ok(page);
+        return ResponseEntity.ok(page.map(ChatMapper::toResponse));
     }
 
     // @GetMapping("/groups/{groupId}/before")
@@ -57,7 +60,7 @@ public class ChatController {
     // }
 
     @PostMapping("/private")
-    public ResponseEntity<Messages> sendPrivateMessage(
+    public ResponseEntity<ChatMessageResponse> sendPrivateMessage(
             @AuthenticationPrincipal SecurityUser currentUser,
             @RequestBody SendPrivateMessageRequest request
     ) {
@@ -66,13 +69,25 @@ public class ChatController {
                 request.recipientId(),
                 request.content()
         );
-        return ResponseEntity.status(201).body(created);
+        return ResponseEntity.status(201).body(ChatMapper.toResponse(created));
     }
 
     @GetMapping("/private")
-    public ResponseEntity<Page<Messages>> getPrivateConversation(
+    public ResponseEntity<Page<PrivateConversationSummaryResponse>> listPrivateConversations(
             @AuthenticationPrincipal SecurityUser currentUser,
-            @RequestParam UUID otherUserId,
+            Pageable pageable
+    ) {
+        Page<PrivateConversationSummaryResponse> page = chatService.listPrivateConversations(
+                currentUser.getProfileId(),
+                pageable
+        );
+        return ResponseEntity.ok(page);
+    }
+
+    @GetMapping("/private/{otherUserId}")
+    public ResponseEntity<Page<ChatMessageResponse>> getPrivateConversation(
+            @AuthenticationPrincipal SecurityUser currentUser,
+            @PathVariable UUID otherUserId,
             Pageable pageable
     ) {
         Page<Messages> page = chatService.getPrivateConversation(
@@ -80,6 +95,6 @@ public class ChatController {
                 otherUserId,
                 pageable
         );
-        return ResponseEntity.ok(page);
+        return ResponseEntity.ok(page.map(ChatMapper::toResponse));
     }
 }

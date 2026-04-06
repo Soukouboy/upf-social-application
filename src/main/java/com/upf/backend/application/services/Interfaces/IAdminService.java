@@ -1,5 +1,6 @@
 package com.upf.backend.application.services.Interfaces;
 
+import com.upf.backend.application.dto.student.StudentProfileSummary;
 import com.upf.backend.application.model.entity.AdminProfile;
 import com.upf.backend.application.model.entity.Enrollment;
 import com.upf.backend.application.model.entity.ProfessorProfile;

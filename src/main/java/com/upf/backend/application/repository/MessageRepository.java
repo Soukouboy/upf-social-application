@@ -1,5 +1,6 @@
 package com.upf.backend.application.repository;
 
+import com.upf.backend.application.dto.PrivateConversationSummaryResponse;
 import com.upf.backend.application.model.entity.Messages;
 import com.upf.backend.application.model.enums.ContextMessage;
 import org.springframework.data.domain.Page;
@@ -36,5 +37,28 @@ public interface MessageRepository extends JpaRepository<Messages, UUID> {
     Page<Messages> findPrivateConversation(
             @Param("userA") UUID userA,
             @Param("userB") UUID userB,
+            Pageable pageable);
+
+    @Query(value = """
+        SELECT new com.upf.backend.application.dto.PrivateConversationSummaryResponse(
+            CASE WHEN m.senderId = :userId THEN m.recipientId ELSE m.senderId END,
+            MAX(m.createdAt)
+        )
+        FROM Messages m
+        WHERE m.isDeleted = false
+          AND m.context = com.upf.backend.application.model.enums.ContextMessage.PRIVATE
+          AND (m.senderId = :userId OR m.recipientId = :userId)
+        GROUP BY CASE WHEN m.senderId = :userId THEN m.recipientId ELSE m.senderId END
+        ORDER BY MAX(m.createdAt) DESC
+    """,
+    countQuery = """
+        SELECT COUNT(DISTINCT CASE WHEN m.senderId = :userId THEN m.recipientId ELSE m.senderId END)
+        FROM Messages m
+        WHERE m.isDeleted = false
+          AND m.context = com.upf.backend.application.model.enums.ContextMessage.PRIVATE
+          AND (m.senderId = :userId OR m.recipientId = :userId)
+    """)
+    Page<PrivateConversationSummaryResponse> findPrivateConversationSummaries(
+            @Param("userId") UUID userId,
             Pageable pageable);
 }

@@ -91,5 +91,5 @@ public class Announcement {
     @PrePersist
     public void prePersist() { this.createdAt = LocalDateTime.now(); }
 
-    // getters / setters
+    
 }

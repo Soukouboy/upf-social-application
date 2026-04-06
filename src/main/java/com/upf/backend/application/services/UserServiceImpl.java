@@ -1,8 +1,11 @@
 package com.upf.backend.application.services;
 import com.upf.backend.application.services.Exceptions.*;
 import com.upf.backend.application.services.Interfaces.IUserService;
+import com.upf.backend.application.dto.student.StudentProfileSummary;
+import com.upf.backend.application.mapper.StudentMapper;
 import com.upf.backend.application.model.entity.StudentProfile;
 import com.upf.backend.application.repository.StudentRepository;
+import com.upf.backend.application.services.Interfaces.IFollowService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -10,15 +13,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.UUID;
-
+import java.util.List;
 @Service
 @Transactional
 public class UserServiceImpl implements IUserService {
 
     private final StudentRepository studentRepository;
+    private final IFollowService followService;
 
-    public UserServiceImpl(StudentRepository studentRepository) {
+    public UserServiceImpl(StudentRepository studentRepository, IFollowService followService) {
         this.studentRepository = studentRepository;
+        this.followService = followService;
     }
 
     @Override
@@ -82,5 +87,14 @@ public class UserServiceImpl implements IUserService {
         }
 
         return studentRepository.findByIsProfilePublicTrue(pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<StudentProfileSummary> getAllStudents() {
+        return studentRepository.findAll()
+                .stream()
+                .map(student -> StudentMapper.toSummaryWithFollowers(student, (int) followService.countFollowers(student.getId())))
+                .toList();
     }
 }

@@ -110,11 +110,18 @@ public class ExamController {
 
         Resource resource = fileStorageService.loadAsResource(relativePath);
 
-        String filename = "exam-" + examId + ".bin";
+    //     // ✅ 1 — Détecter le vrai Content-Type depuis le FileType stocké
+    // MediaType mediaType = resolveMediaType(exam.);
+    //     if (mediaType == null) {
+    //         mediaType = MediaType.APPLICATION_OCTET_STREAM; // fallback générique
+    //     }
+
+   
+        String filename = "exam-" + examId + ".pdf"; // ou extraire depuis l'URL si possible
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentDisposition(
-                ContentDisposition.attachment()
+                ContentDisposition.inline()
                         .filename(filename, StandardCharsets.UTF_8)
                         .build()
         );
@@ -165,4 +172,22 @@ public class ExamController {
 
         throw new IllegalArgumentException("Impossible d'extraire le chemin relatif depuis l'URL : " + fileUrl);
     }
+
+
+    // ✅ Résoudre le bon MediaType depuis ton enum FileType
+private MediaType resolveMediaType(FileType examType) {
+    if (examType == null) return MediaType.APPLICATION_OCTET_STREAM;
+
+    return switch (examType) {
+        case PDF        -> MediaType.APPLICATION_PDF;
+      
+        case DOCX  -> MediaType.parseMediaType(
+                               "application/vnd.openxmlformats-officedocument"
+                               + ".wordprocessingml.document");
+        case PPT -> MediaType.parseMediaType(
+                               "application/vnd.openxmlformats-officedocument"
+                               + ".presentationml.presentation");
+        default         -> MediaType.APPLICATION_OCTET_STREAM;
+    };
+}
 }

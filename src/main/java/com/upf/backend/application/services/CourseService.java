@@ -119,6 +119,13 @@ public class CourseService implements ICourseService {
                 .toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasStudentAccess(UUID courseId, UUID studentId) {
+        return enrollmentRepository
+                .existsByStudentProfile_IdAndCourse_IdAndStatus(studentId, courseId, EnrollmentStatus.ACTIVE);
+    }
+
     // ─── Helper ──────────────────────────────────────────────────────────────
 
     private Course findOrThrow(UUID courseId) {

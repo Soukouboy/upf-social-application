@@ -52,9 +52,13 @@ public class WebSocketController {
         ChatMessageResponse response = new ChatMessageResponse(
                 saved.getId(),
                 saved.getContent(),
-                sender.getFirstName() + " " + sender.getLastName(),
+                 sender.getFirstName() + " " + sender.getLastName(),
                 sender.getId(),
+               
                 groupId,
+                null,
+                saved.getMessageType(),
+                saved.getEditedAt(),
                 saved.getCreatedAt()
         );
 
@@ -86,9 +90,13 @@ public class WebSocketController {
         ChatMessageResponse response = new ChatMessageResponse(
                 saved.getId(),
                 saved.getContent(),
-                sender.getFirstName() + " " + sender.getLastName(),
+                 sender.getFirstName() + " " + sender.getLastName(),
                 sender.getId(),
+               
                 null,
+                recipientId,
+                saved.getMessageType(),
+                saved.getEditedAt(),
                 saved.getCreatedAt()
         );
 

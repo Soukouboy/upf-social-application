@@ -7,7 +7,8 @@ import com.upf.backend.application.model.entity.Announcement;
 import com.upf.backend.application.model.entity.Course;
 import com.upf.backend.application.model.entity.CourseResource;
 import com.upf.backend.application.model.entity.Enrollment;
-import com.upf.backend.application.model.entity.StudentProfile;
+import com.upf.backend.application.model.entity.ProfessorProfile;
+import com.upf.backend.application.dto.student.StudentProfileSummary;
 import com.upf.backend.application.model.enums.FileType;
 
 public interface IProfessorService {
@@ -17,7 +18,7 @@ public interface IProfessorService {
     Course removeCourse(UUID professorId, UUID courseId);
 
     // Étudiants
-    List<StudentProfile> getStudentsInCourse(UUID professorId, UUID courseId);
+    List<StudentProfileSummary> getStudentsInCourse(UUID professorId, UUID courseId);
 
     // Ressources
     CourseResource uploadResource(UUID professorId, UUID courseId, String title,
@@ -31,6 +32,9 @@ public interface IProfessorService {
                                      String title, String content);
     void deleteAnnouncement(UUID professorId, UUID announcementId);
     List<Announcement> getAnnouncementsByCourse(UUID courseId);
+    List<Announcement> getAnnouncementsByProfessor(UUID professorId);
     List<Course> getMyCourses(UUID professorId);
+
+    ProfessorProfile getProfessorProfile(UUID professorId);
 }
 

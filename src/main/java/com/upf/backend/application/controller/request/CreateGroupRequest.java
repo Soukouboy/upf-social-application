@@ -6,7 +6,6 @@ public record CreateGroupRequest(
         String name,
         String description,
         GroupType type,
-        String major,
-        String coverImageUrl
+        String major
 ) {
 }

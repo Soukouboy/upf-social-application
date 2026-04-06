@@ -4,6 +4,7 @@ package com.upf.backend.application.services;
 import com.upf.backend.application.model.entity.AcademicGroup;
 import com.upf.backend.application.model.entity.Messages;
 import com.upf.backend.application.model.enums.ContextMessage;
+import com.upf.backend.application.dto.PrivateConversationSummaryResponse;
 import com.upf.backend.application.repository.GroupMembershipRepository;
 import com.upf.backend.application.repository.GroupRepository;
 import com.upf.backend.application.repository.MessageRepository;
@@ -139,5 +140,14 @@ public class ChatService implements IChatService {
                 userB,
                 pageable
         );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<PrivateConversationSummaryResponse> listPrivateConversations(UUID userId, Pageable pageable) {
+        studentRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable."));
+
+        return messageRepository.findPrivateConversationSummaries(userId, pageable);
     }
 }

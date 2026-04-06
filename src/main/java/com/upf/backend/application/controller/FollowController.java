@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import com.upf.backend.application.model.entity.StudentProfile;
+import com.upf.backend.application.dto.student.StudentProfileSummary;
 import com.upf.backend.application.security.SecurityUser;
 import com.upf.backend.application.services.Interfaces.IFollowService;
 
@@ -42,19 +42,19 @@ public class FollowController {
 
     // Mes followers
     @GetMapping("/me/followers")
-    public ResponseEntity<List<StudentProfile>> myFollowers(Authentication auth) {
+    public ResponseEntity<List<StudentProfileSummary>> myFollowers(Authentication auth) {
         return ResponseEntity.ok(followService.getFollowers(profileId(auth)));
     }
 
     // Qui je suis
     @GetMapping("/me/following")
-    public ResponseEntity<List<StudentProfile>> myFollowing(Authentication auth) {
+    public ResponseEntity<List<StudentProfileSummary>> myFollowing(Authentication auth) {
         return ResponseEntity.ok(followService.getFollowing(profileId(auth)));
     }
 
     // Followers d'un autre étudiant (profil public)
     @GetMapping("/{studentId}/followers")
-    public ResponseEntity<List<StudentProfile>> followers(@PathVariable UUID studentId) {
+    public ResponseEntity<List<StudentProfileSummary>> followers(@PathVariable UUID studentId) {
         return ResponseEntity.ok(followService.getFollowers(studentId));
     }
 
