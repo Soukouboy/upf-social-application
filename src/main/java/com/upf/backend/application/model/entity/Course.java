@@ -43,11 +43,11 @@ public class Course {
 
     @Size(max = 1000)
     @Column(name = "objectives", length = 1000)
-    private String objectives;
+    private String objectives="À définir";
 
     @Size(max = 1000)
     @Column(name = "prerequisites", length = 1000)
-    private String prerequisites;
+    private String prerequisites="À définir";
 
     @NotBlank(message = "La filière est obligatoire")
     @Size(max = 100)
@@ -56,7 +56,7 @@ public class Course {
 
     @Min(1) @Max(7)
     @Column(name = "year", nullable = false)
-    private int year;
+    private int year=3;
 
     @Min(1) @Max(2)
     @Column(name = "semester", nullable = false)

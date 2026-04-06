@@ -292,7 +292,7 @@ public class AdminServiceImpl implements IAdminService {
     @Override
     @Transactional(readOnly = true)
     public List<ProfessorProfile> listProfessors() {
-        return professorRepository.findAll();
+        return professorRepository.findAllWithCourses();
     }
 
       // ─── Gestion étudiants ───────────────────────────────────────────────────

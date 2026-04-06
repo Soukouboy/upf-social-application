@@ -150,6 +150,14 @@ public class AdminController {
         return ResponseEntity.ok(ProfessorMapper.toResponse(adminService.assignCourseToProfessor(professorId, courseId)));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/professors")
+    public ResponseEntity<List<ProfessorProfileResponse>> listProfessors() {
+        return ResponseEntity.ok(adminService.listProfessors().stream()
+                .map(ProfessorMapper::toResponse)
+                .toList());
+    }
+
  // ─── Étudiants ───────────────────────────────────────────────────────────
 
     @GetMapping("/students")

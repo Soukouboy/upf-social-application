@@ -4,12 +4,8 @@ public record CreateCourseRequest(
         String code,
         String title,
         String description,
-        String objectives,
-        String prerequisites,
-        String major,
-        Integer year,
+        String major,   
         Integer semester,
-        Integer credits,
-        String instructorName
+        Integer credits
 ) {
 }

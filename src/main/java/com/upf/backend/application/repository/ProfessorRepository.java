@@ -1,14 +1,10 @@
 package com.upf.backend.application.repository;
 
-
-
-import javax.security.auth.Subject;
-
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+
 import java.util.*;
-import com.upf.backend.application.model.entity.Announcement;
-import com.upf.backend.application.model.entity.Course;
-import com.upf.backend.application.model.entity.Enrollment;
+
 import com.upf.backend.application.model.entity.ProfessorProfile;
 
 public interface ProfessorRepository extends JpaRepository<ProfessorProfile, UUID> {
@@ -27,6 +23,9 @@ public interface ProfessorRepository extends JpaRepository<ProfessorProfile, UUI
 
     // ✅ Correct — retourne des ProfessorProfile qui ont ce cours
     Optional<ProfessorProfile> findByCourses_Code(String code);
+
+    @Query("select distinct p from ProfessorProfile p left join fetch p.courses")
+    List<ProfessorProfile> findAllWithCourses();
 
     // ✅ Correct
     boolean existsByUser_Id(UUID userId);

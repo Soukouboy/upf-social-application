@@ -39,14 +39,14 @@ public class AdminCourseServiceImpl implements IAdminCourseService {
         Course course = new Course();
         course.setCode(normalizedCode);
         course.setTitle(request.title().trim());
-        course.setDescription(request.description());
-        course.setObjectives(request.objectives());
-        course.setPrerequisites(request.prerequisites());
+        course.setDescription(request.description() != null ? request.description() : "desc");
+        course.setObjectives("À définir");
+        course.setPrerequisites("À définir");
         course.setMajor(request.major().trim());
-        course.setYear(request.year());
+        course.setYear(4);
         course.setSemester(request.semester());
         course.setCredits(request.credits() == null ? 0 : request.credits());
-        course.setInstructorName(request.instructorName().trim());
+        course.setInstructorName("À assigner");
         course.setActive(true);
 
         return courseRepository.save(course);
@@ -167,19 +167,14 @@ public class AdminCourseServiceImpl implements IAdminCourseService {
             throw new BusinessException("La filière est obligatoire.");
         }
 
-        if (request.year() == null) {
-            throw new BusinessException("L'année est obligatoire.");
-        }
-
+        
         if (request.semester() == null) {
             throw new BusinessException("Le semestre est obligatoire.");
         }
 
-        if (request.instructorName() == null || request.instructorName().isBlank()) {
-            throw new BusinessException("Le nom de l'enseignant est obligatoire.");
-        }
+      
 
-        validateYear(request.year());
+    
         validateSemester(request.semester());
 
         if (request.credits() != null && request.credits() < 0) {

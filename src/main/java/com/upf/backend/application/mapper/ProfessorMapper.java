@@ -31,7 +31,10 @@ public class ProfessorMapper {
             user.getLastName(),
             professorProfile.getDepartment(),
             professorProfile.getTitle(),
-            professorProfile.getBio()
+            professorProfile.getBio(),
+            professorProfile.getCourses().stream()
+                .map(course -> course.getTitle())
+                .toList()
         );
     }
 
