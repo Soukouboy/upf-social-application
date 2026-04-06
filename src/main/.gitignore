@@ -1,0 +1,7 @@
+# Fichiers uploadés par les utilisateurs — jamais dans Git
+uploads/
+*.pdf
+*.docx
+*.xlsx
+*.zip
+*.bin
