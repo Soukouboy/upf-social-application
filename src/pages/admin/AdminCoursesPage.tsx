@@ -37,7 +37,7 @@ import {
 const DEPARTMENTS = ['Informatique', 'Génie Civil', 'Génie Électrique', 'Architecture', 'Management'];
 
 const emptyForm: CreateCourseAdminRequest = {
-  name: '', description: '', code: '', credits: 3, department: '', semester: '',
+  title: '', description: '', code: '', credits: 3, major: '', semester: 1,
 };
 
 const AdminCoursesPage: React.FC = () => {
@@ -84,16 +84,15 @@ const AdminCoursesPage: React.FC = () => {
     setFormOpen(true);
   };
 
-  const openEditForm = (course: CourseSummary) => {
+  const openEditForm = (course: CreateCourseAdminRequest) => {
     setForm({
-      name: (course as any).name ?? course.title ?? '',
+      title: (course as any).name ?? course.title ?? '',
       code: course.code ?? '',
       description: (course as any).description ?? '',
       credits: course.credits ?? 3,
-      department: (course as any).department ?? '',
-      semester: String((course as any).semester ?? ''),
+      major: (course as any).department ?? '',
+      semester: Number((course as any).semester ?? ''),
     });
-    setEditId(String(course.id));
     setFormOpen(true);
   };
 
@@ -269,14 +268,14 @@ const AdminCoursesPage: React.FC = () => {
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <TextField label="Code" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} size="small" required />
-          <TextField label="Nom du cours" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} size="small" required />
+          <TextField label="Nom du cours" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} size="small" required />
           <TextField label="Description" value={form.description ?? ''} onChange={(e) => setForm({ ...form, description: e.target.value })} size="small" multiline rows={2} />
-          <TextField label="Département" value={form.department ?? ''} onChange={(e) => setForm({ ...form, department: e.target.value })} select size="small">
+          <TextField label="Filière" value={form.major ?? ''} onChange={(e) => setForm({ ...form, major: e.target.value })} select size="small">
             {DEPARTMENTS.map((d) => <MenuItem key={d} value={d}>{d}</MenuItem>)}
           </TextField>
           <Box sx={{ display: 'flex', gap: 2 }}>
             <TextField label="Crédits" value={form.credits} onChange={(e) => setForm({ ...form, credits: Number(e.target.value) })} type="number" size="small" sx={{ flex: 1 }} />
-            <TextField label="Semestre" value={form.semester ?? ''} onChange={(e) => setForm({ ...form, semester: e.target.value })} size="small" sx={{ flex: 1 }} placeholder="Ex: S1, S2, S5..." />
+            <TextField label="Semestre" value={form.semester ?? ''} onChange={(e) => setForm({ ...form, semester: Number(e.target.value) })} size="small" sx={{ flex: 1 }} placeholder="Ex: 1, 2, " />
           </Box>
         </Box>
       </UPFModal>

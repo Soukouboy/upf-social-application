@@ -14,37 +14,37 @@ import UPFButton from '../../components/ui/UPFButton';
 import UPFAvatar from '../../components/ui/UPFAvatar';
 import UPFModal from '../../components/ui/UPFModal';
 import UPFSearchBar from '../../components/ui/UPFSearchBar';
-import type { Student } from '../../types';
-import { getUsers, updateUserStatus } from '../../services/adminService';
+import type { StudentProfileSummary } from '../../types';
+import { getStudents, updateUserStatus } from '../../services/adminService';
 
 const FILIERES = ['Tous', 'Génie Informatique', 'Génie Civil', 'Génie Électrique', 'Architecture', 'Management'];
 
-const MOCK_USERS: Student[] = [
-  { id: 1, firstName: 'Amine', lastName: 'Benali', email: 'amine@upf.ac.ma', filiere: 'Génie Informatique', annee: 3, role: 'ADMIN', isActive: true, createdAt: '2025-09-01' },
-  { id: 2, firstName: 'Sarah', lastName: 'Alaoui', email: 'sarah@upf.ac.ma', filiere: 'Génie Électrique', annee: 2, role: 'STUDENT', isActive: true, createdAt: '2025-09-15' },
-  { id: 3, firstName: 'Youssef', lastName: 'Karimi', email: 'youssef@upf.ac.ma', filiere: 'Génie Civil', annee: 4, role: 'STUDENT', isActive: true, createdAt: '2024-09-01' },
-  { id: 4, firstName: 'Lina', lastName: 'Tazi', email: 'lina@upf.ac.ma', filiere: 'Architecture', annee: 1, role: 'STUDENT', isActive: false, createdAt: '2026-01-10' },
-  { id: 5, firstName: 'Omar', lastName: 'Fassi', email: 'omar@upf.ac.ma', filiere: 'Management', annee: 3, role: 'STUDENT', isActive: true, createdAt: '2025-03-20' },
-  { id: 6, firstName: 'Kenza', lastName: 'Moussaoui', email: 'kenza@upf.ac.ma', filiere: 'Génie Informatique', annee: 2, role: 'STUDENT', isActive: true, createdAt: '2025-10-01' },
-  { id: 7, firstName: 'Mehdi', lastName: 'Bennani', email: 'mehdi@upf.ac.ma', filiere: 'Génie Informatique', annee: 4, role: 'ADMIN', isActive: true, createdAt: '2024-09-01' },
+const MOCK_USERS: any[] = [
+  { id: '1', firstName: 'Amine', lastName: 'Benali', email: 'amine@upf.ac.ma', major: 'Génie Informatique', currentYear: 3, role: 'ADMIN', isActive: true, createdAt: '2025-09-01' },
+  { id: '2', firstName: 'Sarah', lastName: 'Alaoui', email: 'sarah@upf.ac.ma', major: 'Génie Électrique', currentYear: 2, role: 'STUDENT', isActive: true, createdAt: '2025-09-15' },
+  { id: '3', firstName: 'Youssef', lastName: 'Karimi', email: 'youssef@upf.ac.ma', major: 'Génie Civil', currentYear: 4, role: 'STUDENT', isActive: true, createdAt: '2024-09-01' },
+  { id: '4', firstName: 'Lina', lastName: 'Tazi', email: 'lina@upf.ac.ma', major: 'Architecture', currentYear: 1, role: 'STUDENT', isActive: false, createdAt: '2026-01-10' },
+  { id: '5', firstName: 'Omar', lastName: 'Fassi', email: 'omar@upf.ac.ma', major: 'Management', currentYear: 3, role: 'STUDENT', isActive: true, createdAt: '2025-03-20' },
+  { id: '6', firstName: 'Kenza', lastName: 'Moussaoui', email: 'kenza@upf.ac.ma', major: 'Génie Informatique', currentYear: 2, role: 'STUDENT', isActive: true, createdAt: '2025-10-01' },
+  { id: '7', firstName: 'Mehdi', lastName: 'Bennani', email: 'mehdi@upf.ac.ma', major: 'Génie Informatique', currentYear: 4, role: 'ADMIN', isActive: true, createdAt: '2024-09-01' },
 ];
 
 const AdminUsersPage: React.FC = () => {
   const theme = useTheme();
-  const [users, setUsers] = useState<Student[]>([]);
+  const [users, setUsers] = useState<StudentProfileSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filiere, setFiliere] = useState('Tous');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [page, setPage] = useState(1);
-  const [confirmModal, setConfirmModal] = useState<{ open: boolean; user: Student | null; action: 'activate' | 'deactivate' }>({ open: false, user: null, action: 'deactivate' });
+  const [confirmModal, setConfirmModal] = useState<{ open: boolean; user: any | null; action: 'activate' | 'deactivate' }>({ open: false, user: null, action: 'deactivate' });
 
   useEffect(() => {
     const fetchUsers = async () => {
       setLoading(true);
       try {
-        const data = await getUsers({ page: page - 1, size: 20, search, filiere: filiere !== 'Tous' ? filiere : undefined });
-        setUsers(data.content);
+        const data = await getStudents();
+        setUsers(data);
       } catch {
         setUsers(MOCK_USERS);
       } finally {
@@ -54,9 +54,21 @@ const AdminUsersPage: React.FC = () => {
     fetchUsers();
   }, [page, search, filiere]);
 
-  const filteredUsers = users.filter((u) => {
-    if (statusFilter === 'active' && !u.isActive) return false;
-    if (statusFilter === 'inactive' && u.isActive) return false;
+  const filteredUsers = users.filter((u: any) => {
+    const isActive = u.isActive ?? true;
+    if (statusFilter === 'active' && !isActive) return false;
+    if (statusFilter === 'inactive' && isActive) return false;
+
+    // Filtrage par nom/email
+    if (search && !(`${u.firstName} ${u.lastName} ${u.email}`.toLowerCase().includes(search.toLowerCase()))) {
+      return false;
+    }
+
+    // Filtrage par filière
+    if (filiere !== 'Tous' && u.major && u.major !== filiere) {
+      return false;
+    }
+
     return true;
   });
 
@@ -117,47 +129,51 @@ const AdminUsersPage: React.FC = () => {
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}><TableCell colSpan={7} sx={{ p: 3 }}>Chargement...</TableCell></TableRow>
                 ))
-              ) : filteredUsers.map((u) => (
-                <TableRow key={u.id} hover sx={{ '&:last-child td': { borderBottom: 0 } }}>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                      <UPFAvatar firstName={u.firstName} lastName={u.lastName} size="small" />
-                      <Typography variant="body2" fontWeight={500}>{u.firstName} {u.lastName}</Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell><Typography variant="body2" color="text.secondary">{u.email}</Typography></TableCell>
-                  <TableCell><Typography variant="body2">{u.filiere}</Typography></TableCell>
-                  <TableCell><Typography variant="body2">{u.annee}</Typography></TableCell>
-                  <TableCell>
-                    <Chip label={u.role} size="small" color={u.role === 'ADMIN' ? 'error' : 'default'} variant="outlined" sx={{ fontWeight: 600 }} />
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      icon={u.isActive ? <CheckCircleRoundedIcon /> : <BlockRoundedIcon />}
-                      label={u.isActive ? 'Actif' : 'Inactif'}
-                      size="small"
-                      color={u.isActive ? 'success' : 'default'}
-                      variant="outlined"
-                    />
-                  </TableCell>
-                  <TableCell align="right">
-                    <UPFButton
-                      size="small"
-                      variant={u.isActive ? 'outlined' : 'contained'}
-                      color={u.isActive ? 'error' : 'success'}
-                      onClick={() => setConfirmModal({ open: true, user: u, action: u.isActive ? 'deactivate' : 'activate' })}
-                    >
-                      {u.isActive ? 'Désactiver' : 'Activer'}
-                    </UPFButton>
-                  </TableCell>
-                </TableRow>
-              ))}
+              ) : filteredUsers.slice((page - 1) * 20, page * 20).map((u: any) => {
+                const role = u.role || 'STUDENT';
+                const isActive = u.isActive ?? true;
+                return (
+                  <TableRow key={u.id} hover sx={{ '&:last-child td': { borderBottom: 0 } }}>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <UPFAvatar firstName={u.firstName} lastName={u.lastName} size="small" />
+                        <Typography variant="body2" fontWeight={500}>{u.firstName} {u.lastName}</Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell><Typography variant="body2" color="text.secondary">{u.email}</Typography></TableCell>
+                    <TableCell><Typography variant="body2">{u.major}</Typography></TableCell>
+                    <TableCell><Typography variant="body2">{u.currentYear}</Typography></TableCell>
+                    <TableCell>
+                      <Chip label={role} size="small" color={role === 'ADMIN' ? 'error' : 'default'} variant="outlined" sx={{ fontWeight: 600 }} />
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        icon={isActive ? <CheckCircleRoundedIcon /> : <BlockRoundedIcon />}
+                        label={isActive ? 'Actif' : 'Inactif'}
+                        size="small"
+                        color={isActive ? 'success' : 'default'}
+                        variant="outlined"
+                      />
+                    </TableCell>
+                    <TableCell align="right">
+                      <UPFButton
+                        size="small"
+                        variant={isActive ? 'outlined' : 'contained'}
+                        color={isActive ? 'error' : 'success'}
+                        onClick={() => setConfirmModal({ open: true, user: u, action: isActive ? 'deactivate' : 'activate' })}
+                      >
+                        {isActive ? 'Désactiver' : 'Activer'}
+                      </UPFButton>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </TableContainer>
 
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
-          <Pagination count={3} page={page} onChange={(_, v) => setPage(v)} color="primary" />
+          <Pagination count={Math.ceil(filteredUsers.length / 20) || 1} page={page} onChange={(_, v) => setPage(v)} color="primary" />
         </Box>
       </UPFCard>
 

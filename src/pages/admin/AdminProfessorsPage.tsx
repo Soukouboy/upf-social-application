@@ -108,9 +108,9 @@ const AdminProfessorsPage: React.FC = () => {
     try {
       // PUT /admin/professors/{professorId}/courses/{courseId}
       const updated = await assignCourseToProf(assignProfId, String(assignCourseId));
-      setProfessors((prev) => prev.map((p) =>
-        p.id === assignProfId ? { ...p, courses: updated.courses } as any : p
-      ));
+      // setProfessors((prev) => prev.map((p) =>
+      //   p.id === assignProfId ? { ...p, courses: updated.courses } as any : p
+      // ));
       setAssignOpen(false);
       setAssignCourseId('');
       setSuccess('Cours affecté avec succès !');
@@ -180,11 +180,11 @@ const AdminProfessorsPage: React.FC = () => {
                   <TableCell><Typography variant="body2">{prof.title || '—'}</Typography></TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                      {(prof.courses || []).length === 0 ? (
+                      {(prof.courseNames || []).length === 0 ? (
                         <Typography variant="caption" color="text.secondary">Aucun cours</Typography>
                       ) : (
-                        (prof.courses || []).map((c) => (
-                          <Chip key={c.id} label={c.code || c.title} size="small" color="primary" variant="outlined" sx={{ fontWeight: 500 }} />
+                        (prof.courseNames || []).map((c) => (
+                          <Chip key={c} label={c} size="small" color="primary" variant="outlined" sx={{ fontWeight: 500 }} />
                         ))
                       )}
                     </Box>

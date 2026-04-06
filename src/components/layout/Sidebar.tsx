@@ -170,18 +170,16 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
                 mb: 0.5,
                 mx: 1,
                 py: 1.2,
-                color: isActive ? theme.palette.secondary.main : alpha('#fff', 0.8),
-                backgroundColor: isActive
-                  ? alpha(theme.palette.secondary.main, 0.12)
-                  : 'transparent',
+                color: isActive ? theme.palette.primary.main : alpha('#fff', 0.8),
+                backgroundColor: isActive ? '#fff' : 'transparent',
                 '&:hover': {
-                  backgroundColor: alpha('#fff', 0.08),
-                  color: '#fff',
+                  backgroundColor: isActive ? '#fff' : alpha('#fff', 0.08),
+                  color: isActive ? theme.palette.primary.main : '#fff',
                 },
                 '&.Mui-selected': {
-                  backgroundColor: alpha(theme.palette.secondary.main, 0.12),
+                  backgroundColor: '#fff',
                   '&:hover': {
-                    backgroundColor: alpha(theme.palette.secondary.main, 0.18),
+                    backgroundColor: '#fff',
                   },
                 },
                 transition: 'all 0.2s ease',

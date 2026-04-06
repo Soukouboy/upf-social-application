@@ -34,13 +34,13 @@ const ProfessorDashboardPage: React.FC = () => {
         setCourses(c);
         setAnnouncements([]); // endpoint pas encore dispo
       } catch {
-        setCourses([
-          { id: '1', code: 'INF301', title: 'Algorithmique avancée', department: 'Génie Informatique', year: 3, semester: 5, professorName: user?.firstName } as unknown as CourseSummary,
-          { id: '2', code: 'INF302', title: 'Programmation Web', department: 'Génie Informatique', year: 3, semester: 5, professorName: user?.firstName } as unknown as CourseSummary,
-        ]);
-        setAnnouncements([
-          { id: '1', courseId: '1', courseTitle: 'Algorithmique avancée', title: 'Report du TP 3', content: 'Le TP 3 est reporté au lundi prochain.', professorName: `${user?.firstName} ${user?.lastName}`, createdAt: new Date(Date.now() - 86400000).toISOString() },
-        ]);
+        // setCourses([
+        //   { id: '1', code: 'INF301', title: 'Algorithmique avancée', department: 'Génie Informatique', year: 3, semester: 5, professorName: user?.firstName } as unknown as CourseSummary,
+        //   { id: '2', code: 'INF302', title: 'Programmation Web', department: 'Génie Informatique', year: 3, semester: 5, professorName: user?.firstName } as unknown as CourseSummary,
+        // ]);
+        // setAnnouncements([
+        //   { id: '1', courseId: '1', courseTitle: 'Algorithmique avancée', title: 'Report du TP 3', content: 'Le TP 3 est reporté au lundi prochain.', professorName: `${user?.firstName} ${user?.lastName}`, createdAt: new Date(Date.now() - 86400000).toISOString() },
+        // ]);
       } finally { setLoading(false); }
     };
     fetchData();
@@ -159,7 +159,7 @@ const ProfessorDashboardPage: React.FC = () => {
             ) : announcements.slice(0, 3).map((a) => (
               <Box key={a.id} sx={{ mb: 2, p: 2, borderRadius: 2, bgcolor: alpha(theme.palette.warning.main, 0.05), border: `1px solid ${alpha(theme.palette.warning.main, 0.15)}` }}>
                 <Typography variant="subtitle2" fontWeight={600}>{a.title}</Typography>
-                <Typography variant="caption" color="text.secondary">{a.courseTitle} · {new Date(a.createdAt).toLocaleDateString('fr-FR')}</Typography>
+                <Typography variant="caption" color="text.secondary">{a.title} · {new Date(a.createdAt).toLocaleDateString('fr-FR')}</Typography>
                 <Typography variant="body2" color="text.secondary" mt={0.5} sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                   {a.content}
                 </Typography>

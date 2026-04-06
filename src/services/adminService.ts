@@ -65,7 +65,7 @@ export interface ProfessorProfileResponse {
   email: string;
   department?: string;
   title?: string;
-  courses: CourseSummary[];
+  courseNames: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -81,22 +81,25 @@ export interface StudentProfileSummary {
 }
 
 export interface CreateCourseAdminRequest {
-  name: string;
+  title: string;        // Aligné sur CourseSummary
   description?: string;
   code: string;
   credits: number;
-  department?: string;
-  semester?: string;
-  professorIds?: string[];
+  major?: string;        // Aligné sur CourseSummaryl
+  semester: number;      // Changé de string à number
 }
 
 export interface UpdateCourseAdminRequest {
+  title?: string;
   name?: string;
   description?: string;
   code?: string;
   credits?: number;
+  major?: string;
   department?: string;
-  semester?: string;
+  year?: number;
+  semester?: number;
+  isActive?: boolean;
 }
 
 // ────────── Dashboard ──────────

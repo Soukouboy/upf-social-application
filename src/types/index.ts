@@ -664,6 +664,16 @@ export interface Student {
   competences?: string[];
 }
 
+export interface StudentProfileSummary {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  major: string;
+  currentYear: number;
+  profilePictureUrl?: string;
+}
+
 /** Alias réseau (Student + infos follow) */
 export interface StudentNetwork extends Student {
   isFollowing: boolean;

@@ -29,7 +29,6 @@ import {
   getStudents,
   createAdminAccount,
   promoteStudentToAdmin,
-  updateAdminLevel,
   revokeAdmin,
 } from '../../services/adminService';
 import { useAuth } from '../../hooks/useAuth';
@@ -40,6 +39,7 @@ const AdminAdminsPage: React.FC = () => {
   const theme = useTheme();
   const { user } = useAuth();
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+  const isAdmin = user?.role === 'ADMIN' || isSuperAdmin;
 
   const [admins, setAdmins] = useState<AdminProfileResponse[]>([]);
   const [students, setStudents] = useState<StudentProfileSummary[]>([]);
@@ -164,7 +164,7 @@ const AdminAdminsPage: React.FC = () => {
             </Typography>
           </Box>
         </Box>
-        {isSuperAdmin && (
+        {isAdmin && (
           <UPFButton variant="contained" startIcon={<PersonAddRoundedIcon />} onClick={() => setCreateOpen(true)}>
             Créer un administrateur
           </UPFButton>
@@ -197,7 +197,7 @@ const AdminAdminsPage: React.FC = () => {
                     secondary={admin.email}
                   />
                   {getLevelChip(admin.adminLevel)}
-                  {isSuperAdmin && admin.adminLevel !== 'SUPER_ADMIN' && (
+                  {isAdmin && (admin.adminLevel !== 'SUPER_ADMIN' || isSuperAdmin) && (
                     <UPFButton
                       size="small" variant="outlined" color="error"
                       startIcon={<DeleteOutlineRoundedIcon />}
@@ -269,7 +269,7 @@ const AdminAdminsPage: React.FC = () => {
           value={promoteModal.level}
           onChange={(e) => setPromoteModal((prev) => ({ ...prev, level: e.target.value as AdminLevel }))}
         >
-          {ADMIN_LEVELS.filter((l) => l !== 'SUPER_ADMIN' || isSuperAdmin).map((l) => (
+          {ADMIN_LEVELS.filter((l) => l !== 'SUPER_ADMIN' || isAdmin).map((l) => (
             <MenuItem key={l} value={l}>{l.replace('_', ' ')}</MenuItem>
           ))}
         </TextField>
@@ -320,7 +320,7 @@ const AdminAdminsPage: React.FC = () => {
             select label="Niveau d'accès" value={createForm.adminLevel} size="small"
             onChange={(e) => setCreateForm({ ...createForm, adminLevel: e.target.value as AdminLevel })}
           >
-            {ADMIN_LEVELS.filter((l) => l !== 'SUPER_ADMIN' || isSuperAdmin).map((l) => (
+            {ADMIN_LEVELS.filter((l) => l !== 'SUPER_ADMIN' || isAdmin).map((l) => (
               <MenuItem key={l} value={l}>{l.replace('_', ' ')}</MenuItem>
             ))}
           </TextField>
