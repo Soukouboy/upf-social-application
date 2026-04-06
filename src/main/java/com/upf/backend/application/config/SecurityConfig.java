@@ -108,9 +108,10 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // ✅ Origines autorisées — ton frontend React
+            // SecurityConfig.java — mettre à jour
         config.setAllowedOrigins(List.of(
-            "http://localhost:5173"   // Vite dev server
+            "http://localhost:5173",            // dev local
+            "https://upf-connect.vercel.app"    // ✅ prod Vercel (à mettre à jour après déploiement)
         ));
 
         // ✅ Méthodes HTTP autorisées
