@@ -2,6 +2,8 @@
 FROM eclipse-temurin:17-jdk-alpine AS build
 WORKDIR /app
 COPY . .
+
+RUN chmod +x mvnw
 RUN ./mvnw clean package -DskipTests
 
 # ── Étape 2 : Image finale ────────────────────────────────────────
