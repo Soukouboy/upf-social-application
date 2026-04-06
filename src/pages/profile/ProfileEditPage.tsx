@@ -21,8 +21,8 @@ const ProfileEditPage: React.FC = () => {
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
-    bio: user?.bio || '',
-    competences: (user?.competences || []).join(', '),
+    bio: (user as any)?.bio || '',
+    competences: ((user as any)?.competences || []).join(', '),
   });
   const [newCompetence, setNewCompetence] = useState('');
   const [loading, setLoading] = useState(false);
@@ -34,7 +34,7 @@ const ProfileEditPage: React.FC = () => {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
 
-  const competenceList = formData.competences.split(',').map((c) => c.trim()).filter(Boolean);
+  const competenceList = formData.competences.split(',').map((c: string) => c.trim()).filter(Boolean);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -145,7 +145,7 @@ const ProfileEditPage: React.FC = () => {
           {/* Info non modifiable */}
           <TextField label="Nom complet" value={user ? `${user.firstName} ${user.lastName}` : ''} disabled fullWidth sx={{ mb: 2 }} />
           <TextField label="Email" value={user?.email || ''} disabled fullWidth sx={{ mb: 2 }} />
-          <TextField label="Filière" value={user?.filiere || ''} disabled fullWidth sx={{ mb: 2.5 }} />
+          <TextField label="Filière" value={(user as any)?.filiere || ''} disabled fullWidth sx={{ mb: 2.5 }} />
 
           {/* Bio */}
           <TextField
@@ -159,12 +159,12 @@ const ProfileEditPage: React.FC = () => {
           {/* Compétences */}
           <Typography variant="body2" fontWeight={600} mb={1}>Compétences</Typography>
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 1.5 }}>
-            {competenceList.map((c) => (
+            {competenceList.map((c: string) => (
               <UPFChip
                 key={c} label={c} size="small" colorVariant="primary"
                 onDelete={() => setFormData((prev) => ({
                   ...prev,
-                  competences: competenceList.filter((x) => x !== c).join(', '),
+                  competences: competenceList.filter((x: string) => x !== c).join(', '),
                 }))}
               />
             ))}

@@ -4,30 +4,30 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  TextField, MenuItem, useTheme, alpha,
+  TextField, MenuItem, useTheme, alpha, Box, Typography,
+  TableContainer, Table, TableHead, TableRow, TableCell, TableBody
 } from '@mui/material';
 import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded';
 import UPFCard from '../../components/ui/UPFCard';
 import UPFAvatar from '../../components/ui/UPFAvatar';
 import UPFChip from '../../components/ui/UPFChip';
 import UPFSearchBar from '../../components/ui/UPFSearchBar';
-import type { Student, Course } from '../../types';
+import type { CourseSummary } from '../../types';
+import type { StudentProfileSummary } from '../../services/adminService'; // Note: getCourseStudents returns StudentProfileSummary
 import { getMyCourses, getCourseStudents } from '../../services/professorService';
 
-interface StudentWithCourse extends Student {
+interface StudentWithCourse extends StudentProfileSummary {
   courseName: string;
   courseCode: string;
 }
 
 const ProfessorStudentsPage: React.FC = () => {
   const theme = useTheme();
-  const navigate = useNavigate();
   const [students, setStudents] = useState<StudentWithCourse[]>([]);
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [courses, setCourses] = useState<CourseSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [filterCourse, setFilterCourse] = useState<number | 'ALL'>('ALL');
+  const [filterCourse, setFilterCourse] = useState<string | 'ALL'>('ALL');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -37,22 +37,17 @@ const ProfessorStudentsPage: React.FC = () => {
         setCourses(myCourses);
         const allStudents: StudentWithCourse[] = [];
         for (const course of myCourses) {
-          const studs = await getCourseStudents(course.id);
-          studs.forEach((s) => allStudents.push({ ...s, courseName: course.title, courseCode: course.code || '' }));
+          const studs = await getCourseStudents(String(course.id));
+          studs.forEach((s) => allStudents.push({ ...s, courseName: course.title ?? (course as any).name, courseCode: course.code || '' }));
         }
         setStudents(allStudents);
       } catch {
-        const mockCourses: Course[] = [
-          { id: 1, code: 'INF301', title: 'Algorithmique avancée', description: '', filiere: 'GI', annee: 3, semestre: 5, createdAt: '' },
-          { id: 2, code: 'INF302', title: 'Programmation Web', description: '', filiere: 'GI', annee: 3, semestre: 5, createdAt: '' },
-        ];
-        setCourses(mockCourses);
+        // Fallback pour dev
+        setCourses([
+          { id: '1', code: 'INF301', title: 'Algorithmique avancée', department: 'Génie Informatique', year: 3, semester: 5, professorName: 'Pr.' } as unknown as CourseSummary
+        ]);
         setStudents([
-          { id: 1, firstName: 'Amine', lastName: 'Benali', email: 'amine@upf.ac.ma', filiere: 'GI', annee: 3, role: 'STUDENT', isActive: true, createdAt: '', courseName: 'Algorithmique avancée', courseCode: 'INF301' },
-          { id: 2, firstName: 'Sarah', lastName: 'Alaoui', email: 'sarah@upf.ac.ma', filiere: 'GI', annee: 3, role: 'STUDENT', isActive: true, createdAt: '', courseName: 'Algorithmique avancée', courseCode: 'INF301' },
-          { id: 3, firstName: 'Youssef', lastName: 'Karimi', email: 'youssef@upf.ac.ma', filiere: 'GI', annee: 3, role: 'STUDENT', isActive: true, createdAt: '', courseName: 'Programmation Web', courseCode: 'INF302' },
-          { id: 4, firstName: 'Lina', lastName: 'Tazi', email: 'lina@upf.ac.ma', filiere: 'GI', annee: 3, role: 'STUDENT', isActive: true, createdAt: '', courseName: 'Programmation Web', courseCode: 'INF302' },
-          { id: 1, firstName: 'Amine', lastName: 'Benali', email: 'amine@upf.ac.ma', filiere: 'GI', annee: 3, role: 'STUDENT', isActive: true, createdAt: '', courseName: 'Programmation Web', courseCode: 'INF302' },
+          { id: '1', firstName: 'Amine', lastName: 'Benali', email: 'amine@upf.ac.ma', major: 'Génie Informatique', currentYear: 3, courseName: 'Algorithmique', courseCode: 'INF301' } as StudentWithCourse
         ]);
       } finally { setLoading(false); }
     };
@@ -84,9 +79,9 @@ const ProfessorStudentsPage: React.FC = () => {
             <UPFSearchBar placeholder="Rechercher un étudiant…" value={search} onChange={setSearch} fullWidth />
           </Box>
           <TextField select size="small" label="Filtrer par cours" value={filterCourse}
-            onChange={(e) => setFilterCourse(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value))} sx={{ minWidth: 220 }}>
+            onChange={(e) => setFilterCourse(e.target.value === 'ALL' ? 'ALL' : e.target.value)} sx={{ minWidth: 220 }}>
             <MenuItem value="ALL">Tous les cours</MenuItem>
-            {courses.map((c) => <MenuItem key={c.id} value={c.id}>{c.code} — {c.title}</MenuItem>)}
+            {courses.map((c) => <MenuItem key={c.id} value={c.id}>{c.code} — {c.title ?? (c as any).name}</MenuItem>)}
           </TextField>
         </Box>
       </UPFCard>
@@ -117,8 +112,8 @@ const ProfessorStudentsPage: React.FC = () => {
                     </Box>
                   </TableCell>
                   <TableCell><Typography variant="body2" color="text.secondary">{s.email}</Typography></TableCell>
-                  <TableCell><Typography variant="body2">{s.filiere}</Typography></TableCell>
-                  <TableCell><Typography variant="body2">{s.annee}A</Typography></TableCell>
+                  <TableCell><Typography variant="body2">{s.major ?? (s as any).filiere}</Typography></TableCell>
+                  <TableCell><Typography variant="body2">{s.currentYear ?? (s as any).annee}A</Typography></TableCell>
                   <TableCell><UPFChip label={s.courseCode} size="small" colorVariant="primary" /></TableCell>
                 </TableRow>
               ))}

@@ -337,7 +337,7 @@ const RegisterPage: React.FC = () => {
                   id="register-filiere"
                   label="Filière"
                   value={formData.major}
-                  onChange={handleChange('filiere')}
+                  onChange={handleChange('major')}
                   fullWidth
                   required
                   select
@@ -354,7 +354,7 @@ const RegisterPage: React.FC = () => {
                   id="register-annee"
                   label="Année"
                   value={formData.currentYear}
-                  onChange={handleChange('annee')}
+                  onChange={handleChange('currentYear')}
                   fullWidth
                   required
                   select

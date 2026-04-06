@@ -4,24 +4,23 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Box, Typography, Grid, Skeleton, useTheme, alpha,
+  Box, Typography, Grid, Skeleton, useTheme,
 } from '@mui/material';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded';
 import FolderRoundedIcon from '@mui/icons-material/FolderRounded';
-import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import UPFCard from '../../components/ui/UPFCard';
 import UPFChip from '../../components/ui/UPFChip';
 import UPFButton from '../../components/ui/UPFButton';
 import UPFSearchBar from '../../components/ui/UPFSearchBar';
 import EmptyState from '../../components/common/EmptyState';
-import type { Course } from '../../types';
+import type { CourseSummary } from '../../types';
 import { getMyCourses } from '../../services/professorService';
 
 const ProfessorCoursesPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [courses, setCourses] = useState<CourseSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
@@ -33,19 +32,19 @@ const ProfessorCoursesPage: React.FC = () => {
         setCourses(data);
       } catch {
         setCourses([
-          { id: 1, code: 'INF301', title: 'Algorithmique avancée', description: 'Structures de données et complexité.', filiere: 'Génie Informatique', annee: 3, semestre: 5, professorName: 'Pr. Chraibi', isActive: true, createdAt: '2025-09-01' },
-          { id: 2, code: 'INF302', title: 'Programmation Web', description: 'React, Spring Boot, API REST.', filiere: 'Génie Informatique', annee: 3, semestre: 5, professorName: 'Pr. Chraibi', isActive: true, createdAt: '2025-09-01' },
-          { id: 3, code: 'INF201', title: 'Base de données', description: 'SQL, NoSQL, optimisation.', filiere: 'Génie Informatique', annee: 2, semestre: 3, professorName: 'Pr. Chraibi', isActive: true, createdAt: '2025-09-01' },
-          { id: 4, code: 'INF202', title: 'Systèmes d\'exploitation', description: 'Linux, processus, mémoire.', filiere: 'Génie Informatique', annee: 2, semestre: 4, professorName: 'Pr. Chraibi', isActive: false, createdAt: '2025-09-01' },
+          { id: '1', code: 'INF301', title: 'Algorithmique avancée', department: 'Génie Informatique', year: 3, semester: 5, professorName: 'Pr. Chraibi' } as unknown as CourseSummary,
+          { id: '2', code: 'INF302', title: 'Programmation Web', department: 'Génie Informatique', year: 3, semester: 5, professorName: 'Pr. Chraibi' } as unknown as CourseSummary,
         ]);
       } finally { setLoading(false); }
     };
     fetchCourses();
   }, []);
 
-  const filtered = courses.filter((c) =>
-    c.title.toLowerCase().includes(search.toLowerCase()) || c.code?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = courses.filter((c) => {
+    const t = c.title ?? (c as any).name ?? '';
+    const cod = c.code ?? '';
+    return t.toLowerCase().includes(search.toLowerCase()) || cod.toLowerCase().includes(search.toLowerCase());
+  });
 
   return (
     <Box>
@@ -78,24 +77,24 @@ const ProfessorCoursesPage: React.FC = () => {
                 onClick={() => navigate(`/professor/courses/${course.id}`)}>
                 <Box sx={{
                   position: 'absolute', top: 0, left: 0, right: 0, height: 4,
-                  background: course.isActive
+                  background: (course as any).isActive !== false
                     ? `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.info.main})`
                     : theme.palette.divider,
                 }} />
 
                 <Box sx={{ display: 'flex', gap: 1, mb: 2, mt: 1 }}>
                   <UPFChip label={course.code || '—'} size="small" colorVariant="primary" />
-                  <UPFChip label={course.isActive ? 'Actif' : 'Inactif'} size="small" colorVariant={course.isActive ? 'success' : 'error'} />
+                  <UPFChip label={(course as any).isActive !== false ? 'Actif' : 'Inactif'} size="small" colorVariant={(course as any).isActive !== false ? 'success' : 'error'} />
                 </Box>
 
-                <Typography variant="h6" fontWeight={600} mb={0.5}>{course.title}</Typography>
+                <Typography variant="h6" fontWeight={600} mb={0.5}>{course.title ?? (course as any).name}</Typography>
                 <Typography variant="body2" color="text.secondary" mb={2}
                   sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                  {course.description}
+                  {(course as any).description}
                 </Typography>
 
                 <Typography variant="caption" color="text.secondary" display="block" mb={2}>
-                  {course.filiere} · {course.annee}ème année · Semestre {course.semestre}
+                  {(course as any).department ?? (course as any).filiere} · {(course as any).year ?? (course as any).annee}ème année · Semestre {(course as any).semester ?? (course as any).semestre}
                 </Typography>
 
                 <Box sx={{ display: 'flex', gap: 1 }}>

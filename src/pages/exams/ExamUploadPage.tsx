@@ -3,7 +3,7 @@
  *
  * Formulaire avec zone de drag-and-drop pour le fichier (< 20 Mo).
  */
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box, Typography, TextField, MenuItem, Alert, useTheme, alpha,
@@ -13,16 +13,19 @@ import InsertDriveFileRoundedIcon from '@mui/icons-material/InsertDriveFileRound
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
 import UPFCard from '../../components/ui/UPFCard';
 import UPFButton from '../../components/ui/UPFButton';
-import type { ExamType } from '../../types';
+import type { CourseSummary, ExamType } from '../../types';
 import { uploadExam } from '../../services/examService';
+import { getMyCourses } from '../../services/courseService';
+import type { CourseDetails } from '../../types';
+import type { Subject } from '@mui/icons-material';
 
 const EXAM_TYPES: { value: ExamType; label: string }[] = [
-  { value: 'PARTIEL', label: 'Partiel' },
-  { value: 'FINAL', label: 'Final' },
+
+  { value: 'CF', label: 'Final' },
   { value: 'RATTRAPAGE', label: 'Rattrapage' },
   { value: 'CC', label: 'Contrôle continu' },
   { value: 'TP', label: 'TP' },
-  { value: 'AUTRE', label: 'Autre' },
+  { value: 'PROJET', label: 'Autre' },
 ];
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 Mo
@@ -33,10 +36,10 @@ const ExamUploadPage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
-    title: '',
-    matiere: '',
-    anneeAcademique: '',
-    type: 'PARTIEL' as ExamType,
+    subject: '',
+    courseId: '',
+    academicYear: '',
+    type: 'CC' as ExamType,
     description: '',
   });
   const [file, setFile] = useState<File | null>(null);
@@ -44,6 +47,13 @@ const ExamUploadPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [myCourses, setMyCourses] = useState<CourseSummary[]>([]);
+
+  useEffect(() => {
+    getMyCourses()
+      .then(setMyCourses)
+      .catch((err) => console.error('Erreur lors du chargement des cours:', err));
+  }, []);
 
   const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({ ...prev, [field]: e.target.value }));
@@ -72,7 +82,7 @@ const ExamUploadPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!formData.title || !formData.matiere || !formData.anneeAcademique || !file) {
+    if (!formData.subject || !formData.courseId || !formData.academicYear || !file) {
       setError('Veuillez remplir tous les champs et sélectionner un fichier.');
       return;
     }
@@ -100,10 +110,19 @@ const ExamUploadPage: React.FC = () => {
 
       <UPFCard noHover>
         <Box component="form" onSubmit={handleSubmit} noValidate>
-          <TextField id="upload-title" label="Titre de l'épreuve" value={formData.title} onChange={handleChange('title')} fullWidth required sx={{ mb: 2.5 }} placeholder="Ex: Examen Final Algorithmique 2025" />
-          <TextField id="upload-matiere" label="Matière" value={formData.matiere} onChange={handleChange('matiere')} fullWidth required sx={{ mb: 2.5 }} placeholder="Ex: Algorithmique et Structures de Données" />
+          <TextField id="upload-title" label="Titre de l'épreuve" value={formData.subject} onChange={handleChange('subject')} fullWidth required sx={{ mb: 2.5 }} placeholder="Ex: Examen Final Algorithmique 2025" />
+          <TextField id="upload-matiere" label="Matière" value={formData.courseId} onChange={handleChange('courseId')} fullWidth required select sx={{ mb: 2.5 }}>
+            <MenuItem value="" disabled>
+              {myCourses.length === 0 ? "Aucun cours trouvé" : "Sélectionnez un cours"}
+            </MenuItem>
+            {myCourses.map((course) => (
+              <MenuItem key={course.id} value={course.id}>
+                {course.title} {course.code && `(${course.code})`}
+              </MenuItem>
+            ))}
+          </TextField>
           <Box sx={{ display: 'flex', gap: 2, mb: 2.5 }}>
-            <TextField id="upload-annee" label="Année académique" value={formData.anneeAcademique} onChange={handleChange('anneeAcademique')} fullWidth required placeholder="Ex: 2024-2025" />
+            <TextField id="upload-annee" label="Année académique" value={formData.academicYear} onChange={handleChange('academicYear')} fullWidth required placeholder="Ex: 2024-2025" />
             <TextField id="upload-type" label="Type" value={formData.type} onChange={handleChange('type')} fullWidth required select>
               {EXAM_TYPES.map((t) => <MenuItem key={t.value} value={t.value}>{t.label}</MenuItem>)}
             </TextField>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Typography, Avatar, useTheme, alpha } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import PersonAddRoundedIcon from '@mui/icons-material/PersonAddRounded';
@@ -8,6 +8,7 @@ import UPFCard from '../ui/UPFCard';
 import UPFButton from '../ui/UPFButton';
 import type { StudentNetwork } from '../../types';
 import { followUser, unfollowUser } from '../../services/userService';
+import { checkFollowStatus } from '../../services/followService';
 
 interface StudentCardProps {
   student: StudentNetwork;
@@ -19,14 +20,24 @@ const StudentCard: React.FC<StudentCardProps> = ({ student }) => {
   const [isFollowing, setIsFollowing] = useState(student.isFollowing);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    let active = true;
+    checkFollowStatus(String(student.id))
+      .then((status) => {
+        if (active) setIsFollowing(status);
+      })
+      .catch((err) => console.error('Erreur status follow', err));
+    return () => { active = false; };
+  }, [student.id]);
+
   const handleFollowToggle = async () => {
     setLoading(true);
     try {
       if (isFollowing) {
-        await unfollowUser(student.id);
+        await unfollowUser(String(student.id));
         setIsFollowing(false);
       } else {
-        await followUser(student.id);
+        await followUser(String(student.id));
         setIsFollowing(true);
       }
     } catch (error) {

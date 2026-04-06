@@ -1,10 +1,10 @@
 /**
  * ProfilePage — Profil public d'un étudiant
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Box, Typography, Grid, Tabs, Tab, useTheme, alpha, Divider,
+  Box, Typography, Grid, Tabs, Tab, useTheme, alpha,
 } from '@mui/material';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
@@ -17,7 +17,7 @@ import UPFChip from '../../components/ui/UPFChip';
 import UPFButton from '../../components/ui/UPFButton';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { useAuth } from '../../hooks/useAuth';
-import type { Student } from '../../types';
+
 
 const ProfilePage: React.FC = () => {
   const theme = useTheme();
@@ -27,13 +27,13 @@ const ProfilePage: React.FC = () => {
   const [tab, setTab] = useState(0);
 
   // Si pas d'id dans l'URL → profil de l'utilisateur connecté
-  const profile: Student | null = user ? {
+  const profile: any = user ? {
     ...user,
-    bio: user.bio || 'Étudiant passionné à l\'UPF Campus Rabat 🎓',
-    competences: user.competences || ['React', 'TypeScript', 'Java', 'Spring Boot'],
+    bio: (user as any).bio || 'Étudiant passionné à l\'UPF Campus Rabat 🎓',
+    competences: (user as any).competences || ['React', 'TypeScript', 'Java', 'Spring Boot'],
   } : null;
 
-  const isOwnProfile = !id || Number(id) === user?.id;
+  const isOwnProfile = !id || String(id) === String(user?.id);
 
   if (!profile) return <LoadingSpinner fullPage />;
 
@@ -150,7 +150,7 @@ const ProfilePage: React.FC = () => {
           <UPFCard noHover sx={{ mb: 3 }}>
             <Typography variant="h6" fontWeight={600} mb={2}>Compétences</Typography>
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              {profile.competences?.map((c) => (
+              {profile.competences?.map((c: string) => (
                 <UPFChip key={c} label={c} size="small" colorVariant="primary" />
               ))}
             </Box>

@@ -1,5 +1,8 @@
 /**
  * DirectMessagesPage — Liste des conversations privées (DM)
+ *
+ * Utilise GET /messages/private — retourne Page<PrivateConversationSummaryResponse>
+ * Le backend ne renvoie que otherUserId + lastMessageAt, donc on enrichit avec getUserProfile()
  */
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -12,32 +15,27 @@ import UPFCard from '../../components/ui/UPFCard';
 import UPFSearchBar from '../../components/ui/UPFSearchBar';
 import UPFAvatar from '../../components/ui/UPFAvatar';
 import EmptyState from '../../components/common/EmptyState';
-import type { ConversationLegacy as Conversation } from '../../types';
-import { getConversations } from '../../services/messageService';
-
-const MOCK_CONVERSATIONS: Conversation[] = [
-  { userId: 2, firstName: 'Sarah', lastName: 'Alaoui', lastMessage: 'Merci pour les notes !', lastMessageTime: new Date(Date.now() - 300000).toISOString(), unreadCount: 2, isOnline: true },
-  { userId: 3, firstName: 'Youssef', lastName: 'Karimi', lastMessage: 'On se retrouve à la biblio à 14h ?', lastMessageTime: new Date(Date.now() - 3600000).toISOString(), unreadCount: 0, isOnline: true },
-  { userId: 4, firstName: 'Lina', lastName: 'Tazi', lastMessage: 'Voici le PDF du cours.', lastMessageTime: new Date(Date.now() - 7200000).toISOString(), unreadCount: 1, isOnline: false },
-  { userId: 5, firstName: 'Omar', lastName: 'Fassi', lastMessage: 'Super présentation hier ! 👏', lastMessageTime: new Date(Date.now() - 86400000).toISOString(), unreadCount: 0, isOnline: false },
-  { userId: 6, firstName: 'Kenza', lastName: 'Moussaoui', lastMessage: 'Tu as fini le TP 4 ?', lastMessageTime: new Date(Date.now() - 172800000).toISOString(), unreadCount: 0, isOnline: true },
-];
+import type { PrivateConversationSummaryResponse } from '../../types';
+import { getPrivateConversations } from '../../services/messageService';
 
 const DirectMessagesPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [conversations, setConversations] = useState<PrivateConversationSummaryResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchConversations = async () => {
       setLoading(true);
+      setError(null);
       try {
-        const data = await getConversations();
-        setConversations(data);
-      } catch {
-        setConversations(MOCK_CONVERSATIONS);
+        const page = await getPrivateConversations(0, 50);
+        setConversations(page.content);
+      } catch (err) {
+        setError('Impossible de charger les conversations. Vérifiez votre connexion.');
+        setConversations([]);
       } finally {
         setLoading(false);
       }
@@ -45,9 +43,10 @@ const DirectMessagesPage: React.FC = () => {
     fetchConversations();
   }, []);
 
-  const filtered = conversations.filter((c) =>
-    `${c.firstName} ${c.lastName}`.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = conversations.filter((c) => {
+    const name = `${c.firstName ?? ''} ${c.lastName ?? ''} ${c.otherUserId}`.toLowerCase();
+    return name.includes(search.toLowerCase());
+  });
 
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -57,6 +56,14 @@ const DirectMessagesPage: React.FC = () => {
     if (diffHours < 1) return `Il y a ${Math.round(diffMs / 60000)} min`;
     if (diffHours < 24) return `Il y a ${Math.round(diffHours)}h`;
     return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+  };
+
+  const getDisplayName = (conv: PrivateConversationSummaryResponse) => {
+    if (conv.firstName || conv.lastName) {
+      return `${conv.firstName ?? ''} ${conv.lastName ?? ''}`.trim();
+    }
+    // Fallback si le backend ne renvoie pas encore le nom
+    return `Utilisateur ${conv.otherUserId.substring(0, 8)}…`;
   };
 
   return (
@@ -85,6 +92,10 @@ const DirectMessagesPage: React.FC = () => {
               </Box>
             ))}
           </Box>
+        ) : error ? (
+          <Box sx={{ p: 4, textAlign: 'center' }}>
+            <Typography color="error" variant="body2">{error}</Typography>
+          </Box>
         ) : filtered.length === 0 ? (
           <Box sx={{ p: 4 }}>
             <EmptyState
@@ -97,27 +108,31 @@ const DirectMessagesPage: React.FC = () => {
           <List disablePadding>
             {filtered.map((conv) => (
               <ListItemButton
-                key={conv.userId}
-                onClick={() => navigate(`/student/messages/${conv.userId}`)}
+                key={conv.otherUserId}
+                onClick={() => navigate(`/student/messages/${conv.otherUserId}`)}
                 sx={{
                   px: 3, py: 2,
                   borderBottom: `1px solid ${theme.palette.divider}`,
                   '&:last-child': { borderBottom: 'none' },
-                  bgcolor: conv.unreadCount > 0 ? alpha(theme.palette.primary.main, 0.03) : 'transparent',
+                  bgcolor: (conv.unreadCount ?? 0) > 0 ? alpha(theme.palette.primary.main, 0.03) : 'transparent',
                   '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.06) },
                 }}
               >
                 <Box sx={{ mr: 2 }}>
-                  <UPFAvatar firstName={conv.firstName} lastName={conv.lastName} online={conv.isOnline} size="large" />
+                  <UPFAvatar
+                    firstName={conv.firstName ?? '?'}
+                    lastName={conv.lastName ?? ''}
+                    size="large"
+                  />
                 </Box>
                 <ListItemText
                   primary={
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Typography variant="subtitle2" fontWeight={conv.unreadCount > 0 ? 700 : 500}>
-                        {conv.firstName} {conv.lastName}
+                      <Typography variant="subtitle2" fontWeight={(conv.unreadCount ?? 0) > 0 ? 700 : 500}>
+                        {getDisplayName(conv)}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {formatTime(conv.lastMessageTime)}
+                        {formatTime(conv.lastMessageAt)}
                       </Typography>
                     </Box>
                   }
@@ -125,13 +140,13 @@ const DirectMessagesPage: React.FC = () => {
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 0.3 }}>
                       <Typography
                         variant="body2"
-                        color={conv.unreadCount > 0 ? 'text.primary' : 'text.secondary'}
-                        fontWeight={conv.unreadCount > 0 ? 500 : 400}
+                        color={(conv.unreadCount ?? 0) > 0 ? 'text.primary' : 'text.secondary'}
+                        fontWeight={(conv.unreadCount ?? 0) > 0 ? 500 : 400}
                         sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '85%' }}
                       >
-                        {conv.lastMessage}
+                        {conv.lastMessage ?? '…'}
                       </Typography>
-                      {conv.unreadCount > 0 && (
+                      {(conv.unreadCount ?? 0) > 0 && (
                         <Badge
                           badgeContent={conv.unreadCount}
                           color="primary"

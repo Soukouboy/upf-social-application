@@ -13,69 +13,79 @@ import UPFModal from '../../components/ui/UPFModal';
 import UPFChip from '../../components/ui/UPFChip';
 import EmptyState from '../../components/common/EmptyState';
 import { useAuth } from '../../hooks/useAuth';
-import type { Course, Announcement } from '../../types';
-import { getMyCourses, getMyAnnouncements, createAnnouncement } from '../../services/professorService';
+import type { CourseSummary, AnnouncementResponse } from '../../types';
+import { getMyCourses, getMyAnnouncements, createAnnouncement, deleteAnnouncement } from '../../services/professorService';
 
 const ProfessorAnnouncementsPage: React.FC = () => {
   const theme = useTheme();
   const { user } = useAuth();
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [courses, setCourses] = useState<CourseSummary[]>([]);
+  const [announcements, setAnnouncements] = useState<AnnouncementResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
-  const [selectedCourse, setSelectedCourse] = useState<number>(0);
+  const [selectedCourse, setSelectedCourse] = useState<string>('');
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [creating, setCreating] = useState(false);
-  const [filterCourse, setFilterCourse] = useState<number | 'ALL'>('ALL');
+  const [filterCourse, setFilterCourse] = useState<string | 'ALL'>('ALL');
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [c, a] = await Promise.all([getMyCourses(), getMyAnnouncements()]);
+        const [c, a] = await Promise.all([
+          getMyCourses(),
+          getMyAnnouncements()
+        ]);
         setCourses(c);
         setAnnouncements(a);
       } catch {
-        const mockCourses: Course[] = [
-          { id: 1, code: 'INF301', title: 'Algorithmique avancée', description: '', filiere: 'GI', annee: 3, semestre: 5, createdAt: '' },
-          { id: 2, code: 'INF302', title: 'Programmation Web', description: '', filiere: 'GI', annee: 3, semestre: 5, createdAt: '' },
-        ];
-        setCourses(mockCourses);
-        setAnnouncements([
-          { id: 1, courseId: 1, courseTitle: 'Algorithmique avancée', title: 'Report du TP 3', content: 'Le TP 3 est reporté au lundi prochain suite à un problème de salle. Préparez vos exercices de la série 4.', authorName: `Pr. ${user?.lastName}`, createdAt: new Date(Date.now() - 86400000).toISOString() },
-          { id: 2, courseId: 2, courseTitle: 'Programmation Web', title: 'Projet final — Sujet disponible', content: 'Le sujet du projet final est maintenant disponible dans les documents du cours. Date limite : 15 avril.', authorName: `Pr. ${user?.lastName}`, createdAt: new Date(Date.now() - 172800000).toISOString() },
-          { id: 3, courseId: 1, courseTitle: 'Algorithmique avancée', title: 'Résultats du CC', content: 'Les résultats du contrôle continu sont disponibles. Consultez votre espace étudiant.', authorName: `Pr. ${user?.lastName}`, createdAt: new Date(Date.now() - 604800000).toISOString() },
-        ]);
+        setCourses([]);
+        setAnnouncements([]);
       } finally { setLoading(false); }
     };
     fetchData();
-  }, [user]);
+  }, []);
 
   const handleCreate = async () => {
     if (!selectedCourse || !title.trim() || !content.trim()) return;
     setCreating(true);
     try {
+      // POST /professors/me/courses/{courseId}/announcements
       const newAnn = await createAnnouncement(selectedCourse, title, content);
       setAnnouncements((prev) => [newAnn, ...prev]);
     } catch {
-      const courseTitle = courses.find((c) => c.id === selectedCourse)?.title || '';
-      setAnnouncements((prev) => [{
-        id: Date.now(), courseId: selectedCourse, courseTitle, title, content,
-        authorName: `Pr. ${user?.lastName}`, createdAt: new Date().toISOString(),
-      }, ...prev]);
+      const courseSummary = courses.find((c) => c.id === selectedCourse);
+      if (courseSummary) {
+        setAnnouncements((prev) => [{
+          id: String(Date.now()), 
+          course: courseSummary, 
+          title, 
+          content,
+          professor: { id: user?.userId || '', firstName: user?.firstName || '', lastName: user?.lastName || '' }, 
+          createdAt: new Date().toISOString(),
+        }, ...prev]);
+      }
     } finally {
       setCreating(false);
       setCreateOpen(false);
       setTitle('');
       setContent('');
-      setSelectedCourse(0);
+      setSelectedCourse('');
     }
+  };
+
+  const handleDeleteAnnouncement = async (announcementId: string) => {
+    try {
+      // DELETE /professors/me/announcements/{announcementId}
+      await deleteAnnouncement(announcementId);
+      setAnnouncements((prev) => prev.filter((a) => a.id !== announcementId));
+    } catch { /* ignore */ }
   };
 
   const filtered = filterCourse === 'ALL'
     ? announcements
-    : announcements.filter((a) => a.courseId === filterCourse);
+    : announcements.filter((a) => a.course?.id === filterCourse);
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
@@ -99,7 +109,7 @@ const ProfessorAnnouncementsPage: React.FC = () => {
       {/* Filtre par cours */}
       <UPFCard noHover sx={{ mb: 3 }}>
         <TextField select size="small" label="Filtrer par cours" value={filterCourse}
-          onChange={(e) => setFilterCourse(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value))} sx={{ minWidth: 250 }}>
+          onChange={(e) => setFilterCourse(e.target.value)} sx={{ minWidth: 250 }}>
           <MenuItem value="ALL">Tous les cours</MenuItem>
           {courses.map((c) => <MenuItem key={c.id} value={c.id}>{c.code} — {c.title}</MenuItem>)}
         </TextField>
@@ -118,10 +128,16 @@ const ProfessorAnnouncementsPage: React.FC = () => {
                 <Box>
                   <Typography variant="h6" fontWeight={600}>{a.title}</Typography>
                   <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 0.5 }}>
-                    <UPFChip label={a.courseTitle} size="small" colorVariant="primary" />
+                    <UPFChip label={a.course?.title || 'Cours inconnu'} size="small" colorVariant="primary" />
                     <Typography variant="caption" color="text.secondary">{formatDate(a.createdAt)}</Typography>
                   </Box>
                 </Box>
+                <UPFButton
+                  size="small" variant="outlined" color="error"
+                  onClick={() => handleDeleteAnnouncement(String(a.id))}
+                >
+                  Supprimer
+                </UPFButton>
               </Box>
               <Divider sx={{ my: 1.5 }} />
               <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'pre-wrap' }}>
@@ -144,7 +160,7 @@ const ProfessorAnnouncementsPage: React.FC = () => {
           </>
         }>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <TextField label="Cours" value={selectedCourse || ''} onChange={(e) => setSelectedCourse(Number(e.target.value))} select size="small" required>
+          <TextField label="Cours" value={selectedCourse || ''} onChange={(e) => setSelectedCourse(e.target.value)} select size="small" required>
             <MenuItem value="" disabled>Sélectionner un cours…</MenuItem>
             {courses.map((c) => <MenuItem key={c.id} value={c.id}>{c.code} — {c.title}</MenuItem>)}
           </TextField>

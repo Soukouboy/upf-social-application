@@ -18,7 +18,7 @@ import UPFButton from '../../components/ui/UPFButton';
 import UPFAvatar from '../../components/ui/UPFAvatar';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import type { Group, GroupMembership } from '../../types';
-import { getGroupById, getGroupMembers, joinGroup } from '../../services/groupService';
+import { getGroupById, getGroupMembers, joinGroup, requestJoinGroup } from '../../services/groupService';
 
 const GroupDetailPage: React.FC = () => {
   const theme = useTheme();
@@ -34,24 +34,26 @@ const GroupDetailPage: React.FC = () => {
       setLoading(true);
       try {
         const [groupData, membersData] = await Promise.all([
-          getGroupById(Number(id)),
-          getGroupMembers(Number(id)),
+          getGroupById(id),
+          getGroupMembers(id),
         ]);
         setGroup(groupData);
         setMembers(membersData);
       } catch {
         setGroup({
-          id: Number(id), name: 'Dev Web S4',
+          id: id, name: 'Dev Web S4',
           description: 'Groupe d\'entraide pour le module Développement Web du semestre 4. React, Node.js, API REST. Partagez vos ressources, posez vos questions et entraidez-vous !',
-          visibility: 'PUBLIC', memberCount: 28,
-          createdBy: { id: 1, firstName: 'Amina', lastName: 'Benali' },
-          createdAt: '2025-02-10', coverImageUrl: undefined,
+          type: 'PUBLIC', memberCount: 28,
+          messageCount: 0, isActive: true, updatedAt: '2025-02-10', major: '',
+          createdBy: 'uuid',
+          createdAt: '2025-02-10', coverImageUrl: '',
+
         });
         setMembers([
-          { id: 1, groupId: Number(id), user: { id: 1, firstName: 'Amina', lastName: 'Benali', avatarUrl: undefined }, role: 'ADMIN', status: 'ACTIVE', joinedAt: '2025-02-10' },
-          { id: 2, groupId: Number(id), user: { id: 2, firstName: 'Youssef', lastName: 'Karimi', avatarUrl: undefined }, role: 'MODERATOR', status: 'ACTIVE', joinedAt: '2025-02-11' },
-          { id: 3, groupId: Number(id), user: { id: 3, firstName: 'Sara', lastName: 'Moussaoui', avatarUrl: undefined }, role: 'MEMBER', status: 'ACTIVE', joinedAt: '2025-02-12' },
-          { id: 4, groupId: Number(id), user: { id: 4, firstName: 'Omar', lastName: 'Tazi', avatarUrl: undefined }, role: 'MEMBER', status: 'ACTIVE', joinedAt: '2025-02-13' },
+          { id: '1', groupId: id, user: { id: '1', firstName: 'Amina', lastName: 'Benali' }, role: 'ADMIN', status: 'ACTIVE', joinedAt: '2025-02-10' },
+          { id: '2', groupId: id, user: { id: '2', firstName: 'Youssef', lastName: 'Karimi' }, role: 'MODERATOR', status: 'ACTIVE', joinedAt: '2025-02-11' },
+          { id: '3', groupId: id, user: { id: '3', firstName: 'Sara', lastName: 'Moussaoui' }, role: 'MEMBER', status: 'ACTIVE', joinedAt: '2025-02-12' },
+          { id: '4', groupId: id, user: { id: '4', firstName: 'Omar', lastName: 'Tazi' }, role: 'MEMBER', status: 'ACTIVE', joinedAt: '2025-02-13' },
         ]);
       } finally { setLoading(false); }
     };
@@ -60,6 +62,22 @@ const GroupDetailPage: React.FC = () => {
 
   if (loading) return <LoadingSpinner fullPage message="Chargement du groupe…" />;
   if (!group) return null;
+
+  const handleJoin = async () => {
+    try {
+      if (group.type === 'PUBLIC') {
+        await joinGroup(group.id);
+        alert('Vous avez rejoint le groupe avec succès !');
+      } else {
+        await requestJoinGroup(group.id);
+        alert('Votre demande a été envoyée au créateur du groupe.');
+      }
+      // Recharger pour voir la mise à jour
+      window.location.reload();
+    } catch {
+      alert("Erreur lors de l'intégration au groupe.");
+    }
+  };
 
   const roleColor: Record<string, 'error' | 'secondary' | 'info'> = { ADMIN: 'error', MODERATOR: 'secondary', MEMBER: 'info' };
 
@@ -82,8 +100,8 @@ const GroupDetailPage: React.FC = () => {
         <Box sx={{ position: 'relative', zIndex: 1 }}>
           <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
             <UPFChip
-              label={group.visibility === 'PUBLIC' ? 'Public' : 'Privé'}
-              icon={group.visibility === 'PUBLIC' ? <PublicRoundedIcon /> : <LockRoundedIcon />}
+              label={group.type === 'PUBLIC' ? 'Public' : 'Privé'}
+              icon={group.type === 'PUBLIC' ? <PublicRoundedIcon /> : <LockRoundedIcon />}
               sx={{ bgcolor: alpha('#fff', 0.2), color: '#fff', '& .MuiChip-icon': { color: '#fff' } }}
             />
           </Box>
@@ -92,13 +110,14 @@ const GroupDetailPage: React.FC = () => {
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
             <UPFButton
               variant="contained" startIcon={<ChatRoundedIcon />}
-              onClick={() => navigate(`/groups/${group.id}/chat`)}
+              onClick={() => navigate(`/student/groups/${group.id}/chat`)}
               sx={{ bgcolor: alpha('#fff', 0.2), color: '#fff', '&:hover': { bgcolor: alpha('#fff', 0.3), boxShadow: 'none' } }}
             >
               Ouvrir le chat
             </UPFButton>
             <UPFButton
               variant="outlined"
+              onClick={handleJoin}
               sx={{ borderColor: alpha('#fff', 0.3), color: '#fff', '&:hover': { borderColor: '#fff', bgcolor: alpha('#fff', 0.1) } }}
             >
               Rejoindre
@@ -138,9 +157,9 @@ const GroupDetailPage: React.FC = () => {
               {members.map((member) => (
                 <ListItem key={member.id} disablePadding sx={{ py: 1 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%' }}>
-                    <UPFAvatar firstName={member.user.firstName} lastName={member.user.lastName} size="small" />
+                    <UPFAvatar firstName={(member as any).firstName || member.user?.firstName || 'User'} lastName={(member as any).lastName || member.user?.lastName || ''} size="small" />
                     <ListItemText
-                      primary={`${member.user.firstName} ${member.user.lastName}`}
+                      primary={`${(member as any).firstName || member.user?.firstName || 'Utilisateur'} ${(member as any).lastName || member.user?.lastName || 'Inconnu'}`}
                       primaryTypographyProps={{ variant: 'body2', fontWeight: 500 }}
                     />
                     <UPFChip label={member.role} size="small" colorVariant={roleColor[member.role] || 'info'} />

@@ -1,22 +1,26 @@
 /**
- * Service de messagerie (chat de groupe)
+ * Service Chat (fallback REST pour GroupChatPage)
  *
- * Fallback REST :
- *   GET /messages?groupId=X&page=Y — historique paginé
+ * Endpoint réel (backend ENDPIN.md) :
+ *   GET /messages/groups/{groupId} — historique paginé des messages de groupe
  *
- * Le temps réel se fait via le hook useWebSocket.
+ * Le temps réel se fait via useWebSocket (STOMP/SockJS).
  */
 import api from './api';
-import type { Message, PaginatedResponse } from '../types';
+import type { ChatMessageResponse, PaginatedResponse } from '../types';
 
 /** Récupérer l'historique des messages d'un groupe (REST fallback) */
-export const getMessages = async (
-  groupId: number | string,
+export const getGroupMessages = async (
+  groupId: string,
   page: number = 0,
-  size: number = 30
-): Promise<PaginatedResponse<Message>> => {
-  const { data } = await api.get<PaginatedResponse<Message>>('/messages', {
-    params: { groupId, page, size },
-  });
+  size: number = 50
+): Promise<PaginatedResponse<ChatMessageResponse>> => {
+  const { data } = await api.get<PaginatedResponse<ChatMessageResponse>>(
+    `/messages/groups/${groupId}`,
+    { params: { page, size, sort: 'sentAt,asc' } }
+  );
   return data;
 };
+
+// Alias pour la compatibilité avec l'ancienne signature
+export const getMessages = getGroupMessages;

@@ -21,18 +21,11 @@ const GroupCreatePage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [visibility, setVisibility] = useState<GroupVisibility>('PUBLIC');
-  const [coverImage, setCoverImage] = useState<File | null>(null);
-  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [type, setType] = useState<GroupVisibility>('PUBLIC');
+  const [major, setMajor] = useState('');
   const [error, setError] = useState('');
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setCoverImage(file);
-      setCoverPreview(URL.createObjectURL(file));
-    }
-  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,12 +39,13 @@ const GroupCreatePage: React.FC = () => {
       const group = await createGroup({
         name: name.trim(),
         description: description.trim(),
-        visibility,
-        coverImage: coverImage || undefined,
+        type,
+        major: major.trim(),
       });
       navigate(`/student/groups/${group.id}`);
-    } catch {
-      setError('Erreur lors de la création du groupe. Veuillez réessayer.');
+    } catch (err: any) {
+      console.error('Erreur API :', err.response?.data || err.message);
+      setError(err.response?.data?.detail || 'Erreur lors de la création du groupe. Veuillez vérifier tous les champs.');
     } finally {
       setLoading(false);
     }
@@ -90,31 +84,7 @@ const GroupCreatePage: React.FC = () => {
 
       <UPFCard noHover>
         <Box component="form" onSubmit={handleSubmit}>
-          {/* Image de couverture */}
-          <Box
-            sx={{
-              width: '100%', height: 180, borderRadius: 3, mb: 3,
-              border: `2px dashed ${theme.palette.divider}`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', position: 'relative', overflow: 'hidden',
-              bgcolor: alpha(theme.palette.primary.main, 0.03),
-              transition: 'all 0.2s',
-              '&:hover': { borderColor: theme.palette.primary.main, bgcolor: alpha(theme.palette.primary.main, 0.06) },
-            }}
-            onClick={() => document.getElementById('cover-input')?.click()}
-          >
-            {coverPreview ? (
-              <Box component="img" src={coverPreview} alt="Cover" sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            ) : (
-              <Box sx={{ textAlign: 'center' }}>
-                <AddPhotoAlternateRoundedIcon sx={{ fontSize: 40, color: 'text.secondary', mb: 1 }} />
-                <Typography variant="body2" color="text.secondary">
-                  Cliquez pour ajouter une image de couverture
-                </Typography>
-              </Box>
-            )}
-            <input id="cover-input" type="file" accept="image/*" hidden onChange={handleImageChange} />
-          </Box>
+
 
           {/* Champs du formulaire */}
           <TextField
@@ -136,9 +106,18 @@ const GroupCreatePage: React.FC = () => {
           />
 
           <TextField
-            label="Visibilité"
-            value={visibility}
-            onChange={(e) => setVisibility(e.target.value as GroupVisibility)}
+            label="Filière / Spécialité"
+            value={major}
+            onChange={(e) => setMajor(e.target.value)}
+            fullWidth required
+            placeholder="Ex: Génie Logiciel"
+            sx={{ mb: 2.5 }}
+          />
+
+          <TextField
+            label="Type"
+            value={type}
+            onChange={(e) => setType(e.target.value as GroupVisibility)}
             select fullWidth
             sx={{ mb: 3 }}
           >

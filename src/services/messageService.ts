@@ -1,37 +1,91 @@
 /**
- * Service de messagerie privée (DM)
+ * Service de messagerie (groupe + privé)
  *
- * Endpoints attendus côté backend :
- *   GET  /messages/conversations              — liste des conversations privées
- *   GET  /messages/direct/:userId?page&size   — historique des messages avec un utilisateur
- *   POST /messages/direct/:userId             — envoyer un message privé
+ * Endpoints réels (backend ENDPIN.md) :
+ *   POST /messages/groups/{groupId}       — envoyer msg groupe
+ *   GET  /messages/groups/{groupId}       — historique paginé groupe
+ *   POST /messages/private                — envoyer message privé (param: recipientId, content)
+ *   GET  /messages/private                — liste paginée des conversations
+ *   GET  /messages/private/{otherUserId}  — historique paginé avec un utilisateur
  */
 import api from './api';
-import type { ConversationLegacy, DirectMessage, PaginatedResponse } from '../types';
+import type { ChatMessageResponse, PrivateConversationSummaryResponse, PaginatedResponse } from '../types';
 
-/** Liste des conversations privées */
-export const getConversations = async (): Promise<ConversationLegacy[]> => {
-  const { data } = await api.get<ConversationLegacy[]>('/messages/conversations');
+// ─── Messages de Groupe ─────────────────────────────────────────────────────
+
+/** Récupérer l'historique des messages d'un groupe (REST fallback) */
+export const getGroupMessages = async (
+  groupId: string,
+  page: number = 0,
+  size: number = 50
+): Promise<PaginatedResponse<ChatMessageResponse>> => {
+  const { data } = await api.get<PaginatedResponse<ChatMessageResponse>>(
+    `/messages/groups/${groupId}`,
+    { params: { page, size, sort: 'createdAt,asc' } }
+  );
   return data;
 };
 
-/** Historique des messages avec un utilisateur */
-export const getDirectMessages = async (
-  userId: number | string,
+/** Envoyer un message dans un groupe (REST fallback si WebSocket indisponible) */
+export const sendGroupMessage = async (
+  groupId: string,
+  content: string
+): Promise<ChatMessageResponse> => {
+  const { data } = await api.post<ChatMessageResponse>(
+    `/messages/groups/${groupId}`,
+    { content }
+  );
+  return data;
+};
+
+// ─── Messages Privés ────────────────────────────────────────────────────────
+
+/** Liste paginée des conversations privées */
+export const getPrivateConversations = async (
   page: number = 0,
   size: number = 30
-): Promise<PaginatedResponse<DirectMessage>> => {
-  const { data } = await api.get<PaginatedResponse<DirectMessage>>(`/messages/direct/${userId}`, {
-    params: { page, size },
-  });
+): Promise<PaginatedResponse<PrivateConversationSummaryResponse>> => {
+  const { data } = await api.get<PaginatedResponse<PrivateConversationSummaryResponse>>(
+    '/messages/private',
+    { params: { page, size } }
+  );
+  return data;
+};
+
+/** Historique des messages privés avec un utilisateur */
+export const getPrivateMessages = async (
+  otherUserId: string,
+  page: number = 0,
+  size: number = 50
+): Promise<PaginatedResponse<ChatMessageResponse>> => {
+  const { data } = await api.get<PaginatedResponse<ChatMessageResponse>>(
+    `/messages/private/${otherUserId}`,
+    { params: { page, size } }
+  );
   return data;
 };
 
 /** Envoyer un message privé */
-export const sendDirectMessage = async (
-  userId: number | string,
+export const sendPrivateMessage = async (
+  recipientId: string,
   content: string
-): Promise<DirectMessage> => {
-  const { data } = await api.post<DirectMessage>(`/messages/direct/${userId}`, { content });
+): Promise<ChatMessageResponse> => {
+  const { data } = await api.post<ChatMessageResponse>(
+    '/messages/private',
+    { recipientId, content }
+  );
   return data;
 };
+
+// ─── Alias de compatibilité (utilisés par les anciennes pages) ───────────────
+
+/** @deprecated Utiliser getPrivateConversations() */
+export const getConversations = getPrivateConversations;
+
+/** @deprecated Utiliser getPrivateMessages() */
+export const getDirectMessages = (userId: string, page = 0, size = 30) =>
+  getPrivateMessages(userId, page, size);
+
+/** @deprecated Utiliser sendPrivateMessage() */
+export const sendDirectMessage = (userId: string, content: string) =>
+  sendPrivateMessage(userId, content);

@@ -16,32 +16,30 @@ import UPFCard from '../../components/ui/UPFCard';
 import UPFButton from '../../components/ui/UPFButton';
 import UPFChip from '../../components/ui/UPFChip';
 import { useAuth } from '../../hooks/useAuth';
-import type { Course, Announcement } from '../../types';
-import { getMyCourses, getMyAnnouncements } from '../../services/professorService';
+import type { CourseSummary, AnnouncementResponse } from '../../types';
+import { getMyCourses } from '../../services/professorService';
 
 const ProfessorDashboardPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [courses, setCourses] = useState<CourseSummary[]>([]);
+  const [announcements, setAnnouncements] = useState<AnnouncementResponse[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [c, a] = await Promise.all([getMyCourses(), getMyAnnouncements()]);
+        const c = await getMyCourses();
         setCourses(c);
-        setAnnouncements(a);
+        setAnnouncements([]); // endpoint pas encore dispo
       } catch {
         setCourses([
-          { id: 1, code: 'INF301', title: 'Algorithmique avancée', description: 'Structures de données.', filiere: 'Génie Informatique', annee: 3, semestre: 5, professorName: user?.firstName, isActive: true, createdAt: '2025-09-01' },
-          { id: 2, code: 'INF302', title: 'Programmation Web', description: 'React & Spring Boot.', filiere: 'Génie Informatique', annee: 3, semestre: 5, professorName: user?.firstName, isActive: true, createdAt: '2025-09-01' },
-          { id: 3, code: 'INF303', title: 'Base de données', description: 'SQL avancé.', filiere: 'Génie Informatique', annee: 2, semestre: 3, professorName: user?.firstName, isActive: true, createdAt: '2025-09-01' },
+          { id: '1', code: 'INF301', title: 'Algorithmique avancée', department: 'Génie Informatique', year: 3, semester: 5, professorName: user?.firstName } as unknown as CourseSummary,
+          { id: '2', code: 'INF302', title: 'Programmation Web', department: 'Génie Informatique', year: 3, semester: 5, professorName: user?.firstName } as unknown as CourseSummary,
         ]);
         setAnnouncements([
-          { id: 1, courseId: 1, courseTitle: 'Algorithmique avancée', title: 'Report du TP 3', content: 'Le TP 3 est reporté au lundi prochain.', authorName: `${user?.firstName} ${user?.lastName}`, createdAt: new Date(Date.now() - 86400000).toISOString() },
-          { id: 2, courseId: 2, courseTitle: 'Programmation Web', title: 'Projet final', content: 'Le sujet du projet final sera distribué vendredi.', authorName: `${user?.firstName} ${user?.lastName}`, createdAt: new Date(Date.now() - 172800000).toISOString() },
+          { id: '1', courseId: '1', courseTitle: 'Algorithmique avancée', title: 'Report du TP 3', content: 'Le TP 3 est reporté au lundi prochain.', professorName: `${user?.firstName} ${user?.lastName}`, createdAt: new Date(Date.now() - 86400000).toISOString() },
         ]);
       } finally { setLoading(false); }
     };
@@ -135,10 +133,10 @@ const ProfessorDashboardPage: React.FC = () => {
                   <ListItem sx={{ px: 1, py: 1.5, borderRadius: 2, cursor: 'pointer', '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.04) } }}
                     onClick={() => navigate(`/professor/courses/${c.id}`)}>
                     <ListItemText
-                      primary={<Typography variant="body2" fontWeight={600}>{c.code} — {c.title}</Typography>}
-                      secondary={`${c.filiere} · ${c.annee}A · S${c.semestre}`}
+                      primary={<Typography variant="body2" fontWeight={600}>{c.code} — {c.title ?? (c as any).name}</Typography>}
+                      secondary={`${(c as any).department ?? (c as any).filiere} · ${(c as any).year ?? (c as any).annee}A · S${(c as any).semester ?? (c as any).semestre}`}
                     />
-                    <UPFChip label={c.isActive ? 'Actif' : 'Inactif'} size="small" colorVariant={c.isActive ? 'success' : 'error'} />
+                    <UPFChip label={(c as any).isActive !== false ? 'Actif' : 'Inactif'} size="small" colorVariant={(c as any).isActive !== false ? 'success' : 'error'} />
                   </ListItem>
                   {i < courses.length - 1 && <Divider />}
                 </React.Fragment>

@@ -15,8 +15,8 @@ import InsertDriveFileRoundedIcon from '@mui/icons-material/InsertDriveFileRound
 import UPFCard from '../../components/ui/UPFCard';
 import UPFButton from '../../components/ui/UPFButton';
 import UPFModal from '../../components/ui/UPFModal';
-import type { CourseResource } from '../../types';
-import { uploadDocument, deleteDocument } from '../../services/professorService';
+import type { CourseResourceResponse } from '../../types';
+import { uploadResource } from '../../services/professorService';
 import { getCourseResources } from '../../services/courseService';
 
 const RESOURCE_TYPES = ['PDF', 'DOC', 'ZIP', 'LINK', 'VIDEO'];
@@ -25,42 +25,48 @@ const ProfessorDocumentsPage: React.FC = () => {
   const theme = useTheme();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const courseId = id ? Number(id) : 0;
+  const courseId = id;
 
-  const [resources, setResources] = useState<CourseResource[]>([]);
+  const [resources, setResources] = useState<CourseResourceResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState('');
   const [type, setType] = useState('PDF');
   const [uploading, setUploading] = useState(false);
-  const [deleteModal, setDeleteModal] = useState<{ open: boolean; resource: CourseResource | null }>({ open: false, resource: null });
+  const [deleteModal, setDeleteModal] = useState<{ open: boolean; resource: CourseResourceResponse | null }>({ open: false, resource: null });
 
   useEffect(() => {
     const fetchResources = async () => {
+      if (!courseId) return;
       setLoading(true);
       try {
         const data = await getCourseResources(courseId);
         setResources(data);
       } catch {
-        setResources([
-          { id: 1, courseId, title: 'Cours magistral — Chapitre 1', type: 'PDF', url: '#', sizeBytes: 2048000, downloadCount: 34 },
-          { id: 2, courseId, title: 'TD Série 1 — Exercices', type: 'PDF', url: '#', sizeBytes: 512000, downloadCount: 56 },
-          { id: 3, courseId, title: 'TP 1 — Code source', type: 'ZIP', url: '#', sizeBytes: 4096000, downloadCount: 22 },
-        ]);
+        // setResources([
+        //   { id: 1, courseId, title: 'Cours magistral — Chapitre 1', type: 'PDF', url: '#', sizeBytes: 2048000, downloadCount: 34 },
+        //   { id: 2, courseId, title: 'TD Série 1 — Exercices', type: 'PDF', url: '#', sizeBytes: 512000, downloadCount: 56 },
+        //   { id: 3, courseId, title: 'TP 1 — Code source', type: 'ZIP', url: '#', sizeBytes: 4096000, downloadCount: 22 },
+        // ]);
       } finally { setLoading(false); }
     };
     fetchResources();
   }, [courseId]);
 
   const handleUpload = async () => {
-    if (!file || !title.trim()) return;
+    if (!file || !title.trim() || !id) return;
     setUploading(true);
     try {
-      const newResource = await uploadDocument(courseId, file, title, type);
+      // POST /professors/me/courses/{courseId}/resources
+      const newResource = await uploadResource(id, file, title, type, false);
       setResources((prev) => [...prev, newResource]);
     } catch {
-      setResources((prev) => [...prev, { id: Date.now(), courseId, title, type: type as CourseResource['type'], url: '#', sizeBytes: file.size, downloadCount: 0 }]);
+      // Fallback optimiste
+      setResources((prev) => [...prev, {
+        id: String(Date.now()), courseId: id, title, fileType: type as any, fileUrl: '#',
+        fileSizeBytes: file.size, downloadCount: 0, isExternal: false, createdAt: new Date().toISOString(),
+      }]);
     } finally {
       setUploading(false);
       setUploadOpen(false);
@@ -71,8 +77,9 @@ const ProfessorDocumentsPage: React.FC = () => {
   };
 
   const handleDelete = async () => {
-    if (!deleteModal.resource) return;
-    try { await deleteDocument(courseId, deleteModal.resource.id); } catch { /* mock */ }
+    if (!deleteModal.resource || !id) return;
+    // Note : pas d'endpoint DELETE /professors/me/courses/{courseId}/resources/{id} dans ENDPIN.md
+    // à ajouter côté backend
     setResources((prev) => prev.filter((r) => r.id !== deleteModal.resource!.id));
     setDeleteModal({ open: false, resource: null });
   };
@@ -130,18 +137,16 @@ const ProfessorDocumentsPage: React.FC = () => {
                 <TableRow key={r.id} hover>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <InsertDriveFileRoundedIcon sx={{ color: typeColors[r.type] || '#888', fontSize: 20 }} />
+                      <InsertDriveFileRoundedIcon sx={{ color: typeColors[r.fileType] || '#888', fontSize: 20 }} />
                       <Typography variant="body2" fontWeight={500}>{r.title}</Typography>
                     </Box>
                   </TableCell>
-                  <TableCell>
-                    <Chip label={r.type} size="small" sx={{ bgcolor: alpha(typeColors[r.type] || '#888', 0.1), color: typeColors[r.type] || '#888', fontWeight: 600 }} />
-                  </TableCell>
-                  <TableCell><Typography variant="body2" color="text.secondary">{formatSize(r.sizeBytes)}</Typography></TableCell>
+                  <TableCell><Chip label={r.fileType ?? (r as any).type} size="small" sx={{ bgcolor: alpha(typeColors[(r.fileType ?? (r as any).type) as string] || '#888', 0.1), color: typeColors[(r.fileType ?? (r as any).type) as string] || '#888', fontWeight: 600 }} /></TableCell>
+                  <TableCell><Typography variant="body2" color="text.secondary">{formatSize(r.fileSizeBytes)}</Typography></TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <DownloadRoundedIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-                      <Typography variant="body2">{r.downloadCount}</Typography>
+                      <Typography variant="body2">{r.downloadCount ?? 0}</Typography>
                     </Box>
                   </TableCell>
                   <TableCell align="right">

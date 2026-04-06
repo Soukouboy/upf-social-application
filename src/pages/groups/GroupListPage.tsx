@@ -34,7 +34,7 @@ const GroupListPage: React.FC = () => {
         const data = await getGroups();
         setGroups(data);
       } catch {
-        setGroups(MOCK_GROUPS);
+        setGroups([]);
       } finally {
         setLoading(false);
       }
@@ -86,17 +86,17 @@ const GroupListPage: React.FC = () => {
                 {/* Bande de couleur en haut */}
                 <Box sx={{
                   position: 'absolute', top: 0, left: 0, right: 0, height: 4,
-                  background: group.visibility === 'PUBLIC'
+                  background: group.type === 'PUBLIC'
                     ? `linear-gradient(90deg, ${theme.palette.info.main}, ${theme.palette.primary.main})`
                     : `linear-gradient(90deg, ${theme.palette.warning.main}, ${theme.palette.secondary.main})`,
                 }} />
 
                 <Box sx={{ display: 'flex', gap: 1, mb: 2, mt: 1 }}>
                   <UPFChip
-                    label={group.visibility === 'PUBLIC' ? 'Public' : 'Privé'}
+                    label={group.type === 'PUBLIC' ? 'Public' : 'Privé'}
                     size="small"
-                    colorVariant={group.visibility === 'PUBLIC' ? 'info' : 'secondary'}
-                    icon={group.visibility === 'PUBLIC' ? <PublicRoundedIcon /> : <LockRoundedIcon />}
+                    colorVariant={group.type === 'PUBLIC' ? 'info' : 'secondary'}
+                    icon={group.type === 'PUBLIC' ? <PublicRoundedIcon /> : <LockRoundedIcon />}
                   />
                 </Box>
 
@@ -128,13 +128,13 @@ const GroupListPage: React.FC = () => {
   );
 };
 
-const MOCK_GROUPS: Group[] = [
-  { id: 1, name: 'Dev Web S4', description: 'Groupe d\'entraide pour le module Développement Web du semestre 4. React, Node.js, API REST.', visibility: 'PUBLIC', memberCount: 28, createdBy: { id: 1, firstName: 'Amina', lastName: 'Benali' }, createdAt: '2025-02-10', coverImageUrl: undefined },
-  { id: 2, name: 'Prépa Examen Algo', description: 'Préparation intensive pour l\'examen final d\'algorithmique. Exercices, annales, discussions.', visibility: 'PUBLIC', memberCount: 45, createdBy: { id: 2, firstName: 'Youssef', lastName: 'Karimi' }, createdAt: '2025-05-01', coverImageUrl: undefined },
-  { id: 3, name: 'Projet PFE — IA Médicale', description: 'Groupe privé pour le projet de fin d\'études sur l\'intelligence artificielle appliquée au diagnostic médical.', visibility: 'PRIVATE', memberCount: 6, createdBy: { id: 3, firstName: 'Sara', lastName: 'Moussaoui' }, createdAt: '2025-01-15', coverImageUrl: undefined },
-  { id: 4, name: 'Club Entrepreneuriat UPF', description: 'Le club entrepreneuriat de l\'UPF Campus Rabat. Business plans, networking, pitch sessions.', visibility: 'PUBLIC', memberCount: 62, createdBy: { id: 4, firstName: 'Omar', lastName: 'Tazi' }, createdAt: '2024-09-20', coverImageUrl: undefined },
-  { id: 5, name: 'BDD Avancées — Projet', description: 'Collaboration sur le projet de base de données avancées. PostgreSQL, optimisation.', visibility: 'PRIVATE', memberCount: 8, createdBy: { id: 1, firstName: 'Amina', lastName: 'Benali' }, createdAt: '2025-03-01', coverImageUrl: undefined },
-  { id: 6, name: 'Stage & Emploi', description: 'Partage d\'offres de stages et d\'emploi pour les étudiants UPF.', visibility: 'PUBLIC', memberCount: 120, createdBy: { id: 5, firstName: 'Leila', lastName: 'Fassi' }, createdAt: '2024-10-01', coverImageUrl: undefined },
-];
+// const MOCK_GROUPS: Group[] = [
+//   { id: 1, name: 'Dev Web S4', description: 'Groupe d\'entraide pour le module Développement Web du semestre 4. React, Node.js, API REST.', visibility: 'PUBLIC', memberCount: 28, createdBy: { id: 1, firstName: 'Amina', lastName: 'Benali' }, createdAt: '2025-02-10', coverImageUrl: undefined },
+//   { id: 2, name: 'Prépa Examen Algo', description: 'Préparation intensive pour l\'examen final d\'algorithmique. Exercices, annales, discussions.', visibility: 'PUBLIC', memberCount: 45, createdBy: { id: 2, firstName: 'Youssef', lastName: 'Karimi' }, createdAt: '2025-05-01', coverImageUrl: undefined },
+//   { id: 3, name: 'Projet PFE — IA Médicale', description: 'Groupe privé pour le projet de fin d\'études sur l\'intelligence artificielle appliquée au diagnostic médical.', visibility: 'PRIVATE', memberCount: 6, createdBy: { id: 3, firstName: 'Sara', lastName: 'Moussaoui' }, createdAt: '2025-01-15', coverImageUrl: undefined },
+//   { id: 4, name: 'Club Entrepreneuriat UPF', description: 'Le club entrepreneuriat de l\'UPF Campus Rabat. Business plans, networking, pitch sessions.', visibility: 'PUBLIC', memberCount: 62, createdBy: { id: 4, firstName: 'Omar', lastName: 'Tazi' }, createdAt: '2024-09-20', coverImageUrl: undefined },
+//   { id: 5, name: 'BDD Avancées — Projet', description: 'Collaboration sur le projet de base de données avancées. PostgreSQL, optimisation.', visibility: 'PRIVATE', memberCount: 8, createdBy: { id: 1, firstName: 'Amina', lastName: 'Benali' }, createdAt: '2025-03-01', coverImageUrl: undefined },
+//   { id: 6, name: 'Stage & Emploi', description: 'Partage d\'offres de stages et d\'emploi pour les étudiants UPF.', visibility: 'PUBLIC', memberCount: 120, createdBy: { id: 5, firstName: 'Leila', lastName: 'Fassi' }, createdAt: '2024-10-01', coverImageUrl: undefined },
+// ];
 
 export default GroupListPage;

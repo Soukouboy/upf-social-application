@@ -5,7 +5,7 @@ import UPFSearchBar from '../../components/ui/UPFSearchBar';
 import StudentCard from '../../components/network/StudentCard';
 import EmptyState from '../../components/common/EmptyState';
 import { getUsers } from '../../services/userService';
-import type { StudentNetwork } from '../../types';
+import type { StudentFollow, StudentNetwork } from '../../types';
 
 const NetworkPage: React.FC = () => {
   const [students, setStudents] = useState<StudentNetwork[]>([]);
@@ -18,7 +18,7 @@ const NetworkPage: React.FC = () => {
       setLoading(true);
       try {
         const data = await getUsers(search);
-        setStudents(data.content);
+        setStudents(Array.isArray(data) ? data : (data?.content || []));
       } catch (error) {
         console.error('Erreur lors de la récupération du réseau', error);
       } finally {
@@ -40,7 +40,7 @@ const NetworkPage: React.FC = () => {
         <Typography variant="body1" color="text.secondary" mb={3}>
           Recherchez vos camarades, suivez leurs activités et élargissez votre réseau.
         </Typography>
-        
+
         <UPFSearchBar
           placeholder="Rechercher par nom, prénom ou filière..."
           value={search}
@@ -58,10 +58,10 @@ const NetworkPage: React.FC = () => {
           ))}
         </Grid>
       ) : students.length === 0 ? (
-        <EmptyState 
-          title="Aucun étudiant trouvé" 
-          description="Essayez de modifier vos termes de recherche." 
-          icon={<PersonSearchRoundedIcon />} 
+        <EmptyState
+          title="Aucun étudiant trouvé"
+          description="Essayez de modifier vos termes de recherche."
+          icon={<PersonSearchRoundedIcon />}
         />
       ) : (
         <Grid container spacing={3}>

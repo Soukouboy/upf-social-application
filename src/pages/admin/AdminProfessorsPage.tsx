@@ -20,17 +20,17 @@ import UPFButton from '../../components/ui/UPFButton';
 import UPFAvatar from '../../components/ui/UPFAvatar';
 import UPFModal from '../../components/ui/UPFModal';
 import UPFSearchBar from '../../components/ui/UPFSearchBar';
-import type { Professor, Course } from '../../types';
-import { getProfessors, createProfessor, assignCourseToProf } from '../../services/adminService';
-import { getCourses } from '../../services/courseService';
+import type { CourseSummary } from '../../types';
+import type { ProfessorProfileResponse } from '../../services/adminService';
+import { getProfessors, createProfessor, assignCourseToProf, getAdminCourses } from '../../services/adminService';
 
 const DEPARTMENTS = ['Informatique', 'Génie Civil', 'Génie Électrique', 'Architecture', 'Management', 'Mathématiques', 'Physique'];
 const TITLES = ['Dr.', 'Pr.', 'M.', 'Mme'];
 
 const AdminProfessorsPage: React.FC = () => {
   const theme = useTheme();
-  const [professors, setProfessors] = useState<Professor[]>([]);
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [professors, setProfessors] = useState<ProfessorProfileResponse[]>([]);
+  const [courses, setCourses] = useState<CourseSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [success, setSuccess] = useState<string | null>(null);
@@ -55,9 +55,9 @@ const AdminProfessorsPage: React.FC = () => {
       try {
         const [profData, courseData] = await Promise.all([
           getProfessors(),
-          getCourses(),
+          getAdminCourses(),
         ]);
-        setProfessors(profData);
+        setProfessors(profData as any);
         setCourses(courseData.content);
       } catch {
         // Fallback data already in mock
@@ -106,16 +106,11 @@ const AdminProfessorsPage: React.FC = () => {
     if (!assignProfId || !assignCourseId) return;
     setAssignLoading(true);
     try {
-      await assignCourseToProf(assignCourseId, assignProfId);
-      // Update local state
-      const course = courses.find((c) => c.id === assignCourseId);
-      if (course) {
-        setProfessors((prev) => prev.map((p) =>
-          p.id === assignProfId
-            ? { ...p, courses: [...(p.courses || []), course] }
-            : p
-        ));
-      }
+      // PUT /admin/professors/{professorId}/courses/{courseId}
+      const updated = await assignCourseToProf(assignProfId, String(assignCourseId));
+      setProfessors((prev) => prev.map((p) =>
+        p.id === assignProfId ? { ...p, courses: updated.courses } as any : p
+      ));
       setAssignOpen(false);
       setAssignCourseId('');
       setSuccess('Cours affecté avec succès !');
@@ -264,7 +259,7 @@ const AdminProfessorsPage: React.FC = () => {
               <MenuItem key={c.id} value={c.id}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <MenuBookRoundedIcon sx={{ fontSize: 16, color: 'primary.main' }} />
-                  <span>{c.code ? `[${c.code}] ` : ''}{c.title} — {c.filiere}</span>
+                  <span>{c.code ? `[${c.code}] ` : ''}{c.title ?? (c as any).name}</span>
                 </Box>
               </MenuItem>
             ))}

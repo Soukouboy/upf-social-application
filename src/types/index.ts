@@ -17,7 +17,7 @@ export type AdminLevel = 'SUPER_ADMIN' | 'ADMIN' | 'MODERATOR';
 
 export type EnrollmentStatus = 'ACTIVE' | 'INACTIVE';
 
-export type ExamType = 'PARTIEL' | 'FINAL' | 'RATTRAPAGE' | 'CC' | 'TP' | 'AUTRE';
+export type ExamType = 'PROJET' | 'CF' | 'RATTRAPAGE' | 'CC' | 'TP';
 
 // Correspond à FileType.java
 export type FileType = 'PDF' | 'DOC' | 'DOCX' | 'XLS' | 'XLSX'
@@ -102,25 +102,26 @@ export interface StudentSummary {
   email: string;
   major: string;
   currentYear: number;
-  avatarUrl?: string;
-  profilePublic: boolean;
+  profilePictureUrl?: string;
+  isProfilePublic: boolean;
+  lastLoginAt: Date,
+  role: UserRole;
+
 }
 
 // Correspond à StudentProfile.java (détail complet)
 export interface StudentDetails extends StudentSummary {
   bio?: string;
-  followersCount: number;
-  followingCount: number;
-  isFollowing?: boolean;  // calculé côté backend selon l'utilisateur connecté
+  // followersCount: number;
+  // followingCount: number;
+  // isFollowing?: boolean;  // calculé côté backend selon l'utilisateur connecté
 }
 
 // Correspond à ProfessorProfile.java
 export interface ProfessorSummary {
   id: string;           // UUID de ProfessorProfile
-  userId: string;
   firstName: string;
   lastName: string;
-  email: string;
   department?: string;
   title?: string;       // "Dr.", "Pr."
 }
@@ -141,31 +142,118 @@ export interface AdminProfile {
 }
 
 // =============================================================================
+// NOVEAUX TYPES : CurrentUser (Backend /users/me updates)
+// =============================================================================
+
+export interface StudentProfileFrontend {
+  id: string;
+  userId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  major: string;
+  currentYear: number;
+  profilePictureUrl?: string | null;
+  bio?: string | null;
+  isProfilePublic: boolean;
+  lastLoginAt?: string | null;
+  role: UserRole;
+}
+
+
+export interface StudentFollow {
+  id: string,
+  firstName: string,
+  lastName: string,
+  major: string,
+  currentYear: number,
+
+  profilePictureUrl?: string | null,
+  followersCount: number,
+
+}
+
+
+export interface AdminProfileFrontend {
+  id: string;
+  userId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  adminLevel: string;
+  lastActionAt?: string | null;
+}
+
+export interface ProfessorProfileFrontend {
+  id: string;
+  userId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  department?: string | null;
+  title?: string | null;
+  bio?: string | null;
+}
+
+export type CurrentUserResponse =
+  | { role: "STUDENT"; studentProfile: StudentProfileFrontend; adminProfile: null; professorProfile: null }
+  | { role: "ADMIN"; studentProfile: null; adminProfile: AdminProfileFrontend; professorProfile: null }
+  | { role: "PROFESSOR"; studentProfile: null; adminProfile: null; professorProfile: ProfessorProfileFrontend };
+
+export interface AuthUser {
+  id: string;
+  userId: string;
+  role: UserRole;
+  email: string;
+  firstName: string;
+  lastName: string;
+  avatarUrl?: string;
+  // Garder le type original pour l'accès aux champs spécifiques si besoin
+  profileData: CurrentUserResponse;
+}
+
+// =============================================================================
 // COURS — DTOs des mappers CourseMapper
 // =============================================================================
 
 // Correspond à CourseSummary.java (liste paginée)
+
+// AnnoucementResponse
+export interface AnnoucementResponse {
+
+  id: string,
+  title: string,
+  content: string,
+  course: CourseSummary,
+  professor: ProfessorSummary,
+  createdAt: string
+}
+
 export interface CourseSummary {
-  id: string;           // UUID
-  code: string;
-  title: string;
-  major: string;        // ← "major" et non "filiere"
-  year: number;         // ← "year" et non "annee"
-  semester: number;     // ← "semester" et non "semestre"
-  credits: number;
-  instructorName: string;
-  isActive: boolean;
+
+  id: string,
+  code: string,
+  title: string,
+  major: string,
+  year: number,
+  semester: number,
+  credits: number,
+  professorName: string
 }
 
 // Correspond à CourseDetails.java (détail complet)
 export interface CourseDetails extends CourseSummary {
-  description?: string;
-  objectives?: string;
-  prerequisites?: string;
-  resources: CourseResourceResponse[];
-  announcements: AnnouncementResponse[];
-  createdAt: string;
-  updatedAt: string;
+
+  objectives: string,
+  prerequisites: string,
+  professor: ProfessorSummary,
+  isActive: boolean,
+  resources: CourseResourceResponse[],
+  announcements: AnnoucementResponse[],
+  resourceCount: number,
+  announcementCount: number,
+  createdAt: string,
+  updatedAt: string
 }
 
 // Correspond à CourseResourceResponse.java
@@ -178,18 +266,17 @@ export interface CourseResourceResponse {
   fileSizeBytes?: number;   // nullable pour les liens externes
   downloadCount: number;
   isExternal: boolean;
-  uploadedAt: string;
+  createdAt: string;
   uploadedByName?: string;  // nom du professeur
 }
 
 // Correspond à AnnouncementResponse.java
 export interface AnnouncementResponse {
   id: string;           // UUID
-  courseId: string;     // UUID
-  courseTitle: string;
   title: string;
   content: string;
-  professorName: string;
+  course: CourseSummary;
+  professor: ProfessorSummary;
   createdAt: string;
 }
 
@@ -237,14 +324,15 @@ export interface CourseFilters {
 // Correspond à ExamSummary.java
 export interface ExamSummary {
   id: string;           // UUID
-  subject: string;
+  title: string;
   academicYear: string;
   examType: ExamType;
   fileName: string;
   fileSizeBytes: number;
   downloadCount: number;
   upvoteCount: number;
-  uploadedBy: StudentSummary;
+  uploader: StudentSummary;
+  isHidden: boolean,
   courseId: string;     // UUID
   createdAt: string;
 }
@@ -261,6 +349,19 @@ export interface ExamDetails extends ExamResponse {
   comments: ExamCommentResponse[];
   userVote?: VoteType;  // vote de l'utilisateur connecté
   isHidden: boolean;
+}
+
+export interface ExamResponseDto {
+  id: string;
+  title: string;
+  academicYear: string;
+  examType: ExamType;
+  examDate: string;
+  uploaderName: string;
+  courseName: string;
+  downloadCount: number;
+  upvoteCount: number;
+  downvoteCount: number;
 }
 
 // Correspond à ExamCommentResponse.java
@@ -341,32 +442,53 @@ export interface GroupMembershipResponse {
 // MESSAGES — alignés sur Messages.java
 // =============================================================================
 
-// Correspond à Messages.java (message de groupe ou privé)
+// Correspond à ChatMessageResponse.java (backend ENDPIN.md)
 export interface ChatMessageResponse {
-  id: string;           // UUID
-  context: ContextMessage;
-  groupId?: string;     // UUID — présent si context = GROUP
-  senderId: string;     // UUID brut (StudentProfile) ← UUID brut dans l'entité
-  recipientId?: string; // UUID brut — présent si context = PRIVATE
+  messageId: string;    // UUID — champ principal
+  id?: string;          // alias legacy
+  content: string;
   senderName: string;   // calculé côté backend
-  content?: string;
+  senderId: string;     // UUID du StudentProfile expéditeur
+  groupId?: string;     // UUID — présent si message de groupe
+  recipientId?: string | null; // UUID — présent si message privé
   messageType: MessageType;
+  isEdited: boolean;
+  editedAt?: string | null;
+  sentAt: string;       // ← "sentAt" dans ENDPIN.md (et non "createdAt")
+  // Champs additionnels compatibilité
+  createdAt?: string;   // alias legacy
+  context?: ContextMessage;
   fileUrl?: string;
   fileName?: string;
   fileSize?: number;
-  replyToId?: string;   // UUID
-  isEdited: boolean;
-  isDeleted: boolean;
-  createdAt: string;    // ← "createdAt" et non "timestamp" ni "sentAt"
+  replyToId?: string;
+  isDeleted?: boolean;
 }
 
-// Envoyé via STOMP WebSocket vers /app/chat/group/{groupId}
+// Correspond à PrivateConversationSummaryResponse.java (backend ENDPIN.md)
+export interface PrivateConversationSummaryResponse {
+  otherUserId: string;  // UUID du StudentProfile interlocuteur
+  lastMessageAt: string; // ISO 8601
+  // Champs enrichis (à récupérer via GET /users/{id}/profile)
+  firstName?: string;
+  lastName?: string;
+  avatarUrl?: string;
+  lastMessage?: string;
+  unreadCount?: number;
+}
+
+// Payload envoyé via STOMP WebSocket
+// Note : groupId N'EST PAS dans le payload (il est dans l'URL : /app/chat/group/{groupId})
 export interface ChatMessageRequest {
   content: string;
-  groupId?: string;     // UUID — null si message privé
 }
 
-// Correspond à Conversation (liste des DMs)
+// Payload WebSocket message privé vers /app/chat/private/{recipientId}
+export interface PrivateChatMessageRequest {
+  content: string;
+}
+
+// Correspond à Conversation (liste des DMs — format legacy frontend)
 export interface Conversation {
   studentId: string;    // UUID StudentProfile de l'interlocuteur
   firstName: string;
@@ -528,7 +650,7 @@ export interface ApiError {
 
 /** Alias utilisé par toutes les pages existantes */
 export interface Student {
-  id: number | string;
+  id: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -547,24 +669,22 @@ export interface StudentNetwork extends Student {
   isFollowing: boolean;
   followersCount: number;
   followingCount: number;
-  major?: string;
-  currentYear?: number;
-}
-
-/** Alias cours utilisé dans les pages */
-export interface Course {
-  id: number | string;
-  code?: string;
-  title: string;
-  description?: string;
-  filiere: string;
-  annee: number;
-  semestre: number;
-  professorName: string;
-  isActive: boolean;
-  createdAt: string;
-  credits?: number;
-}
+  major: string;
+  currentYear: number;
+}// /** Alias cours utilisé dans les pages */
+// export interface Course {
+//   id: number | string;
+//   code?: string;
+//   title: string;
+//   description?: string;
+//   major: string;
+//   year: number;
+//   semester: number;
+//   professorName: string;
+//   isActive: boolean;
+//   createdAt: string;
+//   credits?: number;
+// }
 
 /** Alias épreuves */
 export interface Exam {
@@ -586,24 +706,16 @@ export interface Exam {
 
 /** Requête d'upload d'épreuve (ancien format) */
 export interface ExamUploadRequestLegacy {
-  title: string;
-  matiere: string;
-  anneeAcademique: string;
+  subject: string;
+  courseId: string;
+  academicYear: string;
   type: ExamType;
   description?: string;
   file: File;
 }
 
-/** Alias ressource de cours */
-export interface CourseResource {
-  id: number | string;
-  courseId: number | string;
-  title: string;
-  type: string;
-  url: string;
-  sizeBytes?: number;
-  downloadCount: number;
-}
+
+
 
 /** Alias annonce */
 export interface Announcement {
@@ -617,15 +729,20 @@ export interface Announcement {
 }
 
 /** Alias groupe */
+/** Alias groupe */
 export interface Group {
-  id: number | string;
+  id: string;
   name: string;
-  description?: string;
-  visibility: GroupVisibility;
+  description: string;
+  coverImageUrl: string;
+  type: string;
+  major: string;
+  createdBy: string;
   memberCount: number;
-  createdBy: { id: number | string; firstName: string; lastName: string };
+  messageCount: number;
+  isActive: boolean;
   createdAt: string;
-  coverImageUrl?: string;
+  updatedAt: string;
 }
 
 /** Alias adhésion de groupe */
@@ -707,5 +824,5 @@ export interface Professor {
   email: string;
   department?: string;
   title?: string;
-  courses?: Course[];
+  courses?: CourseSummary[];
 }

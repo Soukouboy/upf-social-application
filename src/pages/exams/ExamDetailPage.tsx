@@ -18,7 +18,7 @@ import UPFButton from '../../components/ui/UPFButton';
 import UPFAvatar from '../../components/ui/UPFAvatar';
 import UPFModal from '../../components/ui/UPFModal';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import type { Exam, ReportReason } from '../../types';
+import type { ExamResponseDto, ReportReason } from '../../types';
 import { getExamById, downloadExam, voteExam, reportExam } from '../../services/examService';
 
 const REPORT_REASONS: { value: ReportReason; label: string }[] = [
@@ -33,7 +33,7 @@ const ExamDetailPage: React.FC = () => {
   const theme = useTheme();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [exam, setExam] = useState<Exam | null>(null);
+  const [exam, setExam] = useState<ExamResponseDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [reportOpen, setReportOpen] = useState(false);
 
@@ -42,17 +42,14 @@ const ExamDetailPage: React.FC = () => {
       if (!id) return;
       setLoading(true);
       try {
-        const data = await getExamById(Number(id));
+        const data = await getExamById(id);
         setExam(data);
       } catch {
-        setExam({
-          id: Number(id), title: 'Examen Final Algorithmique', matiere: 'Algorithmique',
-          anneeAcademique: '2024-2025', type: 'FINAL',
-          description: 'Examen final couvrant les chapitres 1 à 8. Durée 3h. Documents autorisés : une feuille A4 recto-verso.',
-          fileUrl: '#', fileName: 'algo_final_2025.pdf', fileSizeBytes: 3200000,
-          downloadCount: 87, upvotes: 24, downvotes: 2,
-          uploadedBy: { id: 1, firstName: 'Amina', lastName: 'Benali', avatarUrl: undefined },
-          createdAt: '2025-06-15',
+         setExam({
+          id: id || "mock-id", title: 'Examen Final Algorithmique', courseName: 'Algorithmique',
+          academicYear: '2024-2025', examType: 'FINAL' as any,
+          downloadCount: 87, upvoteCount: 24, downvoteCount: 2,
+          uploaderName: 'Amina Benali', examDate: '2025-06-15',
         });
       } finally { setLoading(false); }
     };
@@ -65,7 +62,7 @@ const ExamDetailPage: React.FC = () => {
       const blob = await downloadExam(exam.id);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = exam.fileName; a.click();
+      a.href = url; a.download = `${exam.title}.pdf`; a.click();
       window.URL.revokeObjectURL(url);
     } catch { /* fallback */ }
   };
@@ -100,24 +97,21 @@ const ExamDetailPage: React.FC = () => {
         <Grid size={{ xs: 12, md: 8 }}>
           <UPFCard noHover>
             <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
-              <UPFChip label={exam.type} colorVariant="error" />
-              <UPFChip label={exam.matiere} colorVariant="primary" />
-              <UPFChip label={exam.anneeAcademique} colorVariant="secondary" />
+              <UPFChip label={exam.examType} colorVariant="error" />
+              <UPFChip label={exam.courseName} colorVariant="primary" />
+              <UPFChip label={exam.academicYear} colorVariant="secondary" />
             </Box>
             <Typography variant="h4" fontWeight={700} mb={2}>{exam.title}</Typography>
-            {exam.description && (
-              <Typography variant="body1" color="text.secondary" lineHeight={1.8} mb={3}>{exam.description}</Typography>
-            )}
             <Divider sx={{ my: 2 }} />
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
               <UPFButton variant="contained" startIcon={<DownloadRoundedIcon />} onClick={handleDownload}>
-                Télécharger ({(exam.fileSizeBytes / 1024 / 1024).toFixed(1)} Mo)
+                Télécharger
               </UPFButton>
               <UPFButton variant="outlined" startIcon={<ThumbUpAltRoundedIcon />} onClick={() => handleVote('UP')} color="success">
-                {exam.upvotes}
+                {exam.upvoteCount}
               </UPFButton>
               <UPFButton variant="outlined" startIcon={<ThumbDownAltRoundedIcon />} onClick={() => handleVote('DOWN')} color="error">
-                {exam.downvotes}
+                {exam.downvoteCount}
               </UPFButton>
               <UPFButton variant="text" startIcon={<FlagRoundedIcon />} onClick={() => setReportOpen(true)} color="warning">
                 Signaler
@@ -130,10 +124,8 @@ const ExamDetailPage: React.FC = () => {
           <UPFCard noHover sx={{ mb: 3 }}>
             <Typography variant="h6" fontWeight={600} mb={2}>Informations</Typography>
             {[
-              { label: 'Fichier', value: exam.fileName },
-              { label: 'Taille', value: `${(exam.fileSizeBytes / 1024 / 1024).toFixed(1)} Mo` },
               { label: 'Téléchargements', value: `${exam.downloadCount}` },
-              { label: 'Date de dépôt', value: new Date(exam.createdAt).toLocaleDateString('fr-FR') },
+              { label: 'Date de dépôt', value: new Date(exam.examDate).toLocaleDateString('fr-FR') },
             ].map((info) => (
               <Box key={info.label} sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: `1px solid ${theme.palette.divider}` }}>
                 <Typography variant="body2" color="text.secondary">{info.label}</Typography>
@@ -145,13 +137,13 @@ const ExamDetailPage: React.FC = () => {
           <UPFCard noHover>
             <Typography variant="h6" fontWeight={600} mb={2}>Déposé par</Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <UPFAvatar firstName={exam.uploadedBy.firstName} lastName={exam.uploadedBy.lastName} />
+              <UPFAvatar firstName={exam.uploaderName} lastName="" />
               <Box>
                 <Typography variant="body2" fontWeight={600}>
-                  {exam.uploadedBy.firstName} {exam.uploadedBy.lastName}
+                  {exam.uploaderName}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {new Date(exam.createdAt).toLocaleDateString('fr-FR')}
+                  {new Date(exam.examDate).toLocaleDateString('fr-FR')}
                 </Typography>
               </Box>
             </Box>

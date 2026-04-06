@@ -47,7 +47,7 @@ export const useWebSocket = ({ groupId, onMessage, onConnectionChange }: UseWebS
     const tokens = getStoredTokens();
 
     const client = new Client({
-      webSocketFactory: () => new SockJS(WS_URL),
+      webSocketFactory: () => new SockJS(`${WS_URL}?token=${tokens?.accessToken || ''}`),
       connectHeaders: {
         Authorization: `Bearer ${tokens?.accessToken || ''}`,
       },

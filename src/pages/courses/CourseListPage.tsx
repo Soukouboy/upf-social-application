@@ -25,7 +25,7 @@ import UPFSearchBar from '../../components/ui/UPFSearchBar';
 import UPFChip from '../../components/ui/UPFChip';
 import UPFButton from '../../components/ui/UPFButton';
 import EmptyState from '../../components/common/EmptyState';
-import type { Course, CourseFilters } from '../../types';
+import type { CourseDetails, CourseFilters } from '../../types';
 import { getCourses } from '../../services/courseService';
 
 const FILIERES = ['Toutes', 'Informatique', 'Gestion', 'Finance', 'Marketing', 'Droit'];
@@ -34,7 +34,7 @@ const SEMESTRES = [0, 1, 2]; // 0 = tous
 const CourseListPage: React.FC = () => {
   const navigate = useNavigate();
 
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [courses, setCourses] = useState<CourseDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filiere, setFiliere] = useState('Toutes');
@@ -58,7 +58,7 @@ const CourseListPage: React.FC = () => {
         setTotalPages(result.totalPages);
       } catch {
         // En mode démo, utiliser des données fictives
-        setCourses(MOCK_COURSES);
+        // setCourses(MOCK_COURSES);
         setTotalPages(2);
       } finally {
         setLoading(false);
@@ -147,9 +147,9 @@ const CourseListPage: React.FC = () => {
                   onClick={() => navigate(`/student/courses/${course.id}`)}
                 >
                   <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
-                    <UPFChip label={course.filiere} size="small" colorVariant="primary" />
+                    <UPFChip label={course.major} size="small" colorVariant="primary" />
                     <Chip
-                      label={`S${course.semestre}`}
+                      label={`S${course.semester}`}
                       size="small"
                       variant="outlined"
                       sx={{ borderRadius: 50, fontSize: '0.7rem' }}
@@ -169,7 +169,7 @@ const CourseListPage: React.FC = () => {
                       overflow: 'hidden',
                     }}
                   >
-                    {course.description}
+                    {course.objectives}
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     {course.professorName && (
@@ -183,7 +183,7 @@ const CourseListPage: React.FC = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <CalendarTodayRoundedIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
                       <Typography variant="caption" color="text.secondary">
-                        Année {course.annee}
+                        Année {course.year}
                       </Typography>
                     </Box>
                   </Box>
@@ -218,32 +218,32 @@ const CourseListPage: React.FC = () => {
   );
 };
 
-// Données fictives pour la démo
-const MOCK_COURSES: Course[] = [
-  {
-    id: 1, title: 'Algorithmique et Structures de Données', description: 'Étude des algorithmes fondamentaux : tri, recherche, graphes. Analyse de complexité et structures de données avancées.',
-    filiere: 'Informatique', annee: 2, semestre: 1, professorName: 'Prof. Ahmed', isActive: true, createdAt: '2025-09-01',
-  },
-  {
-    id: 2, title: 'Base de Données Avancées', description: 'SQL avancé, optimisation de requêtes, NoSQL, transactions distribuées et réplication.',
-    filiere: 'Informatique', annee: 3, semestre: 1, professorName: 'Prof. Fatima', isActive: true, createdAt: '2025-09-01',
-  },
-  {
-    id: 3, title: 'Développement Web Full Stack', description: 'React, Node.js, REST API, authentification JWT, déploiement cloud.',
-    filiere: 'Informatique', annee: 3, semestre: 2, professorName: 'Prof. Karim', isActive: true, createdAt: '2025-09-01',
-  },
-  {
-    id: 4, title: 'Comptabilité Analytique', description: 'Méthodes de calcul des coûts, budgets prévisionnels, contrôle de gestion.',
-    filiere: 'Gestion', annee: 2, semestre: 1, professorName: 'Prof. Nadia', isActive: true, createdAt: '2025-09-01',
-  },
-  {
-    id: 5, title: 'Marketing Digital', description: 'SEO, SEA, réseaux sociaux, content marketing, analytics et KPIs.',
-    filiere: 'Marketing', annee: 2, semestre: 2, professorName: 'Prof. Hassan', isActive: true, createdAt: '2025-09-01',
-  },
-  {
-    id: 6, title: 'Droit des Affaires', description: 'Contrats commerciaux, droit des sociétés, propriété intellectuelle.',
-    filiere: 'Droit', annee: 3, semestre: 1, professorName: 'Prof. Salma', isActive: true, createdAt: '2025-09-01',
-  },
-];
+// // Données fictives pour la démo
+// const MOCK_COURSES: Course[] = [
+//   {
+//     id: 1, title: 'Algorithmique et Structures de Données', description: 'Étude des algorithmes fondamentaux : tri, recherche, graphes. Analyse de complexité et structures de données avancées.',
+//     major: 'Informatique', annee: 2, semestre: 1, professorName: 'Prof. Ahmed', isActive: true, createdAt: '2025-09-01',
+//   },
+//   {
+//     id: 2, title: 'Base de Données Avancées', description: 'SQL avancé, optimisation de requêtes, NoSQL, transactions distribuées et réplication.',
+//     major: 'Informatique', annee: 3, semestre: 1, professorName: 'Prof. Fatima', isActive: true, createdAt: '2025-09-01',
+//   },
+//   {
+//     id: 3, title: 'Développement Web Full Stack', description: 'React, Node.js, REST API, authentification JWT, déploiement cloud.',
+//     major: 'Informatique', annee: 3, semestre: 2, professorName: 'Prof. Karim', isActive: true, createdAt: '2025-09-01',
+//   },
+//   {
+//     id: 4, title: 'Comptabilité Analytique', description: 'Méthodes de calcul des coûts, budgets prévisionnels, contrôle de gestion.',
+//     major: 'Gestion', annee: 2, semestre: 1, professorName: 'Prof. Nadia', isActive: true, createdAt: '2025-09-01',
+//   },
+//   {
+//     id: 5, title: 'Marketing Digital', description: 'SEO, SEA, réseaux sociaux, content marketing, analytics et KPIs.',
+//     major: 'Marketing', annee: 2, semestre: 2, professorName: 'Prof. Hassan', isActive: true, createdAt: '2025-09-01',
+//   },
+//   {
+//     id: 6, title: 'Droit des Affaires', description: 'Contrats commerciaux, droit des sociétés, propriété intellectuelle.',
+//     major: 'Droit', annee: 3, semestre: 1, professorName: 'Prof. Salma', isActive: true, createdAt: '2025-09-01',
+//   },
+// ];
 
 export default CourseListPage;

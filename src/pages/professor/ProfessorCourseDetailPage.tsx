@@ -4,8 +4,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Box, Typography, Grid, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, IconButton, Breadcrumbs, Link, useTheme, alpha, Chip,
+  Box, Typography, Table, TableBody, TableCell, TableContainer,
+  TableHead, TableRow, IconButton, Breadcrumbs, Link, useTheme, alpha,
 } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded';
@@ -16,35 +16,35 @@ import UPFChip from '../../components/ui/UPFChip';
 import UPFAvatar from '../../components/ui/UPFAvatar';
 import UPFSearchBar from '../../components/ui/UPFSearchBar';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import type { Course, Student } from '../../types';
+import type { CourseSummary } from '../../types';
+import type { StudentProfileSummary } from '../../services/professorService';
 import { getMyCourses, getCourseStudents } from '../../services/professorService';
 
 const ProfessorCourseDetailPage: React.FC = () => {
   const theme = useTheme();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const courseId = id ? Number(id) : 0;
+  const courseId = id || '';
 
-  const [course, setCourse] = useState<Course | null>(null);
-  const [students, setStudents] = useState<Student[]>([]);
+  const [course, setCourse] = useState<CourseSummary | null>(null);
+  const [students, setStudents] = useState<StudentProfileSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+      if (!courseId) return;
       try {
         const [courses, studs] = await Promise.all([getMyCourses(), getCourseStudents(courseId)]);
-        setCourse(courses.find((c) => c.id === courseId) || null);
+        setCourse(courses.find((c) => String(c.id) === courseId) || null);
         setStudents(studs);
       } catch {
-        setCourse({ id: courseId, code: 'INF301', title: 'Algorithmique avancée', description: 'Structures de données et complexité algorithmique.', filiere: 'Génie Informatique', annee: 3, semestre: 5, professorName: 'Pr. Chraibi', isActive: true, createdAt: '2025-09-01' });
+        // Fallback for mock environment
+        setCourse({ id: courseId, code: 'INF301', title: 'Algorithmique avancée', department: 'Génie Informatique', year: 3, semester: 5, professorName: 'Pr. Chraibi' } as unknown as CourseSummary);
         setStudents([
-          { id: 1, firstName: 'Amine', lastName: 'Benali', email: 'amine@upf.ac.ma', filiere: 'Génie Informatique', annee: 3, role: 'STUDENT', isActive: true, createdAt: '2025-09-01' },
-          { id: 2, firstName: 'Sarah', lastName: 'Alaoui', email: 'sarah@upf.ac.ma', filiere: 'Génie Informatique', annee: 3, role: 'STUDENT', isActive: true, createdAt: '2025-09-01' },
-          { id: 3, firstName: 'Youssef', lastName: 'Karimi', email: 'youssef@upf.ac.ma', filiere: 'Génie Informatique', annee: 3, role: 'STUDENT', isActive: true, createdAt: '2025-09-01' },
-          { id: 4, firstName: 'Lina', lastName: 'Tazi', email: 'lina@upf.ac.ma', filiere: 'Génie Informatique', annee: 3, role: 'STUDENT', isActive: true, createdAt: '2025-09-01' },
-          { id: 5, firstName: 'Omar', lastName: 'Fassi', email: 'omar@upf.ac.ma', filiere: 'Génie Informatique', annee: 3, role: 'STUDENT', isActive: true, createdAt: '2025-09-01' },
+          { id: '1', firstName: 'Amine', lastName: 'Benali', email: 'amine@upf.ac.ma', major: 'Génie Informatique', currentYear: 3 },
+          { id: '2', firstName: 'Sarah', lastName: 'Alaoui', email: 'sarah@upf.ac.ma', major: 'Génie Informatique', currentYear: 3 },
         ]);
       } finally { setLoading(false); }
     };
@@ -77,10 +77,10 @@ const ProfessorCourseDetailPage: React.FC = () => {
         <Box sx={{ position: 'relative', zIndex: 1 }}>
           <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
             <UPFChip label={course.code || '—'} sx={{ bgcolor: alpha('#fff', 0.2), color: '#fff' }} />
-            <UPFChip label={`S${course.semestre}`} sx={{ bgcolor: alpha('#fff', 0.2), color: '#fff' }} />
+            <UPFChip label={`S${(course as any).semester ?? (course as any).semestre}`} sx={{ bgcolor: alpha('#fff', 0.2), color: '#fff' }} />
           </Box>
-          <Typography variant="h4" fontWeight={700} mb={1}>{course.title}</Typography>
-          <Typography variant="body1" sx={{ opacity: 0.85, mb: 2 }}>{course.description}</Typography>
+          <Typography variant="h4" fontWeight={700} mb={1}>{course.title ?? (course as any).name}</Typography>
+          <Typography variant="body1" sx={{ opacity: 0.85, mb: 2 }}>{(course as any).description}</Typography>
           <Box sx={{ display: 'flex', gap: 2 }}>
             <UPFButton variant="contained" startIcon={<FolderRoundedIcon />}
               onClick={() => navigate(`/professor/courses/${course.id}/documents`)}
@@ -124,8 +124,8 @@ const ProfessorCourseDetailPage: React.FC = () => {
                     </Box>
                   </TableCell>
                   <TableCell><Typography variant="body2" color="text.secondary">{s.email}</Typography></TableCell>
-                  <TableCell><Typography variant="body2">{s.filiere}</Typography></TableCell>
-                  <TableCell><Typography variant="body2">{s.annee}ème année</Typography></TableCell>
+                  <TableCell><Typography variant="body2">{s.major}</Typography></TableCell>
+                  <TableCell><Typography variant="body2">{s.currentYear}ème année</Typography></TableCell>
                 </TableRow>
               ))}
             </TableBody>

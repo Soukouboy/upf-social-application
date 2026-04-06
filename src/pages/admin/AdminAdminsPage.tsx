@@ -1,54 +1,66 @@
 /**
  * AdminAdminsPage — Gestion des administrateurs
  *
- * SUPER_ADMIN peut :
- *   - Voir la liste de tous les admins
- *   - Créer un nouveau compte administrateur
- *   - Promouvoir un utilisateur existant en ADMIN
- *   - Rétrograder un admin en STUDENT
+ * Endpoints utilisés (ENDPIN.md) :
+ *   GET    /admin/accounts                         — liste des admins
+ *   GET    /admin/students                         — liste des étudiants (pour promotion)
+ *   POST   /admin/accounts                         — créer un compte admin
+ *   POST   /admin/students/{studentId}/promote     — promouvoir un étudiant en admin
+ *   PUT    /admin/accounts/{adminProfileId}/level  — modifier le niveau d'un admin
+ *   DELETE /admin/accounts/{adminProfileId}        — révoquer les droits admin
  */
 import React, { useState, useEffect } from 'react';
 import {
-  Box, Typography, List, ListItem, ListItemText, useTheme, Chip, Alert, TextField,
+  Box, Typography, List, ListItem, ListItemText, useTheme, Chip, Alert, TextField, MenuItem,
 } from '@mui/material';
 import AdminPanelSettingsRoundedIcon from '@mui/icons-material/AdminPanelSettingsRounded';
 import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
-import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import PersonAddRoundedIcon from '@mui/icons-material/PersonAddRounded';
 import UPFCard from '../../components/ui/UPFCard';
 import UPFButton from '../../components/ui/UPFButton';
 import UPFAvatar from '../../components/ui/UPFAvatar';
 import UPFModal from '../../components/ui/UPFModal';
 import UPFSearchBar from '../../components/ui/UPFSearchBar';
-import type { Student } from '../../types';
-import { getAdmins, getUsers, updateUserRole, createAdmin } from '../../services/adminService';
+import type { AdminLevel } from '../../types';
+import type { AdminProfileResponse, StudentProfileSummary } from '../../services/adminService';
+import {
+  getAdminAccounts,
+  getStudents,
+  createAdminAccount,
+  promoteStudentToAdmin,
+  updateAdminLevel,
+  revokeAdmin,
+} from '../../services/adminService';
 import { useAuth } from '../../hooks/useAuth';
 
-const MOCK_ALL_USERS: Student[] = [
-  { id: 2, firstName: 'Sarah', lastName: 'Alaoui', email: 'sarah@upf.ac.ma', filiere: 'Génie Électrique', annee: 2, role: 'STUDENT', isActive: true, createdAt: '2025-09-15' },
-  { id: 3, firstName: 'Youssef', lastName: 'Karimi', email: 'youssef@upf.ac.ma', filiere: 'Génie Civil', annee: 4, role: 'STUDENT', isActive: true, createdAt: '2024-09-01' },
-  { id: 5, firstName: 'Omar', lastName: 'Fassi', email: 'omar@upf.ac.ma', filiere: 'Management', annee: 3, role: 'STUDENT', isActive: true, createdAt: '2025-03-20' },
-  { id: 6, firstName: 'Kenza', lastName: 'Moussaoui', email: 'kenza@upf.ac.ma', filiere: 'Génie Informatique', annee: 2, role: 'STUDENT', isActive: true, createdAt: '2025-10-01' },
-];
+const ADMIN_LEVELS: AdminLevel[] = ['SUPER_ADMIN', 'ADMIN', 'MODERATOR'];
 
 const AdminAdminsPage: React.FC = () => {
   const theme = useTheme();
   const { user } = useAuth();
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
-  const [admins, setAdmins] = useState<Student[]>([]);
-  const [allUsers, setAllUsers] = useState<Student[]>([]);
+  const [admins, setAdmins] = useState<AdminProfileResponse[]>([]);
+  const [students, setStudents] = useState<StudentProfileSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [success, setSuccess] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // Modal — Promouvoir
-  const [promoteModal, setPromoteModal] = useState<{ open: boolean; user: Student | null }>({ open: false, user: null });
-  // Modal — Rétrograder
-  const [demoteModal, setDemoteModal] = useState<{ open: boolean; user: Student | null }>({ open: false, user: null });
-  // Modal — Créer Admin
+  // Modal — Promouvoir étudiant
+  const [promoteModal, setPromoteModal] = useState<{ open: boolean; student: StudentProfileSummary | null; level: AdminLevel }>({
+    open: false, student: null, level: 'ADMIN',
+  });
+  // Modal — Révoquer admin
+  const [revokeModal, setRevokeModal] = useState<{ open: boolean; admin: AdminProfileResponse | null }>({
+    open: false, admin: null,
+  });
+  // Modal — Créer compte Admin
   const [createOpen, setCreateOpen] = useState(false);
-  const [createForm, setCreateForm] = useState({ firstName: '', lastName: '', email: '', password: '' });
+  const [createForm, setCreateForm] = useState({
+    firstName: '', lastName: '', email: '', password: '', adminLevel: 'ADMIN' as AdminLevel,
+  });
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
@@ -56,12 +68,16 @@ const AdminAdminsPage: React.FC = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [adminData, userData] = await Promise.all([getAdmins(), getUsers({ size: 100 })]);
+        const [adminData, studentData] = await Promise.all([
+          getAdminAccounts(),
+          getStudents(),
+        ]);
         setAdmins(adminData);
-        setAllUsers(userData.content.filter((u) => u.role !== 'ADMIN' && u.role !== 'SUPER_ADMIN'));
+        setStudents(studentData);
       } catch {
         setAdmins([]);
-        setAllUsers(MOCK_ALL_USERS);
+        setStudents([]);
+        setError('Erreur lors du chargement des données.');
       } finally {
         setLoading(false);
       }
@@ -69,46 +85,57 @@ const AdminAdminsPage: React.FC = () => {
     fetchData();
   }, []);
 
-  const filteredUsers = allUsers.filter((u) =>
-    `${u.firstName} ${u.lastName} ${u.email}`.toLowerCase().includes(search.toLowerCase())
+  const filteredStudents = students.filter((s) =>
+    `${s.firstName} ${s.lastName} ${s.email}`.toLowerCase().includes(search.toLowerCase())
   );
 
+  const showSuccess = (msg: string) => {
+    setSuccess(msg);
+    setTimeout(() => setSuccess(null), 3500);
+  };
+
+  // Promouvoir un étudiant
   const handlePromote = async () => {
-    if (!promoteModal.user) return;
-    try { await updateUserRole(promoteModal.user.id, 'ADMIN'); } catch { /* mock */ }
-    const userToPromote = promoteModal.user;
-    setAdmins((prev) => [...prev, { ...userToPromote, role: 'ADMIN' }]);
-    setAllUsers((prev) => prev.filter((u) => u.id !== userToPromote.id));
-    setPromoteModal({ open: false, user: null });
-    setSuccess(`${userToPromote.firstName} ${userToPromote.lastName} a été promu administrateur`);
-    setTimeout(() => setSuccess(null), 3000);
+    if (!promoteModal.student) return;
+    try {
+      const newAdmin = await promoteStudentToAdmin(promoteModal.student.id, promoteModal.level);
+      setAdmins((prev) => [...prev, newAdmin]);
+      setStudents((prev) => prev.filter((s) => s.id !== promoteModal.student!.id));
+      setPromoteModal({ open: false, student: null, level: 'ADMIN' });
+      showSuccess(`${promoteModal.student.firstName} a été promu ${promoteModal.level}`);
+    } catch {
+      setError('Erreur lors de la promotion.');
+    }
   };
 
-  const handleDemote = async () => {
-    if (!demoteModal.user) return;
-    try { await updateUserRole(demoteModal.user.id, 'STUDENT'); } catch { /* mock */ }
-    const userToDemote = demoteModal.user;
-    setAdmins((prev) => prev.filter((a) => a.id !== userToDemote.id));
-    setAllUsers((prev) => [...prev, { ...userToDemote, role: 'STUDENT' }]);
-    setDemoteModal({ open: false, user: null });
-    setSuccess(`${userToDemote.firstName} ${userToDemote.lastName} a été rétrogradé`);
-    setTimeout(() => setSuccess(null), 3000);
+  // Révoquer un admin
+  const handleRevoke = async () => {
+    if (!revokeModal.admin) return;
+    try {
+      await revokeAdmin(revokeModal.admin.id);
+      setAdmins((prev) => prev.filter((a) => a.id !== revokeModal.admin!.id));
+      setRevokeModal({ open: false, admin: null });
+      showSuccess(`Les droits de ${revokeModal.admin.firstName} ont été révoqués.`);
+    } catch {
+      setError('Erreur lors de la révocation.');
+    }
   };
 
+  // Créer un compte admin
   const handleCreateAdmin = async () => {
-    if (!createForm.firstName.trim() || !createForm.lastName.trim() || !createForm.email.trim() || !createForm.password.trim()) {
+    const { firstName, lastName, email, password, adminLevel } = createForm;
+    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password.trim()) {
       setCreateError('Veuillez remplir tous les champs.');
       return;
     }
     setCreateLoading(true);
     setCreateError(null);
     try {
-      const newAdmin = await createAdmin(createForm);
+      const newAdmin = await createAdminAccount({ firstName, lastName, email, password, adminLevel });
       setAdmins((prev) => [...prev, newAdmin]);
       setCreateOpen(false);
-      setCreateForm({ firstName: '', lastName: '', email: '', password: '' });
-      setSuccess('Compte administrateur créé avec succès !');
-      setTimeout(() => setSuccess(null), 3000);
+      setCreateForm({ firstName: '', lastName: '', email: '', password: '', adminLevel: 'ADMIN' });
+      showSuccess('Compte administrateur créé avec succès !');
     } catch {
       setCreateError('Erreur lors de la création du compte.');
     } finally {
@@ -116,9 +143,13 @@ const AdminAdminsPage: React.FC = () => {
     }
   };
 
-  const getRoleBadge = (role: string) => {
-    if (role === 'SUPER_ADMIN') return <Chip label="SUPER ADMIN" size="small" color="secondary" variant="outlined" sx={{ fontWeight: 600 }} />;
-    return <Chip label="ADMIN" size="small" color="error" variant="outlined" sx={{ fontWeight: 600 }} />;
+  const getLevelChip = (level: AdminLevel) => {
+    const colors: Record<AdminLevel, 'secondary' | 'error' | 'primary'> = {
+      SUPER_ADMIN: 'secondary',
+      ADMIN: 'error',
+      MODERATOR: 'primary',
+    };
+    return <Chip label={level.replace('_', ' ')} size="small" color={colors[level]} variant="outlined" sx={{ fontWeight: 600 }} />;
   };
 
   return (
@@ -129,7 +160,7 @@ const AdminAdminsPage: React.FC = () => {
           <Box>
             <Typography variant="h4" fontWeight={700}>Gestion des administrateurs</Typography>
             <Typography variant="body2" color="text.secondary">
-              {isSuperAdmin ? 'Créer, promouvoir ou rétrograder des administrateurs' : 'Promouvoir ou rétrograder des utilisateurs'}
+              {admins.length} administrateur(s) enregistré(s)
             </Typography>
           </Box>
         </Box>
@@ -141,32 +172,38 @@ const AdminAdminsPage: React.FC = () => {
       </Box>
 
       {success && <Alert severity="success" onClose={() => setSuccess(null)} sx={{ mb: 3, borderRadius: 2 }}>{success}</Alert>}
+      {error && <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 3, borderRadius: 2 }}>{error}</Alert>}
 
       {/* Liste des admins actuels */}
-      <Typography variant="h6" fontWeight={600} mb={2}>Administrateurs actuels ({admins.length})</Typography>
+      <Typography variant="h6" fontWeight={600} mb={2}>
+        Administrateurs actuels ({admins.length})
+      </Typography>
       <UPFCard noHover sx={{ mb: 4 }}>
         {loading ? (
-          <Typography color="text.secondary">Chargement…</Typography>
+          <Typography color="text.secondary" textAlign="center" py={3}>Chargement…</Typography>
         ) : admins.length === 0 ? (
           <Typography color="text.secondary" textAlign="center" py={3}>Aucun administrateur trouvé</Typography>
         ) : (
           <List disablePadding>
             {admins.map((admin) => (
-              <ListItem key={admin.id} sx={{ py: 1.5, borderBottom: `1px solid ${theme.palette.divider}`, '&:last-child': { borderBottom: 'none' } }}>
+              <ListItem
+                key={admin.id}
+                sx={{ py: 1.5, borderBottom: `1px solid ${theme.palette.divider}`, '&:last-child': { borderBottom: 'none' } }}
+              >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
                   <UPFAvatar firstName={admin.firstName} lastName={admin.lastName} />
                   <ListItemText
                     primary={<Typography fontWeight={600}>{admin.firstName} {admin.lastName}</Typography>}
-                    secondary={`${admin.email} · ${admin.filiere}`}
+                    secondary={admin.email}
                   />
-                  {getRoleBadge(admin.role)}
-                  {isSuperAdmin && admin.role !== 'SUPER_ADMIN' && (
+                  {getLevelChip(admin.adminLevel)}
+                  {isSuperAdmin && admin.adminLevel !== 'SUPER_ADMIN' && (
                     <UPFButton
-                      size="small" variant="outlined" color="warning"
-                      startIcon={<ArrowDownwardRoundedIcon />}
-                      onClick={() => setDemoteModal({ open: true, user: admin })}
+                      size="small" variant="outlined" color="error"
+                      startIcon={<DeleteOutlineRoundedIcon />}
+                      onClick={() => setRevokeModal({ open: true, admin })}
                     >
-                      Rétrograder
+                      Révoquer
                     </UPFButton>
                   )}
                 </Box>
@@ -176,29 +213,32 @@ const AdminAdminsPage: React.FC = () => {
         )}
       </UPFCard>
 
-      {/* Promouvoir un utilisateur */}
-      <Typography variant="h6" fontWeight={600} mb={2}>Promouvoir un utilisateur</Typography>
+      {/* Promouvoir un étudiant */}
+      <Typography variant="h6" fontWeight={600} mb={2}>Promouvoir un étudiant en admin</Typography>
       <Box sx={{ mb: 2 }}>
-        <UPFSearchBar placeholder="Rechercher un utilisateur à promouvoir…" value={search} onChange={setSearch} fullWidth />
+        <UPFSearchBar placeholder="Rechercher un étudiant à promouvoir…" value={search} onChange={setSearch} fullWidth />
       </Box>
       <UPFCard noHover>
-        {filteredUsers.length === 0 ? (
-          <Typography color="text.secondary" textAlign="center" py={3}>Aucun utilisateur trouvé</Typography>
+        {filteredStudents.length === 0 ? (
+          <Typography color="text.secondary" textAlign="center" py={3}>Aucun étudiant trouvé</Typography>
         ) : (
           <List disablePadding>
-            {filteredUsers.map((u) => (
-              <ListItem key={u.id} sx={{ py: 1.5, borderBottom: `1px solid ${theme.palette.divider}`, '&:last-child': { borderBottom: 'none' } }}>
+            {filteredStudents.map((s) => (
+              <ListItem
+                key={s.id}
+                sx={{ py: 1.5, borderBottom: `1px solid ${theme.palette.divider}`, '&:last-child': { borderBottom: 'none' } }}
+              >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
-                  <UPFAvatar firstName={u.firstName} lastName={u.lastName} size="small" />
+                  <UPFAvatar firstName={s.firstName} lastName={s.lastName} size="small" />
                   <ListItemText
-                    primary={`${u.firstName} ${u.lastName}`}
-                    secondary={`${u.email} · ${u.filiere} · ${u.annee}ème année`}
+                    primary={`${s.firstName} ${s.lastName}`}
+                    secondary={`${s.email} · ${s.major} · ${s.currentYear}ème année`}
                     primaryTypographyProps={{ fontWeight: 500, variant: 'body2' }}
                   />
                   <UPFButton
                     size="small" variant="contained" color="primary"
                     startIcon={<ArrowUpwardRoundedIcon />}
-                    onClick={() => setPromoteModal({ open: true, user: u })}
+                    onClick={() => setPromoteModal({ open: true, student: s, level: 'ADMIN' })}
                   >
                     Promouvoir
                   </UPFButton>
@@ -212,41 +252,51 @@ const AdminAdminsPage: React.FC = () => {
       {/* Modal — Promouvoir */}
       <UPFModal
         open={promoteModal.open}
-        onClose={() => setPromoteModal({ open: false, user: null })}
+        onClose={() => setPromoteModal({ open: false, student: null, level: 'ADMIN' })}
         title="Promouvoir en administrateur"
         actions={
           <>
-            <UPFButton variant="outlined" onClick={() => setPromoteModal({ open: false, user: null })}>Annuler</UPFButton>
+            <UPFButton variant="outlined" onClick={() => setPromoteModal({ open: false, student: null, level: 'ADMIN' })}>Annuler</UPFButton>
             <UPFButton variant="contained" onClick={handlePromote}>Confirmer</UPFButton>
           </>
         }
       >
         <Typography>
-          Voulez-vous promouvoir <strong>{promoteModal.user?.firstName} {promoteModal.user?.lastName}</strong> au rôle d'administrateur ?
+          Promouvoir <strong>{promoteModal.student?.firstName} {promoteModal.student?.lastName}</strong> en administrateur ?
         </Typography>
-        <Typography variant="body2" color="text.secondary" mt={1}>
-          Cette personne aura accès à toutes les fonctionnalités d'administration.
-        </Typography>
+        <TextField
+          select fullWidth size="small" label="Niveau admin" sx={{ mt: 2 }}
+          value={promoteModal.level}
+          onChange={(e) => setPromoteModal((prev) => ({ ...prev, level: e.target.value as AdminLevel }))}
+        >
+          {ADMIN_LEVELS.filter((l) => l !== 'SUPER_ADMIN' || isSuperAdmin).map((l) => (
+            <MenuItem key={l} value={l}>{l.replace('_', ' ')}</MenuItem>
+          ))}
+        </TextField>
       </UPFModal>
 
-      {/* Modal — Rétrograder */}
+      {/* Modal — Révoquer */}
       <UPFModal
-        open={demoteModal.open}
-        onClose={() => setDemoteModal({ open: false, user: null })}
-        title="Rétrograder l'administrateur"
+        open={revokeModal.open}
+        onClose={() => setRevokeModal({ open: false, admin: null })}
+        title="Révoquer les droits administrateur"
         actions={
           <>
-            <UPFButton variant="outlined" onClick={() => setDemoteModal({ open: false, user: null })}>Annuler</UPFButton>
-            <UPFButton variant="contained" color="warning" onClick={handleDemote}>Confirmer</UPFButton>
+            <UPFButton variant="outlined" onClick={() => setRevokeModal({ open: false, admin: null })}>Annuler</UPFButton>
+            <UPFButton variant="contained" color="error" onClick={handleRevoke}>Révoquer</UPFButton>
           </>
         }
       >
         <Typography>
-          Voulez-vous retirer les droits d'administrateur de <strong>{demoteModal.user?.firstName} {demoteModal.user?.lastName}</strong> ?
+          Voulez-vous révoquer les droits d'administrateur de{' '}
+          <strong>{revokeModal.admin?.firstName} {revokeModal.admin?.lastName}</strong> ?
+        </Typography>
+        <Typography variant="body2" color="text.secondary" mt={1}>
+          Cette action est irréversible. Le compte utilisateur sera conservé.
         </Typography>
       </UPFModal>
 
-      {/* Modal — Créer un administrateur (SUPER_ADMIN uniquement) */}
+      {/* Modal — Créer Admin */}
       <UPFModal
         open={createOpen}
         onClose={() => { setCreateOpen(false); setCreateError(null); }}
@@ -266,6 +316,14 @@ const AdminAdminsPage: React.FC = () => {
           </Box>
           <TextField label="Email" type="email" value={createForm.email} onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })} size="small" required placeholder="prenom.nom@upf.ac.ma" />
           <TextField label="Mot de passe" type="password" value={createForm.password} onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })} size="small" required helperText="Minimum 8 caractères" />
+          <TextField
+            select label="Niveau d'accès" value={createForm.adminLevel} size="small"
+            onChange={(e) => setCreateForm({ ...createForm, adminLevel: e.target.value as AdminLevel })}
+          >
+            {ADMIN_LEVELS.filter((l) => l !== 'SUPER_ADMIN' || isSuperAdmin).map((l) => (
+              <MenuItem key={l} value={l}>{l.replace('_', ' ')}</MenuItem>
+            ))}
+          </TextField>
         </Box>
       </UPFModal>
     </Box>

@@ -8,7 +8,7 @@ import './index.css';
 
 import { startMockApi } from './mocks/mockApi';
 if (import.meta.env.DEV) {
-  startMockApi();
+  // startMockApi();
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

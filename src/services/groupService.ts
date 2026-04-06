@@ -14,45 +14,52 @@
 import api from './api';
 import type { Group, GroupMembership, MemberRole } from '../types';
 
-/** Liste de tous les groupes */
+/** Liste de tous les groupes publics */
 export const getGroups = async (): Promise<Group[]> => {
-  const { data } = await api.get<Group[]>('/groups');
-  return data;
+  const { data } = await api.get<any>('/groups/public');
+  return Array.isArray(data) ? data : (data?.content || []);
 };
 
+/** Liste des groupes de l'utilisateur */
+export const getMyGroups = async (): Promise<Group[]> => {
+  const { data } = await api.get<any>('/groups/me');
+  return Array.isArray(data) ? data : (data?.content || []);
+};
+// Tous les id sont des types UUID donc string 
 /** Détail d'un groupe */
-export const getGroupById = async (id: number): Promise<Group> => {
+export const getGroupById = async (id: string): Promise<Group> => {
   const { data } = await api.get<Group>(`/groups/${id}`);
   return data;
 };
 
 /** Créer un nouveau groupe */
 export const createGroup = async (
-  payload: Pick<Group, 'name' | 'description' | 'visibility'> & { coverImage?: File }
+  payload: { name: string; description: string; type: string; major: string }
 ): Promise<Group> => {
-  // NOTE: coverImage upload sera géré séparément en production
   const { data } = await api.post<Group>('/groups', {
     name: payload.name,
     description: payload.description || '',
-    visibility: payload.visibility,
+    type: payload.type,
+    major: payload.major || '',
+    coverImageUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c'
   });
   return data;
 };
 
 /** Rejoindre un groupe public */
-export const joinGroup = async (id: number): Promise<void> => {
+export const joinGroup = async (id: string): Promise<void> => {
   await api.post(`/groups/${id}/join`);
 };
 
 /** Demander à rejoindre un groupe privé */
-export const requestJoinGroup = async (id: number): Promise<void> => {
-  await api.post(`/groups/${id}/request`);
+export const requestJoinGroup = async (id: string): Promise<void> => {
+  await api.post(`/groups/${id}/request-join`);
 };
 
 /** Liste des membres d'un groupe */
-export const getGroupMembers = async (groupId: number): Promise<GroupMembership[]> => {
-  const { data } = await api.get<GroupMembership[]>(`/groups/${groupId}/members`);
-  return data;
+export const getGroupMembers = async (groupId: string): Promise<GroupMembership[]> => {
+  const { data } = await api.get<any>(`/groups/${groupId}/members`);
+  return Array.isArray(data) ? data : (data?.content || []);
 };
 
 /** Modifier le rôle d'un membre */
@@ -65,6 +72,6 @@ export const updateMemberRole = async (
 };
 
 /** Retirer un membre d'un groupe */
-export const removeMember = async (groupId: number, userId: number): Promise<void> => {
+export const removeMember = async (groupId: string, userId: string): Promise<void> => {
   await api.delete(`/groups/${groupId}/members/${userId}`);
 };

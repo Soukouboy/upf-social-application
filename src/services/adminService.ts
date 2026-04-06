@@ -1,41 +1,103 @@
 /**
  * Service d'administration
  *
- * Endpoints attendus côté backend :
- *   GET    /admin/stats                          — statistiques globales
- *   GET    /admin/users?page&size&filiere&annee&isActive&search — liste utilisateurs
- *   PUT    /admin/users/:id/status               — activer/désactiver un utilisateur
- *   GET    /admin/admins                         — liste des admins
- *   PUT    /admin/users/:id/role                 — promouvoir/rétrograder
+ * Endpoints réels (backend ENDPIN.md) :
+ *
+ * AdminController (/admin) :
+ *   POST   /admin/bootstrap/initial              — créer le premier admin
+ *   POST   /admin/accounts                       — créer un compte admin/modérateur
+ *   POST   /admin/students/{studentId}/promote   — promouvoir un étudiant en admin
+ *   GET    /admin/accounts                        — lister tous les admins
+ *   GET    /admin/accounts/{adminProfileId}       — récupérer un profil admin
+ *   PUT    /admin/accounts/{adminProfileId}/level — modifier le niveau d'un admin
+ *   DELETE /admin/accounts/{adminProfileId}       — révoquer les droits admin
+ *   POST   /admin/professors                      — créer un compte professeur
+ *   PUT    /admin/professors/{professorId}/courses/{courseId} — assigner un cours à un prof
+ *   GET    /admin/students                        — lister tous les étudiants
+ *   POST   /admin/students/{studentId}/enroll/{courseId}   — inscrire un étudiant
+ *   DELETE /admin/students/{studentId}/enroll/{courseId}   — désinscrire un étudiant
+ *
+ * AdminCourseController (/admin/courses) :
  *   POST   /admin/courses                        — créer un cours
- *   PUT    /admin/courses/:id                    — modifier un cours
- *   DELETE /admin/courses/:id                    — supprimer un cours
- *   POST   /admin/courses/:id/resources          — uploader une ressource
- *   DELETE /admin/courses/:courseId/resources/:resourceId — supprimer une ressource
- *   POST   /admin/courses/:id/enroll             — enroller un étudiant à un cours
- *   POST   /admin/courses/:id/assign-professor   — affecter un professeur à un cours
- *   GET    /admin/professors                     — liste des professeurs
- *   POST   /admin/professors                     — créer un compte professeur
+ *   PUT    /admin/courses/{courseId}             — modifier un cours
+ *   GET    /admin/courses/{courseId}             — récupérer un cours
+ *   GET    /admin/courses                        — lister tous les cours (paginé)
+ *   PATCH  /admin/courses/{courseId}/activate    — activer un cours
+ *   PATCH  /admin/courses/{courseId}/deactivate  — désactiver un cours
+ *   DELETE /admin/courses/{courseId}             — supprimer un cours
+ *
+ * Endpoints supplémentaires (non dans ENDPIN.md mais utilisés par le frontend) :
+ *   GET    /admin/stats                          — statistiques globales
  *   GET    /admin/reports?status                 — liste des signalements
- *   PUT    /admin/reports/:id                    — mettre à jour le statut d'un signalement
- *   PUT    /admin/exams/:id/visibility           — masquer/afficher une épreuve
+ *   PUT    /admin/reports/{id}                   — mettre à jour le statut d'un signalement
+ *   PUT    /admin/exams/{id}/visibility          — masquer/afficher une épreuve
  */
 import api from './api';
 import type {
   AdminStats,
-  Student,
-  Course,
-  CourseCreateRequest,
-  CourseUpdateRequest,
-  CourseResource,
+  AdminLevel,
+  CreateAdminRequest,
+  CreateProfessorRequest,
+  CourseResourceResponse,
   ExamReport,
   ReportStatus,
-  UserRole,
   PaginatedResponse,
-  Professor,
-  CreateProfessorRequest,
+  CourseSummary,
   EnrollmentResponse,
 } from '../types';
+
+// ────────── Types spécifiques Admin ──────────────────────────────────────────
+
+export interface AdminProfileResponse {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  adminLevel: AdminLevel;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProfessorProfileResponse {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  department?: string;
+  title?: string;
+  courses: CourseSummary[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StudentProfileSummary {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  major: string;
+  currentYear: number;
+  profilePictureUrl?: string;
+}
+
+export interface CreateCourseAdminRequest {
+  name: string;
+  description?: string;
+  code: string;
+  credits: number;
+  department?: string;
+  semester?: string;
+  professorIds?: string[];
+}
+
+export interface UpdateCourseAdminRequest {
+  name?: string;
+  description?: string;
+  code?: string;
+  credits?: number;
+  department?: string;
+  semester?: string;
+}
 
 // ────────── Dashboard ──────────
 
@@ -44,125 +106,238 @@ export const getAdminStats = async (): Promise<AdminStats> => {
   return data;
 };
 
-// ────────── Utilisateurs ──────────
+// ────────── Comptes Admin ──────────
 
-interface UserFilters {
-  page?: number;
-  size?: number;
-  filiere?: string;
-  annee?: number;
-  isActive?: boolean;
-  search?: string;
-  sortBy?: string;
-  sortDir?: 'asc' | 'desc';
-}
+/** Lister tous les admins */
+export const getAdminAccounts = async (): Promise<AdminProfileResponse[]> => {
+  const { data } = await api.get<AdminProfileResponse[]>('/admin/accounts');
+  return Array.isArray(data) ? data : [];
+};
 
-export const getUsers = async (filters?: UserFilters): Promise<PaginatedResponse<Student>> => {
-  const { data } = await api.get<PaginatedResponse<Student>>('/admin/users', { params: filters });
+/** Récupérer un profil admin par ID */
+export const getAdminById = async (adminProfileId: string): Promise<AdminProfileResponse> => {
+  const { data } = await api.get<AdminProfileResponse>(`/admin/accounts/${adminProfileId}`);
   return data;
 };
 
-export const updateUserStatus = async (userId: number | string, isActive: boolean): Promise<void> => {
-  await api.put(`/admin/users/${userId}/status`, { isActive });
-};
-
-// ────────── Admins ──────────
-
-export const getAdmins = async (): Promise<Student[]> => {
-  const { data } = await api.get<Student[]>('/admin/admins');
+/** Créer un compte admin ou modérateur */
+export const createAdminAccount = async (
+  payload: CreateAdminRequest
+): Promise<AdminProfileResponse> => {
+  const { data } = await api.post<AdminProfileResponse>('/admin/accounts', payload);
   return data;
 };
 
-export const updateUserRole = async (userId: number | string, role: UserRole): Promise<void> => {
-  await api.put(`/admin/users/${userId}/role`, { role });
-};
-
-// ────────── Cours ──────────
-
-export const createCourse = async (payload: CourseCreateRequest): Promise<Course> => {
-  const { data } = await api.post<Course>('/admin/courses', payload);
+/** Promouvoir un étudiant en admin */
+export const promoteStudentToAdmin = async (
+  studentId: string,
+  adminLevel: AdminLevel
+): Promise<AdminProfileResponse> => {
+  const { data } = await api.post<AdminProfileResponse>(
+    `/admin/students/${studentId}/promote`,
+    null,
+    { params: { adminLevel } }
+  );
   return data;
 };
 
-export const updateCourse = async (id: number | string, payload: CourseUpdateRequest): Promise<Course> => {
-  const { data } = await api.put<Course>(`/admin/courses/${id}`, payload);
+/** Modifier le niveau d'un admin */
+export const updateAdminLevel = async (
+  adminProfileId: string,
+  adminLevel: AdminLevel
+): Promise<AdminProfileResponse> => {
+  const { data } = await api.put<AdminProfileResponse>(
+    `/admin/accounts/${adminProfileId}/level`,
+    null,
+    { params: { adminLevel } }
+  );
   return data;
 };
 
-export const deleteCourse = async (id: number | string): Promise<void> => {
-  await api.delete(`/admin/courses/${id}`);
+/** Révoquer les droits admin (204 No Content) */
+export const revokeAdmin = async (adminProfileId: string): Promise<void> => {
+  await api.delete(`/admin/accounts/${adminProfileId}`);
 };
 
-// ────────── Ressources de cours ──────────
-
-export const uploadCourseResource = async (
-  courseId: number | string,
-  file: File,
-  title: string,
-  type: string
-): Promise<CourseResource> => {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('title', title);
-  formData.append('type', type);
-  const { data } = await api.post<CourseResource>(`/admin/courses/${courseId}/resources`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+/** Bootstrap — créer le premier admin */
+export const bootstrapAdmin = async (
+  payload: CreateAdminRequest & { adminLevel: AdminLevel }
+): Promise<AdminProfileResponse> => {
+  const { data } = await api.post<AdminProfileResponse>('/admin/bootstrap/initial', payload);
   return data;
 };
 
-export const deleteCourseResource = async (courseId: number | string, resourceId: number | string): Promise<void> => {
-  await api.delete(`/admin/courses/${courseId}/resources/${resourceId}`);
+// ────────── Étudiants ──────────
+
+/** Lister tous les étudiants */
+export const getStudents = async (): Promise<StudentProfileSummary[]> => {
+  const { data } = await api.get<StudentProfileSummary[]>('/admin/students');
+  return Array.isArray(data) ? data : [];
 };
 
-// ────────── Enrôlement étudiants ──────────
-
-export const enrollStudent = async (courseId: number | string, studentId: number | string): Promise<EnrollmentResponse> => {
-  const { data } = await api.post<EnrollmentResponse>(`/admin/courses/${courseId}/enroll`, { studentId });
+/** Inscrire un étudiant à un cours */
+export const enrollStudent = async (
+  studentId: string,
+  courseId: string
+): Promise<EnrollmentResponse> => {
+  const { data } = await api.post<EnrollmentResponse>(
+    `/admin/students/${studentId}/enroll/${courseId}`
+  );
   return data;
+};
+
+/** Désinscrire un étudiant d'un cours */
+export const unenrollStudent = async (
+  studentId: string,
+  courseId: string
+): Promise<void> => {
+  await api.delete(`/admin/students/${studentId}/enroll/${courseId}`);
 };
 
 // ────────── Professeurs ──────────
 
-export const getProfessors = async (): Promise<Professor[]> => {
-  const { data } = await api.get<Professor[]>('/admin/professors');
+/** Créer un compte professeur */
+export const createProfessor = async (
+  payload: CreateProfessorRequest
+): Promise<ProfessorProfileResponse> => {
+  const { data } = await api.post<ProfessorProfileResponse>('/admin/professors', payload);
   return data;
 };
 
-export const createProfessor = async (payload: CreateProfessorRequest): Promise<Professor> => {
-  const { data } = await api.post<Professor>('/admin/professors', payload);
+/** Assigner un cours à un professeur */
+export const assignCourseToProf = async (
+  professorId: string,
+  courseId: string
+): Promise<ProfessorProfileResponse> => {
+  const { data } = await api.put<ProfessorProfileResponse>(
+    `/admin/professors/${professorId}/courses/${courseId}`
+  );
   return data;
 };
 
-export const assignCourseToProf = async (courseId: number | string, professorId: string): Promise<void> => {
-  await api.post(`/admin/courses/${courseId}/assign-professor`, { professorId });
+/** Lister tous les cours (admin) */
+export const getAdminCourses = async (
+  page: number = 0,
+  size: number = 20
+): Promise<PaginatedResponse<CourseSummary>> => {
+  const { data } = await api.get<PaginatedResponse<CourseSummary>>('/admin/courses', {
+    params: { page, size }
+  });
+  return data;
+};
+
+// ────────── Cours (AdminCourseController) ──────────
+
+/** Créer un cours */
+export const createCourse = async (
+  payload: CreateCourseAdminRequest
+): Promise<CourseSummary> => {
+  const { data } = await api.post<CourseSummary>('/admin/courses', payload);
+  return data;
+};
+
+/** Modifier un cours */
+export const updateCourse = async (
+  courseId: string,
+  payload: UpdateCourseAdminRequest
+): Promise<CourseSummary> => {
+  const { data } = await api.put<CourseSummary>(`/admin/courses/${courseId}`, payload);
+  return data;
+};
+
+/** Supprimer un cours */
+export const deleteCourse = async (courseId: string): Promise<void> => {
+  await api.delete(`/admin/courses/${courseId}`);
+};
+
+/** Activer un cours */
+export const activateCourse = async (courseId: string): Promise<CourseSummary> => {
+  const { data } = await api.patch<CourseSummary>(`/admin/courses/${courseId}/activate`);
+  return data;
+};
+
+/** Désactiver un cours */
+export const deactivateCourse = async (courseId: string): Promise<CourseSummary> => {
+  const { data } = await api.patch<CourseSummary>(`/admin/courses/${courseId}/deactivate`);
+  return data;
 };
 
 // ────────── Signalements ──────────
 
 export const getReports = async (status?: ReportStatus): Promise<ExamReport[]> => {
   const { data } = await api.get<ExamReport[]>('/admin/reports', { params: { status } });
-  return data;
+  return Array.isArray(data) ? data : [];
 };
 
-export const updateReportStatus = async (reportId: number | string, status: ReportStatus): Promise<void> => {
+export const updateReportStatus = async (
+  reportId: string,
+  status: ReportStatus
+): Promise<void> => {
   await api.put(`/admin/reports/${reportId}`, { status });
 };
 
-export const toggleExamVisibility = async (examId: number | string, isHidden: boolean): Promise<void> => {
+export const toggleExamVisibility = async (
+  examId: string,
+  isHidden: boolean
+): Promise<void> => {
   await api.put(`/admin/exams/${examId}/visibility`, { isHidden });
 };
 
-// ────────── Création d'administrateur (SUPER_ADMIN) ──────────
+// ────────── Ressources de cours (admin) ──────────
 
-export interface CreateAdminPayload {
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-}
-
-export const createAdmin = async (payload: CreateAdminPayload): Promise<Student> => {
-  const { data } = await api.post<Student>('/admin/admins', payload);
+export const uploadCourseResource = async (
+  courseId: string,
+  file: File,
+  title: string,
+  type: string
+): Promise<CourseResourceResponse> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('title', title);
+  formData.append('type', type);
+  const { data } = await api.post<CourseResourceResponse>(
+    `/admin/courses/${courseId}/resources`,
+    formData,
+    { headers: { 'Content-Type': 'multipart/form-data' } }
+  );
   return data;
+};
+
+export const deleteCourseResource = async (
+  courseId: string,
+  resourceId: string
+): Promise<void> => {
+  await api.delete(`/admin/courses/${courseId}/resources/${resourceId}`);
+};
+
+// ────────── Alias de compatibilité ──────────────────────────────────────────
+
+/** @deprecated Utiliser getAdminAccounts() */
+export const getAdmins = getAdminAccounts;
+
+/** @deprecated Utiliser createAdminAccount() */
+export const createAdmin = createAdminAccount;
+
+/** @deprecated Utiliser updateAdminLevel() — l'ancien updateUserRole ne correspond plus */
+export const updateUserRole = async (userId: string, role: string): Promise<void> => {
+  console.warn('[DEPRECATED] updateUserRole — utilisez promoteStudentToAdmin ou updateAdminLevel');
+  await api.put(`/admin/users/${userId}/role`, { role });
+};
+
+/** @deprecated L'endpoint /admin/users n'existe plus — utiliser getStudents() */
+export const getUsers = async (filters?: Record<string, unknown>) => {
+  console.warn('[DEPRECATED] getUsers — utiliser getStudents() pour les étudiants');
+  const { data } = await api.get('/admin/students', { params: filters });
+  return { content: Array.isArray(data) ? data : [], totalElements: 0, totalPages: 1, number: 0, size: 20, first: true, last: true };
+};
+
+export const updateUserStatus = async (userId: string, isActive: boolean): Promise<void> => {
+  await api.put(`/admin/users/${userId}/status`, { isActive });
+};
+
+export const getProfessors = async () => {
+  // Note : pas d'endpoint direct GET /admin/professors dans ENDPIN.md
+  // Cet endpoint est à ajouter côté backend
+  const { data } = await api.get('/admin/professors');
+  return Array.isArray(data) ? data : [];
 };

@@ -11,36 +11,41 @@
  */
 import api from './api';
 import type {
-  Exam,
-  ExamUploadRequestLegacy as ExamUploadRequest,
+  ExamResponseDto,
   ExamFilters,
   ExamReport,
   VoteType,
   ReportReason,
   PaginatedResponse,
+  ExamResponse,
 } from '../types';
 
 /** Liste des épreuves avec filtres et pagination */
-export const getExams = async (filters?: ExamFilters): Promise<PaginatedResponse<Exam>> => {
-  const { data } = await api.get<PaginatedResponse<Exam>>('/exams', { params: filters });
+export const getExams = async (filters?: ExamFilters): Promise<PaginatedResponse<ExamResponseDto>> => {
+  const { data } = await api.get<PaginatedResponse<ExamResponseDto>>('/exams/listExams', { params: filters });
   return data;
 };
 
 /** Détail d'une épreuve */
-export const getExamById = async (id: number | string): Promise<Exam> => {
-  const { data } = await api.get<Exam>(`/exams/${id}`);
+export const getExamById = async (id: number | string): Promise<ExamResponseDto> => {
+  const { data } = await api.get<ExamResponseDto>(`/exams/${id}`);
   return data;
 };
 
 /** Dépôt d'une épreuve (envoi multipart/form-data) */
-export const uploadExam = async (payload: ExamUploadRequest): Promise<Exam> => {
-  // En mode mock, on envoie en JSON. En production, utiliser FormData pour le fichier.
-  const { data } = await api.post<Exam>('/exams', {
-    title: payload.title,
-    matiere: payload.matiere,
-    anneeAcademique: payload.anneeAcademique,
-    type: payload.type,
-    description: payload.description || '',
+export const uploadExam = async (payload: any): Promise<ExamResponse> => {
+  const formData = new FormData();
+  formData.append('subject', payload.subject);
+  formData.append('courseId', payload.courseId);
+  formData.append('academicYear', payload.academicYear);
+  formData.append('examType', payload.type || payload.examType);
+  if (payload.description) {
+    formData.append('description', payload.description);
+  }
+  formData.append('file', payload.file);
+
+  const { data } = await api.post<ExamResponse>('/exams/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
   });
   return data;
 };
@@ -66,4 +71,5 @@ export const reportExam = async (
 ): Promise<ExamReport> => {
   const { data } = await api.post<ExamReport>(`/exams/${id}/report`, { reason, description });
   return data;
+
 };

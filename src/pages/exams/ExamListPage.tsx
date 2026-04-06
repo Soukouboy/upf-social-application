@@ -18,13 +18,11 @@ import UPFChip from '../../components/ui/UPFChip';
 import UPFButton from '../../components/ui/UPFButton';
 import UPFAvatar from '../../components/ui/UPFAvatar';
 import EmptyState from '../../components/common/EmptyState';
-import type { Exam, ExamFilters, ExamType } from '../../types';
+import type { ExamResponseDto, ExamFilters, ExamType } from '../../types';
 import { getExams } from '../../services/examService';
 
 const EXAM_TYPES: { value: ExamType | ''; label: string }[] = [
   { value: '', label: 'Tous les types' },
-  { value: 'PARTIEL', label: 'Partiel' },
-  { value: 'FINAL', label: 'Final' },
   { value: 'RATTRAPAGE', label: 'Rattrapage' },
   { value: 'CC', label: 'Contrôle continu' },
   { value: 'TP', label: 'TP' },
@@ -41,7 +39,7 @@ const typeColorMap: Record<string, 'primary' | 'secondary' | 'success' | 'error'
 
 const ExamListPage: React.FC = () => {
   const navigate = useNavigate();
-  const [exams, setExams] = useState<Exam[]>([]);
+  const [exams, setExams] = useState<ExamResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [type, setType] = useState<string>('');
@@ -61,7 +59,7 @@ const ExamListPage: React.FC = () => {
         setExams(result.content);
         setTotalPages(result.totalPages);
       } catch {
-        setExams(MOCK_EXAMS);
+        // setExams(MOCK_EXAMS);
         setTotalPages(1);
       } finally {
         setLoading(false);
@@ -108,32 +106,26 @@ const ExamListPage: React.FC = () => {
               <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={exam.id}>
                 <UPFCard sx={{ cursor: 'pointer', height: '100%' }} onClick={() => navigate(`/student/exams/${exam.id}`)}>
                   <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
-                    <UPFChip label={exam.type} size="small" colorVariant={typeColorMap[exam.type] || 'primary'} />
-                    <UPFChip label={exam.anneeAcademique} size="small" colorVariant="secondary" />
+                    <UPFChip label={exam.examType} size="small" colorVariant={typeColorMap[exam.examType] || 'primary'} />
+                    <UPFChip label={exam.academicYear} size="small" colorVariant="secondary" />
                   </Box>
                   <Typography variant="h6" fontWeight={600} mb={0.5} noWrap>{exam.title}</Typography>
-                  <Typography variant="body2" color="text.secondary" mb={2}>{exam.matiere}</Typography>
-                  {exam.description && (
-                    <Typography variant="body2" color="text.secondary" mb={2}
-                      sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                      {exam.description}
-                    </Typography>
-                  )}
+                  <Typography variant="body2" color="text.secondary" mb={2}>{exam.courseName}</Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 'auto' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <UPFAvatar firstName={exam.uploadedBy.firstName} lastName={exam.uploadedBy.lastName} size="small" />
+                      <UPFAvatar firstName={exam.uploaderName} lastName="" size="small" />
                       <Typography variant="caption" color="text.secondary">
-                        {exam.uploadedBy.firstName} {exam.uploadedBy.lastName?.[0]}.
+                        {exam.uploaderName}
                       </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
                         <ThumbUpAltRoundedIcon sx={{ fontSize: 14, color: 'success.main' }} />
-                        <Typography variant="caption">{exam.upvotes}</Typography>
+                        <Typography variant="caption">{exam.upvoteCount}</Typography>
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
                         <ThumbDownAltRoundedIcon sx={{ fontSize: 14, color: 'error.main' }} />
-                        <Typography variant="caption">{exam.downvotes}</Typography>
+                        <Typography variant="caption">{exam.downvoteCount}</Typography>
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
                         <DownloadRoundedIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
@@ -154,13 +146,13 @@ const ExamListPage: React.FC = () => {
   );
 };
 
-const MOCK_EXAMS: Exam[] = [
-  { id: 1, title: 'Examen Final Algorithmique', matiere: 'Algorithmique', anneeAcademique: '2024-2025', type: 'FINAL', description: 'Examen final couvrant les chapitres 1 à 8.', fileUrl: '#', fileName: 'algo_final.pdf', fileSizeBytes: 3200000, downloadCount: 87, upvotes: 24, downvotes: 2, uploadedBy: { id: 1, firstName: 'Amina', lastName: 'Benali' }, createdAt: '2025-06-15' },
-  { id: 2, title: 'Partiel BDD Avancées', matiere: 'Base de Données', anneeAcademique: '2024-2025', type: 'PARTIEL', description: 'Partiel S1 — SQL avancé et normalisation.', fileUrl: '#', fileName: 'bdd_partiel.pdf', fileSizeBytes: 1800000, downloadCount: 56, upvotes: 15, downvotes: 1, uploadedBy: { id: 2, firstName: 'Youssef', lastName: 'Karimi' }, createdAt: '2025-01-20' },
-  { id: 3, title: 'CC1 Marketing Digital', matiere: 'Marketing Digital', anneeAcademique: '2024-2025', type: 'CC', fileUrl: '#', fileName: 'mkt_cc1.pdf', fileSizeBytes: 950000, downloadCount: 32, upvotes: 8, downvotes: 0, uploadedBy: { id: 3, firstName: 'Sara', lastName: 'Moussaoui' }, createdAt: '2024-11-10' },
-  { id: 4, title: 'TP Réseau — Config Routeurs', matiere: 'Réseaux Informatiques', anneeAcademique: '2024-2025', type: 'TP', description: 'TP noté sur la configuration des routeurs Cisco.', fileUrl: '#', fileName: 'reseau_tp.pdf', fileSizeBytes: 2100000, downloadCount: 41, upvotes: 12, downvotes: 3, uploadedBy: { id: 1, firstName: 'Amina', lastName: 'Benali' }, createdAt: '2024-12-05' },
-  { id: 5, title: 'Rattrapage Maths Discrètes', matiere: 'Mathématiques Discrètes', anneeAcademique: '2023-2024', type: 'RATTRAPAGE', fileUrl: '#', fileName: 'maths_ratt.pdf', fileSizeBytes: 1500000, downloadCount: 28, upvotes: 6, downvotes: 1, uploadedBy: { id: 4, firstName: 'Omar', lastName: 'Tazi' }, createdAt: '2024-07-20' },
-  { id: 6, title: 'Final Droit des Affaires', matiere: 'Droit des Affaires', anneeAcademique: '2024-2025', type: 'FINAL', description: 'Cas pratique + questions de cours.', fileUrl: '#', fileName: 'droit_final.pdf', fileSizeBytes: 2800000, downloadCount: 45, upvotes: 18, downvotes: 0, uploadedBy: { id: 5, firstName: 'Leila', lastName: 'Fassi' }, createdAt: '2025-06-20' },
-];
+// const MOCK_EXAMS: Exam[] = [
+//   { id: 1, title: 'Examen Final Algorithmique', matiere: 'Algorithmique', anneeAcademique: '2024-2025', type: 'FINAL', description: 'Examen final couvrant les chapitres 1 à 8.', fileUrl: '#', fileName: 'algo_final.pdf', fileSizeBytes: 3200000, downloadCount: 87, upvotes: 24, downvotes: 2, uploadedBy: { id: 1, firstName: 'Amina', lastName: 'Benali' }, createdAt: '2025-06-15' },
+//   { id: 2, title: 'Partiel BDD Avancées', matiere: 'Base de Données', anneeAcademique: '2024-2025', type: 'PARTIEL', description: 'Partiel S1 — SQL avancé et normalisation.', fileUrl: '#', fileName: 'bdd_partiel.pdf', fileSizeBytes: 1800000, downloadCount: 56, upvotes: 15, downvotes: 1, uploadedBy: { id: 2, firstName: 'Youssef', lastName: 'Karimi' }, createdAt: '2025-01-20' },
+//   { id: 3, title: 'CC1 Marketing Digital', matiere: 'Marketing Digital', anneeAcademique: '2024-2025', type: 'CC', fileUrl: '#', fileName: 'mkt_cc1.pdf', fileSizeBytes: 950000, downloadCount: 32, upvotes: 8, downvotes: 0, uploadedBy: { id: 3, firstName: 'Sara', lastName: 'Moussaoui' }, createdAt: '2024-11-10' },
+//   { id: 4, title: 'TP Réseau — Config Routeurs', matiere: 'Réseaux Informatiques', anneeAcademique: '2024-2025', type: 'TP', description: 'TP noté sur la configuration des routeurs Cisco.', fileUrl: '#', fileName: 'reseau_tp.pdf', fileSizeBytes: 2100000, downloadCount: 41, upvotes: 12, downvotes: 3, uploadedBy: { id: 1, firstName: 'Amina', lastName: 'Benali' }, createdAt: '2024-12-05' },
+//   { id: 5, title: 'Rattrapage Maths Discrètes', matiere: 'Mathématiques Discrètes', anneeAcademique: '2023-2024', type: 'RATTRAPAGE', fileUrl: '#', fileName: 'maths_ratt.pdf', fileSizeBytes: 1500000, downloadCount: 28, upvotes: 6, downvotes: 1, uploadedBy: { id: 4, firstName: 'Omar', lastName: 'Tazi' }, createdAt: '2024-07-20' },
+//   { id: 6, title: 'Final Droit des Affaires', matiere: 'Droit des Affaires', anneeAcademique: '2024-2025', type: 'FINAL', description: 'Cas pratique + questions de cours.', fileUrl: '#', fileName: 'droit_final.pdf', fileSizeBytes: 2800000, downloadCount: 45, upvotes: 18, downvotes: 0, uploadedBy: { id: 5, firstName: 'Leila', lastName: 'Fassi' }, createdAt: '2025-06-20' },
+// ];
 
 export default ExamListPage;
