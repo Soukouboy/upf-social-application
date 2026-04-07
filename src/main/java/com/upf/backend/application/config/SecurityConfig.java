@@ -109,11 +109,11 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
 
             // SecurityConfig.java — mettre à jour
-        config.setAllowedOrigins(List.of(
-            "http://localhost:5173",            // dev local
-            "https://upf-connect.vercel.app"    // ✅ prod Vercel (à mettre à jour après déploiement)
-        ));
-
+          config.setAllowedOrigins(List.of(
+        "http://localhost:5173",
+        "https://upf-social-p3j27qav6-soukouboys-projects.vercel.app/", // ✅ URL exacte
+        "https://upf-social.vercel.app/"  // ✅ si tu as un domaine custom
+    ));
         // ✅ Méthodes HTTP autorisées
         config.setAllowedMethods(List.of(
             "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
