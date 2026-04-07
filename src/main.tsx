@@ -6,10 +6,10 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 
-import { startMockApi } from './mocks/mockApi';
-if (import.meta.env.DEV) {
-  // startMockApi();
-}
+// import { startMockApi } from './mocks/mockApi';
+// if (import.meta.env.DEV) {
+//   // startMockApi();
+// }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
