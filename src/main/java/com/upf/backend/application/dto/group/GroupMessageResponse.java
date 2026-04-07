@@ -1,9 +1,9 @@
 package com.upf.backend.application.dto.group;
 
-import com.upf.backend.application.model.enums.MessageType;
-
 import java.time.LocalDateTime;
 import java.util.UUID;
+
+import com.upf.backend.application.model.enums.MessageType;
 
 public record GroupMessageResponse(
         UUID id,

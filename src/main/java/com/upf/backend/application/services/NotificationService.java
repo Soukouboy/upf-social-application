@@ -6,12 +6,14 @@ import java.util.UUID;
 
 
 import java.util.Optional;
+
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.upf.backend.application.dto.WsNotification;
 import com.upf.backend.application.model.entity.AcademicGroup;
 import com.upf.backend.application.model.entity.Announcement;
-import com.upf.backend.application.model.entity.Course;     
+import com.upf.backend.application.model.entity.Course;
 import com.upf.backend.application.model.entity.CourseResource;
 import com.upf.backend.application.model.entity.Enrollment;
 import com.upf.backend.application.model.entity.Messages;
@@ -27,45 +29,32 @@ import com.upf.backend.application.repository.NotificationRepository;
 import com.upf.backend.application.repository.UserRepository;
 import com.upf.backend.application.repository.EnrollmentRepository;
 
-
-// ── JavaMail — SMTP, Session, Message ─────────────────────────────────────────
-import jakarta.mail.Authenticator;
- import jakarta.mail.Message;
-import jakarta.mail.PasswordAuthentication;
-import jakarta.mail.Session;
-import jakarta.mail.Transport;
-import jakarta.mail.internet.InternetAddress;
-import jakarta.mail.internet.MimeMessage;
-
-
-
 @Service
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
     private final EnrollmentRepository enrollmentRepository;
-        private final WsNotificationSender wsNotificationSender;
+    private final WsNotificationSender wsNotificationSender;
+    private final EmailService emailService;
     
         // Injections à ajouter dans le constructeur
         // private final WsNotificationSender wsNotificationSender;
 
     // ── SMTP config ────────────────────────────────────────────────────────
-    private static final String SMTP_HOST     = "smtp.mail.me.com";
-    private static final String SMTP_PORT     = "587";
-    private static final String SMTP_USERNAME = "soukounadiadie6@icloud.com";
-    private static final String SMTP_PASSWORD = "wxqpxutvzbmxwagl";
-    private static final String FROM_EMAIL    = SMTP_USERNAME;
+
     private static final String FROM_NAME     = "UPF University";
 
     public NotificationService(NotificationRepository notificationRepository,
                                 UserRepository userRepository,
                                 EnrollmentRepository enrollmentRepository,
-                                WsNotificationSender wsNotificationSender) {
+                                WsNotificationSender wsNotificationSender,
+                                EmailService emailService) {
         this.notificationRepository = notificationRepository;
         this.userRepository         = userRepository;
         this.enrollmentRepository   = enrollmentRepository;
         this.wsNotificationSender   = wsNotificationSender;
+        this.emailService = emailService;
     }
 
     // =========================================================================
@@ -78,6 +67,7 @@ public class NotificationService {
      * Appelé dans AuthServiceImpl.registerStudent()
      * et AdminServiceImpl.createProfessorAccount()
      */
+    @Async
     public void notifyWelcome(User user) {
         String subject = "Bienvenue sur UPF Connect !";
         send(user, null, NotificationType.WELCOME, subject,
@@ -88,6 +78,7 @@ public class NotificationService {
      * Appelé dans AdminServiceImpl.createProfessorAccount()
      * Notifie le professeur que son compte a été créé par un admin
      */
+    @Async
     public void notifyAccountCreated(User professor, String rawPassword) {
         String subject = "Votre compte UPF Connect a été créé";
         send(professor, null, NotificationType.ACCOUNT_CREATED, subject,
@@ -100,6 +91,7 @@ public class NotificationService {
      * Appelé dans AdminServiceImpl.enrollStudentToCourse()
      * Notifie l'étudiant qu'il a été inscrit à un cours
      */
+    @Async
     public void notifyEnrollment(StudentProfile student, Course course) {
         User user = student.getUser();
         String subject = "Inscription confirmée — " + course.getTitle();
@@ -111,6 +103,7 @@ public class NotificationService {
      * Appelé dans ProfessorServiceImpl.uploadResource()
      * Notifie tous les étudiants ACTIFS du cours
      */
+    @Async
     public void notifyNewResource(CourseResource resource) {
         Course course       = resource.getCourse();
         User prof = resource.getUploadedBy();
@@ -143,6 +136,7 @@ public class NotificationService {
 
 
     // Dans NotificationService — injecter WsNotificationSender
+ @Async   
 public void notifyNewAnnouncement(Announcement announcement) {
     Course course = announcement.getCourse();
     List<StudentProfile> students = getActiveStudents(course);
@@ -172,6 +166,7 @@ public void notifyNewAnnouncement(Announcement announcement) {
      * Appelé dans MessageService (ou GroupService) lors d'un nouveau message
      * Notifie le destinataire (message privé) ou les membres (groupe)
      */
+    @Async
     public void notifyNewMessage(User recipient, User sender, String messagePreview) {
         String subject = "Nouveau message de "
                        + sender.getFirstName() + " " + sender.getLastName();
@@ -182,6 +177,7 @@ public void notifyNewAnnouncement(Announcement announcement) {
     /**
      * Appelé dans FollowService lors d'un nouveau follower
      */
+    @Async
     public void notifyNewFollower(User followed, User follower) {
         String subject = follower.getFirstName() + " " + follower.getLastName()
                        + " vous suit maintenant";
@@ -193,6 +189,7 @@ public void notifyNewAnnouncement(Announcement announcement) {
      * Appelé dans GroupService quand un membre rejoint un groupe
      * Notifie le créateur du groupe
      */
+    @Async
     public void notifyNewGroupMember(User groupOwner, User newMember,
                                       AcademicGroup group) {
         String subject = newMember.getFirstName() + " a rejoint "
@@ -206,6 +203,7 @@ public void notifyNewAnnouncement(Announcement announcement) {
     /**
      * Alertes système envoyées à tous les admins
      */
+    @Async
     public void notifyAdmins(String alertSubject, String alertMessage) {
         List<User> admins = userRepository.findByRole(UserRole.ADMIN);
         admins.forEach(admin ->
@@ -218,17 +216,22 @@ public void notifyNewAnnouncement(Announcement announcement) {
     // GESTION DES NOTIFICATIONS (lecture, marquage)
     // =========================================================================
 
+    @Async
     public List<Notification> getNotificationsForUser(UUID userId) {
         return notificationRepository.findByRecipient_IdOrderByCreatedAtDesc(userId);
     }
 
+    @Async
     public List<Notification> getUnreadForUser(UUID userId) {
         return notificationRepository.findByRecipient_IdAndIsReadFalse(userId);
     }
 
+    @Async
     public long countUnread(UUID userId) {
         return notificationRepository.countByRecipient_IdAndIsReadFalse(userId);
     }
+
+    @Async
 
     public void markAsRead(UUID notificationId) {
         notificationRepository.findById(notificationId).ifPresent(n -> {
@@ -237,16 +240,18 @@ public void notifyNewAnnouncement(Announcement announcement) {
         });
     }
 
+    @Async
     public void markAllAsRead(UUID userId) {
         List<Notification> unread = getUnreadForUser(userId);
         unread.forEach(n -> n.isRead());
         notificationRepository.saveAll(unread);
     }
 
+    @Async
     public void retryFailed() {
         notificationRepository.findByStatus(NotificationStatus.FAILED)
             .forEach(n -> {
-                boolean sent = sendEmail(
+                emailService.sendEmail(
                     n.getRecipient().getEmail(),
                     n.getTitle(),
                     n.getContent()
@@ -259,64 +264,37 @@ public void notifyNewAnnouncement(Announcement announcement) {
     // =========================================================================
     // MÉTHODE GÉNÉRIQUE D'ENVOI
     // =========================================================================
+private void send(User user, Object relatedEntity,
+                  NotificationType type, String subject, String message) {
 
-    private void send(User user, Object relatedEntity,
-                      NotificationType type, String subject, String message) {
-        // 1. Persister en BDD
-        Notification notification = new Notification();
-        notification.setRecipient(user);
-        notification.setType(type);
-        notification.setTitle(subject);
-        notification.setContent(message);
-        notification.setStatus(NotificationStatus.PENDING);
-        Notification saved = notificationRepository.save(notification);
+    // 1. Sauvegarde DB (rapide)
+    Notification notification = new Notification();
+    notification.setRecipient(user);
+    notification.setType(type);
+    notification.setTitle(subject);
+    notification.setContent(message);
+    notification.setStatus(NotificationStatus.PENDING);
 
-        // 2. Envoyer l'email
-        boolean sent = sendEmail(user.getEmail(), subject, message);
+    Notification saved = notificationRepository.save(notification);
 
-        // 3. Mettre à jour le statut
-        if (sent) {
-            saved.markAsSent();
-        } else {
-            saved.markAsFailed();
-            System.err.println("❌ Échec envoi email à : " + user.getEmail());
-        }
-        notificationRepository.save(saved);
+    // 2. Envoi email ASYNC (non bloquant)
+    try {
+        emailService.sendEmail(user.getEmail(), subject, message);
+        saved.markAsSent();
+    } catch (Exception e) {
+        saved.markAsFailed();
+        System.err.println("❌ Échec envoi email à : " + user.getEmail());
     }
+
+    // 3. Update status
+    notificationRepository.save(saved);
+}
 
     // =========================================================================
     // SMTP — inchangé, même logique que ton code existant
     // =========================================================================
 
-    public boolean sendEmail(String toEmail, String subject, String body) {
-        try {
-            Properties props = new Properties();
-            props.put("mail.smtp.auth", "true");
-            props.put("mail.smtp.starttls.enable", "true");
-            props.put("mail.smtp.host", SMTP_HOST);
-            props.put("mail.smtp.port", SMTP_PORT);
-            props.put("mail.smtp.ssl.trust", SMTP_HOST);
-
-            Session session = Session.getInstance(props, new Authenticator() {
-                @Override
-                protected PasswordAuthentication getPasswordAuthentication() {
-                    return new PasswordAuthentication(SMTP_USERNAME, SMTP_PASSWORD);
-                }
-            });
-
-            Message msg = new MimeMessage(session);
-            msg.setFrom(new InternetAddress(FROM_EMAIL, FROM_NAME));
-            msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
-            msg.setSubject(subject);
-            msg.setContent(body, "text/html; charset=utf-8");
-            Transport.send(msg);
-
-            return true;
-        } catch (Exception e) {
-            System.err.println("❌ Erreur SMTP : " + e.getMessage());
-            return false;
-        }
-    }
+ 
 
     // =========================================================================
     // TEMPLATES HTML

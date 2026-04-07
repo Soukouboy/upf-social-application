@@ -1,10 +1,10 @@
 package com.upf.backend.application.dto.group;
 
-import com.upf.backend.application.model.enums.GroupType;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+
+import com.upf.backend.application.model.enums.GroupType;
 
 public record GroupDetailResponse(
         UUID id,

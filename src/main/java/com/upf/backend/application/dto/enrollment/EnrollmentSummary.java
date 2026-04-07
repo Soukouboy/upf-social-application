@@ -1,8 +1,9 @@
 package com.upf.backend.application.dto.enrollment;
 
-import com.upf.backend.application.model.enums.EnrollmentStatus;
 import java.time.LocalDateTime;
 import java.util.UUID;
+
+import com.upf.backend.application.model.enums.EnrollmentStatus;
 
 /**
  * Résumé d'une inscription pour les listes simples.

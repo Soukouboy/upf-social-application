@@ -1,7 +1,8 @@
 package com.upf.backend.application.repository;
 
-import com.upf.backend.application.model.entity.CourseResource;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.upf.backend.application.model.entity.CourseResource;
 
 import java.util.List;
 import java.util.Optional;

@@ -3,6 +3,7 @@ package com.upf.backend.application.repository;
 import com.upf.backend.application.dto.PrivateConversationSummaryResponse;
 import com.upf.backend.application.model.entity.Messages;
 import com.upf.backend.application.model.enums.ContextMessage;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

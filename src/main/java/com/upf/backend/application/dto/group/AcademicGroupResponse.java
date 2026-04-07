@@ -1,9 +1,9 @@
 package com.upf.backend.application.dto.group;
 
-import com.upf.backend.application.model.enums.GroupType;
-
 import java.time.LocalDateTime;
 import java.util.UUID;
+
+import com.upf.backend.application.model.enums.GroupType;
 
 public record AcademicGroupResponse(
         UUID id,

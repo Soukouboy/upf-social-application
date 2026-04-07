@@ -1,8 +1,9 @@
 package com.upf.backend.application.dto.admin;
 
-import com.upf.backend.application.model.enums.AdminLevel;
 import java.time.LocalDateTime;
 import java.util.UUID;
+
+import com.upf.backend.application.model.enums.AdminLevel;
 
 /**
  * Réponse pour un profil administrateur.

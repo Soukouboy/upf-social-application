@@ -1,9 +1,10 @@
 package com.upf.backend.application.repository;
 
-import com.upf.backend.application.model.entity.StudentProfile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.upf.backend.application.model.entity.StudentProfile;
 
 import java.util.List;
 import java.util.Optional;

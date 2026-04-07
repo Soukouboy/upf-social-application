@@ -3,9 +3,9 @@ package com.upf.backend.application.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-import java.util.*;
-
 import com.upf.backend.application.model.entity.ProfessorProfile;
+
+import java.util.*;
 
 public interface ProfessorRepository extends JpaRepository<ProfessorProfile, UUID> {
 

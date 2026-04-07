@@ -3,6 +3,7 @@ package com.upf.backend.application.services.Interfaces;
 
 import com.upf.backend.application.dto.PrivateConversationSummaryResponse;
 import com.upf.backend.application.model.entity.Messages;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

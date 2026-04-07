@@ -3,6 +3,7 @@ package com.upf.backend.application.services.Interfaces;
 import com.upf.backend.application.controller.request.CreateCourseRequest;
 import com.upf.backend.application.controller.request.UpdateCourseRequest;
 import com.upf.backend.application.model.entity.Course;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

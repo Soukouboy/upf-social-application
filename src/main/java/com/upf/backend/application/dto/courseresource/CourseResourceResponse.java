@@ -1,8 +1,9 @@
 package com.upf.backend.application.dto.courseresource;
 
-import com.upf.backend.application.model.enums.FileType;
 import java.time.LocalDateTime;
 import java.util.UUID;
+
+import com.upf.backend.application.model.enums.FileType;
 
 /**
  * Réponse pour une ressource de cours.

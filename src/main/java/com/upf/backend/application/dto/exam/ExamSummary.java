@@ -1,8 +1,9 @@
 package com.upf.backend.application.dto.exam;
 
-import com.upf.backend.application.model.enums.ExamType;
 import java.time.LocalDate;
 import java.util.UUID;
+
+import com.upf.backend.application.model.enums.ExamType;
 
 /**
  * Résumé d'un examen pour les listes (GET /exams).

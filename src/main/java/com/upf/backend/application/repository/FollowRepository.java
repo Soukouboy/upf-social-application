@@ -4,6 +4,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
+
 import com.upf.backend.application.model.entity.Follow;
 
 public interface FollowRepository extends JpaRepository<Follow, UUID> {

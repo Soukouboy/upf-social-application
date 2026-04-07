@@ -1,6 +1,7 @@
 package com.upf.backend.application.dto.courseresource;
 
 import com.upf.backend.application.model.enums.FileType;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;

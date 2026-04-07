@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.upf.backend.application.dto.student.StudentProfileSummary;
 import com.upf.backend.application.mapper.StudentMapper;
-import com.upf.backend.application.services.Interfaces.IFollowService;
 import com.upf.backend.application.model.entity.Announcement;
 import com.upf.backend.application.model.entity.Course;
 import com.upf.backend.application.model.entity.CourseResource;
@@ -19,6 +18,7 @@ import com.upf.backend.application.model.entity.StudentProfile;
 import com.upf.backend.application.model.entity.User;
 import com.upf.backend.application.model.enums.EnrollmentStatus;
 import com.upf.backend.application.model.enums.FileType;
+import com.upf.backend.application.services.Interfaces.IFollowService;
 import com.upf.backend.application.repository.AnnouncementRepository;
 import com.upf.backend.application.repository.CourseRepository;
 import com.upf.backend.application.repository.CourseResourceRepository;

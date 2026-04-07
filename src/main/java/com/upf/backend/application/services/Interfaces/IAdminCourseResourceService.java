@@ -1,10 +1,10 @@
 package com.upf.backend.application.services.Interfaces;
 
-import com.upf.backend.application.model.entity.CourseResource;
-import com.upf.backend.application.model.enums.FileType;
-
 import java.util.List;
 import java.util.UUID;
+
+import com.upf.backend.application.model.entity.CourseResource;
+import com.upf.backend.application.model.enums.FileType;
 
 public interface IAdminCourseResourceService {
 

@@ -1,11 +1,11 @@
 package com.upf.backend.application.services.Interfaces;
 
 
-import com.upf.backend.application.model.entity.Course;
-import com.upf.backend.application.model.entity.Enrollment;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+
+import com.upf.backend.application.model.entity.Course;
+import com.upf.backend.application.model.entity.Enrollment;
 
 import java.util.List;
 import java.util.UUID;
