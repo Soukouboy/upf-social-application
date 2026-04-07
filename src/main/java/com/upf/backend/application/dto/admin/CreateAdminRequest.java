@@ -1,17 +1,10 @@
 package com.upf.backend.application.dto.admin;
 
-<<<<<<< HEAD
 import com.upf.backend.application.model.enums.AdminLevel;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-=======
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-import com.upf.backend.application.model.enums.AdminLevel;
->>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
 
 /**
  * Requête de création d'un compte admin (POST /admin/accounts ou /admin/bootstrap/initial).

@@ -6,21 +6,20 @@ import java.util.UUID;
 
 
 import java.util.Optional;
-<<<<<<< HEAD
+ 
 
 import org.springframework.scheduling.annotation.Async;
-=======
->>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
+ 
 import org.springframework.stereotype.Service;
 
 import com.upf.backend.application.dto.WsNotification;
 import com.upf.backend.application.model.entity.AcademicGroup;
 import com.upf.backend.application.model.entity.Announcement;
-<<<<<<< HEAD
+ 
 import com.upf.backend.application.model.entity.Course;
-=======
+ 
 import com.upf.backend.application.model.entity.Course;     
->>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
+ 
 import com.upf.backend.application.model.entity.CourseResource;
 import com.upf.backend.application.model.entity.Enrollment;
 import com.upf.backend.application.model.entity.Messages;
@@ -36,8 +35,6 @@ import com.upf.backend.application.repository.NotificationRepository;
 import com.upf.backend.application.repository.UserRepository;
 import com.upf.backend.application.repository.EnrollmentRepository;
 
-<<<<<<< HEAD
-=======
 
 // ── JavaMail — SMTP, Session, Message ─────────────────────────────────────────
 import jakarta.mail.Authenticator;
@@ -50,52 +47,46 @@ import jakarta.mail.internet.MimeMessage;
 
 
 
->>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
 @Service
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
     private final EnrollmentRepository enrollmentRepository;
-<<<<<<< HEAD
-    private final WsNotificationSender wsNotificationSender;
+
+     
     private final EmailService emailService;
-=======
+
         private final WsNotificationSender wsNotificationSender;
->>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
+
     
         // Injections à ajouter dans le constructeur
         // private final WsNotificationSender wsNotificationSender;
 
     // ── SMTP config ────────────────────────────────────────────────────────
-<<<<<<< HEAD
 
-=======
     private static final String SMTP_HOST     = "smtp.mail.me.com";
     private static final String SMTP_PORT     = "587";
     private static final String SMTP_USERNAME = "soukounadiadie6@icloud.com";
     private static final String SMTP_PASSWORD = "wxqpxutvzbmxwagl";
     private static final String FROM_EMAIL    = SMTP_USERNAME;
->>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
+
     private static final String FROM_NAME     = "UPF University";
 
     public NotificationService(NotificationRepository notificationRepository,
                                 UserRepository userRepository,
                                 EnrollmentRepository enrollmentRepository,
-<<<<<<< HEAD
+ 
                                 WsNotificationSender wsNotificationSender,
-                                EmailService emailService) {
-=======
-                                WsNotificationSender wsNotificationSender) {
->>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
+                                EmailService emailService)  {
+ 
         this.notificationRepository = notificationRepository;
         this.userRepository         = userRepository;
         this.enrollmentRepository   = enrollmentRepository;
         this.wsNotificationSender   = wsNotificationSender;
-<<<<<<< HEAD
+ 
         this.emailService = emailService;
-=======
->>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
+ 
     }
 
     // =========================================================================
@@ -107,11 +98,9 @@ public class NotificationService {
     /**
      * Appelé dans AuthServiceImpl.registerStudent()
      * et AdminServiceImpl.createProfessorAccount()
-     */
-<<<<<<< HEAD
+     */ 
     @Async
-=======
->>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
+
     public void notifyWelcome(User user) {
         String subject = "Bienvenue sur UPF Connect !";
         send(user, null, NotificationType.WELCOME, subject,
@@ -122,10 +111,10 @@ public class NotificationService {
      * Appelé dans AdminServiceImpl.createProfessorAccount()
      * Notifie le professeur que son compte a été créé par un admin
      */
-<<<<<<< HEAD
+ 
     @Async
-=======
->>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
+ 
+ 
     public void notifyAccountCreated(User professor, String rawPassword) {
         String subject = "Votre compte UPF Connect a été créé";
         send(professor, null, NotificationType.ACCOUNT_CREATED, subject,
@@ -138,10 +127,9 @@ public class NotificationService {
      * Appelé dans AdminServiceImpl.enrollStudentToCourse()
      * Notifie l'étudiant qu'il a été inscrit à un cours
      */
-<<<<<<< HEAD
+ 
     @Async
-=======
->>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
+ 
     public void notifyEnrollment(StudentProfile student, Course course) {
         User user = student.getUser();
         String subject = "Inscription confirmée — " + course.getTitle();
@@ -153,10 +141,7 @@ public class NotificationService {
      * Appelé dans ProfessorServiceImpl.uploadResource()
      * Notifie tous les étudiants ACTIFS du cours
      */
-<<<<<<< HEAD
     @Async
-=======
->>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
     public void notifyNewResource(CourseResource resource) {
         Course course       = resource.getCourse();
         User prof = resource.getUploadedBy();
@@ -189,10 +174,9 @@ public class NotificationService {
 
 
     // Dans NotificationService — injecter WsNotificationSender
-<<<<<<< HEAD
+ 
  @Async   
-=======
->>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
+ 
 public void notifyNewAnnouncement(Announcement announcement) {
     Course course = announcement.getCourse();
     List<StudentProfile> students = getActiveStudents(course);
@@ -222,10 +206,9 @@ public void notifyNewAnnouncement(Announcement announcement) {
      * Appelé dans MessageService (ou GroupService) lors d'un nouveau message
      * Notifie le destinataire (message privé) ou les membres (groupe)
      */
-<<<<<<< HEAD
+ 
     @Async
-=======
->>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
+ 
     public void notifyNewMessage(User recipient, User sender, String messagePreview) {
         String subject = "Nouveau message de "
                        + sender.getFirstName() + " " + sender.getLastName();
@@ -236,10 +219,9 @@ public void notifyNewAnnouncement(Announcement announcement) {
     /**
      * Appelé dans FollowService lors d'un nouveau follower
      */
-<<<<<<< HEAD
+ 
     @Async
-=======
->>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
+ 
     public void notifyNewFollower(User followed, User follower) {
         String subject = follower.getFirstName() + " " + follower.getLastName()
                        + " vous suit maintenant";
@@ -251,10 +233,9 @@ public void notifyNewAnnouncement(Announcement announcement) {
      * Appelé dans GroupService quand un membre rejoint un groupe
      * Notifie le créateur du groupe
      */
-<<<<<<< HEAD
+ 
     @Async
-=======
->>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
+ 
     public void notifyNewGroupMember(User groupOwner, User newMember,
                                       AcademicGroup group) {
         String subject = newMember.getFirstName() + " a rejoint "
@@ -268,10 +249,9 @@ public void notifyNewAnnouncement(Announcement announcement) {
     /**
      * Alertes système envoyées à tous les admins
      */
-<<<<<<< HEAD
+ 
     @Async
-=======
->>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
+ 
     public void notifyAdmins(String alertSubject, String alertMessage) {
         List<User> admins = userRepository.findByRole(UserRole.ADMIN);
         admins.forEach(admin ->
@@ -284,35 +264,31 @@ public void notifyNewAnnouncement(Announcement announcement) {
     // GESTION DES NOTIFICATIONS (lecture, marquage)
     // =========================================================================
 
-<<<<<<< HEAD
+ 
     @Async
-=======
->>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
+ 
     public List<Notification> getNotificationsForUser(UUID userId) {
         return notificationRepository.findByRecipient_IdOrderByCreatedAtDesc(userId);
     }
-
-<<<<<<< HEAD
+ 
     @Async
-=======
->>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
+ 
+ 
     public List<Notification> getUnreadForUser(UUID userId) {
         return notificationRepository.findByRecipient_IdAndIsReadFalse(userId);
     }
 
-<<<<<<< HEAD
+ 
     @Async
-=======
->>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
+ 
     public long countUnread(UUID userId) {
         return notificationRepository.countByRecipient_IdAndIsReadFalse(userId);
     }
 
-<<<<<<< HEAD
+
     @Async
 
-=======
->>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
+
     public void markAsRead(UUID notificationId) {
         notificationRepository.findById(notificationId).ifPresent(n -> {
             n.isRead();
@@ -320,28 +296,22 @@ public void notifyNewAnnouncement(Announcement announcement) {
         });
     }
 
-<<<<<<< HEAD
+ 
     @Async
-=======
->>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
+ 
     public void markAllAsRead(UUID userId) {
         List<Notification> unread = getUnreadForUser(userId);
         unread.forEach(n -> n.isRead());
         notificationRepository.saveAll(unread);
     }
 
-<<<<<<< HEAD
+ 
     @Async
     public void retryFailed() {
         notificationRepository.findByStatus(NotificationStatus.FAILED)
             .forEach(n -> {
                 emailService.sendEmail(
-=======
-    public void retryFailed() {
-        notificationRepository.findByStatus(NotificationStatus.FAILED)
-            .forEach(n -> {
-                boolean sent = sendEmail(
->>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
+ 
                     n.getRecipient().getEmail(),
                     n.getTitle(),
                     n.getContent()
@@ -354,34 +324,8 @@ public void notifyNewAnnouncement(Announcement announcement) {
     // =========================================================================
     // MÉTHODE GÉNÉRIQUE D'ENVOI
     // =========================================================================
-<<<<<<< HEAD
-private void send(User user, Object relatedEntity,
-                  NotificationType type, String subject, String message) {
 
-    // 1. Sauvegarde DB (rapide)
-    Notification notification = new Notification();
-    notification.setRecipient(user);
-    notification.setType(type);
-    notification.setTitle(subject);
-    notification.setContent(message);
-    notification.setStatus(NotificationStatus.PENDING);
-
-    Notification saved = notificationRepository.save(notification);
-
-    // 2. Envoi email ASYNC (non bloquant)
-    try {
-        emailService.sendEmail(user.getEmail(), subject, message);
-        saved.markAsSent();
-    } catch (Exception e) {
-        saved.markAsFailed();
-        System.err.println("❌ Échec envoi email à : " + user.getEmail());
-    }
-
-    // 3. Update status
-    notificationRepository.save(saved);
-}
-
-=======
+ 
 
     private void send(User user, Object relatedEntity,
                       NotificationType type, String subject, String message) {
@@ -407,14 +351,12 @@ private void send(User user, Object relatedEntity,
         notificationRepository.save(saved);
     }
 
->>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
+ 
     // =========================================================================
     // SMTP — inchangé, même logique que ton code existant
     // =========================================================================
 
-<<<<<<< HEAD
  
-=======
     public boolean sendEmail(String toEmail, String subject, String body) {
         try {
             Properties props = new Properties();
@@ -444,7 +386,7 @@ private void send(User user, Object relatedEntity,
             return false;
         }
     }
->>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
+ 
 
     // =========================================================================
     // TEMPLATES HTML

@@ -3,19 +3,16 @@ package com.upf.backend.application.services.Interfaces;
 import java.util.List;
 import java.util.UUID;
 
-<<<<<<< HEAD
+
 import com.upf.backend.application.dto.student.StudentProfileSummary;
-=======
->>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
+ 
 import com.upf.backend.application.model.entity.Announcement;
 import com.upf.backend.application.model.entity.Course;
 import com.upf.backend.application.model.entity.CourseResource;
 import com.upf.backend.application.model.entity.Enrollment;
 import com.upf.backend.application.model.entity.ProfessorProfile;
-<<<<<<< HEAD
-=======
 import com.upf.backend.application.dto.student.StudentProfileSummary;
->>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
+ 
 import com.upf.backend.application.model.enums.FileType;
 
 public interface IProfessorService {

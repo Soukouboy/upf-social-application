@@ -3,17 +3,12 @@ package com.upf.backend.application.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-<<<<<<< HEAD
+
 import com.upf.backend.application.model.entity.ProfessorProfile;
 
 import java.util.*;
 
-=======
-import java.util.*;
-
-import com.upf.backend.application.model.entity.ProfessorProfile;
-
->>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
+ 
 public interface ProfessorRepository extends JpaRepository<ProfessorProfile, UUID> {
 
     // ✅ findById déjà hérité de JpaRepository — à supprimer
