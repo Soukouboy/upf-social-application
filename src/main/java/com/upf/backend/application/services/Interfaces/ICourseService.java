@@ -1,12 +1,21 @@
 package com.upf.backend.application.services.Interfaces;
 
 
+<<<<<<< HEAD
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import com.upf.backend.application.model.entity.Course;
 import com.upf.backend.application.model.entity.Enrollment;
 
+=======
+import com.upf.backend.application.model.entity.Course;
+import com.upf.backend.application.model.entity.Enrollment;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+>>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
 import java.util.List;
 import java.util.UUID;
 

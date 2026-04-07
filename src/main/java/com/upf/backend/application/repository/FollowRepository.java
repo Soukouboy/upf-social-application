@@ -4,7 +4,10 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
+<<<<<<< HEAD
 
+=======
+>>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
 import com.upf.backend.application.model.entity.Follow;
 
 public interface FollowRepository extends JpaRepository<Follow, UUID> {

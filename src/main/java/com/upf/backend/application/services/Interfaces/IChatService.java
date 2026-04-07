@@ -3,7 +3,10 @@ package com.upf.backend.application.services.Interfaces;
 
 import com.upf.backend.application.dto.PrivateConversationSummaryResponse;
 import com.upf.backend.application.model.entity.Messages;
+<<<<<<< HEAD
 
+=======
+>>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

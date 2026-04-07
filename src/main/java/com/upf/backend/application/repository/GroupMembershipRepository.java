@@ -5,8 +5,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+<<<<<<< HEAD
 
 import com.upf.backend.application.model.entity.GroupMembership;
+=======
+>>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
 
 import java.util.List;
 import java.util.Optional;

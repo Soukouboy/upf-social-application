@@ -29,7 +29,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")           // URL de connexion du frontend
+<<<<<<< HEAD
                 .setAllowedOriginPatterns("http://localhost:5173", "https://upf-social.vercel.app/")
+=======
+                .setAllowedOriginPatterns("*")
+>>>>>>> a753ae4c3804856e5d10df5c80d2bdd284643164
                 .withSockJS();                // fallback SockJS si WebSocket indispo
     }
 
