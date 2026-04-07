@@ -36,14 +36,16 @@ import { useAuth } from '../../hooks/useAuth';
 
 // Filières disponibles
 const FILIERES = [
-  'Informatique',
-  'Gestion',
-  'Finance',
-  'Marketing',
-  'Droit',
-  'Sciences Politiques',
-  'Communication',
-  'Ingénierie',
+  "Faculté des Sciences de l'Ingénieur",
+  'Fès Business School',
+  'Facultés de medecine dentaire',
+  'Faculté des sciences Paramédicales et techniques de santé',
+  "Ecole supérieure des métiers de l'architecture",
+  'CAMPUS RABAT ISSI',
+  'SCIENCES PO',
+  'CENTRE DE RECHERCHE,DEVELOPPEMENT ,EXPERTISE ET INNOVATION',
+  "CENTRE DES ETUDES DOCTORALES",
+  "CENTRE DE LANGUES,CULTURE ET SOFT-SKILLS"
 ];
 
 const ANNEES = [1, 2, 3, 4, 5];
