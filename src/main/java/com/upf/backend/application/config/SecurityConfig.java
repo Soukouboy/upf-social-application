@@ -60,6 +60,8 @@ public class SecurityConfig {
 
                 // Bootstrap admin initial
                 .requestMatchers("/admin/bootstrap/initial").permitAll()
+                // Endpoint de test pour Supabase Storage (optionnel, à sécuriser ou supprimer après tests)
+                .requestMatchers("/users/test-supabase").permitAll()
 
                 // Admin
                 .requestMatchers("/admin/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
@@ -113,8 +115,8 @@ public class SecurityConfig {
           config.setAllowedOrigins(List.of(
         "http://localhost:5173",
         "https://upf-social-p3j27qav6-soukouboys-projects.vercel.app/", // ✅ URL exacte
-        "https://upf-social.vercel.app/",  // ✅ si tu as un domaine custom
-         "https://upf-social2.vercel.app/" 
+        "https://upf-social.vercel.app",  // ✅ si tu as un domaine custom
+         "https://upf-social2.vercel.app" 
     ));
 
         // ✅ Méthodes HTTP autorisées

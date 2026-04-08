@@ -49,6 +49,11 @@ public class SupabaseStorageService {
         this.supabaseUrl  = supabaseUrl;
         this.supabaseKey  = supabaseKey;
         this.restTemplate = new RestTemplate();
+
+        // LOG TEMPORAIRE — supprimer après vérification
+    System.out.println("=== SUPABASE URL: " + supabaseUrl);
+    System.out.println("=== SUPABASE KEY présente: " + 
+        (supabaseKey != null && supabaseKey.startsWith("eyJ")));
     }
 
     // ══════════════════════════════════════════════════════════════════════════
