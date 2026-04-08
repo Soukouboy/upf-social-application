@@ -113,7 +113,8 @@ public class SecurityConfig {
           config.setAllowedOrigins(List.of(
         "http://localhost:5173",
         "https://upf-social-p3j27qav6-soukouboys-projects.vercel.app/", // ✅ URL exacte
-        "https://upf-social.vercel.app/"  // ✅ si tu as un domaine custom
+        "https://upf-social.vercel.app/",  // ✅ si tu as un domaine custom
+         "https://upf-social2.vercel.app/" 
     ));
 
         // ✅ Méthodes HTTP autorisées

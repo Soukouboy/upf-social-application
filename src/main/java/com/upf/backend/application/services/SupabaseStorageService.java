@@ -17,7 +17,7 @@ import java.util.Set;
 import java.util.UUID;
 
 @Service
-public class SupabaseStorageService implements IFileStorageService {
+public class SupabaseStorageService {
 
     // ── Limites de taille ──────────────────────────────────────────────────────
     private static final long MAX_AVATAR_SIZE    = 5L  * 1024 * 1024;  // 5 Mo
