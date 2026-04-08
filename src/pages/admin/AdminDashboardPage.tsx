@@ -31,7 +31,7 @@ const AdminDashboardPage: React.FC = () => {
         const data = await getAdminStats();
         setStats(data);
       } catch {
-        setStats({ totalUsers: 156, activeUsers: 142, totalCourses: 24, totalExams: 89, totalGroups: 18, pendingReports: 5 });
+        setStats({ totalUsers: 156, activeUsers: 142, totalCourses: 24, totalExams: 89, totalGroups: 18, pendingReports: 5, totalStudents: 100, totalProfessors: 56 });
       } finally {
         setLoading(false);
       }

@@ -34,7 +34,21 @@ import {
   enrollStudent, getStudents, activateCourse, deactivateCourse,
 } from '../../services/adminService';
 
-const DEPARTMENTS = ['Informatique', 'Génie Civil', 'Génie Électrique', 'Architecture', 'Management'];
+
+// Filières disponibles
+const DEPARTMENTS = [
+  "Faculté des Sciences de l'Ingénieur",
+  'Fès Business School',
+  'Facultés de medecine dentaire',
+  'Faculté des sciences Paramédicales et techniques de santé',
+  "Ecole supérieure des métiers de l'architecture",
+  'CAMPUS RABAT ISSI',
+  'SCIENCES PO',
+  'CENTRE DE RECHERCHE,DEVELOPPEMENT ,EXPERTISE ET INNOVATION',
+  "CENTRE DES ETUDES DOCTORALES",
+  "CENTRE DE LANGUES,CULTURE ET SOFT-SKILLS"
+];
+
 
 const emptyForm: CreateCourseAdminRequest = {
   title: '', description: '', code: '', credits: 3, major: '', semester: 1,

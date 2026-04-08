@@ -24,7 +24,20 @@ import type { CourseSummary } from '../../types';
 import type { ProfessorProfileResponse } from '../../services/adminService';
 import { getProfessors, createProfessor, assignCourseToProf, getAdminCourses } from '../../services/adminService';
 
-const DEPARTMENTS = ['Informatique', 'Génie Civil', 'Génie Électrique', 'Architecture', 'Management', 'Mathématiques', 'Physique'];
+// Filières disponibles
+const DEPARTMENTS = [
+  "Faculté des Sciences de l'Ingénieur",
+  'Fès Business School',
+  'Facultés de medecine dentaire',
+  'Faculté des sciences Paramédicales et techniques de santé',
+  "Ecole supérieure des métiers de l'architecture",
+  'CAMPUS RABAT ISSI',
+  'SCIENCES PO',
+  'CENTRE DE RECHERCHE,DEVELOPPEMENT ,EXPERTISE ET INNOVATION',
+  "CENTRE DES ETUDES DOCTORALES",
+  "CENTRE DE LANGUES,CULTURE ET SOFT-SKILLS"
+];
+
 const TITLES = ['Dr.', 'Pr.', 'M.', 'Mme'];
 
 const AdminProfessorsPage: React.FC = () => {
