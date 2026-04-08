@@ -13,12 +13,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.util.UUID;
 import com.upf.backend.application.services.Exceptions.ResourceNotFoundException;
 import com.upf.backend.application.services.Exceptions.BusinessException;
 import com.upf.backend.application.services.Interfaces.IExamService;
-import com.upf.backend.application.services.Interfaces.IFileStorageService;
+import com.upf.backend.application.services.SupabaseStorageService;
 import com.upf.backend.application.services.Interfaces.StoredFileDescriptor;
 
 
@@ -29,12 +31,12 @@ public class ExamService implements IExamService {
     private final ExamRepository examRepository;
     private final CourseRepository courseRepository;
     private final StudentRepository studentRepository;
-    private final IFileStorageService fileStorageService;
+    private final SupabaseStorageService fileStorageService;
 
     public ExamService(ExamRepository examRepository,
                         CourseRepository courseRepository,
                         StudentRepository studentRepository,
-                        IFileStorageService fileStorageService) {
+                        SupabaseStorageService fileStorageService) {
         this.examRepository = examRepository;
         this.courseRepository = courseRepository;
         this.studentRepository = studentRepository;
@@ -51,7 +53,7 @@ public class ExamService implements IExamService {
                            String originalFilename,
                            FileType contentType,
                            long size,
-                           byte[] content,
+                           MultipartFile file,
                            String fileHash) {
 
         validateExamMetadata(subject, academicYear, examType, fileHash);
@@ -70,12 +72,7 @@ public class ExamService implements IExamService {
             throw new BusinessException("Impossible de déposer une épreuve sur un cours inactif.");
         }
 
-        StoredFileDescriptor storedFile = fileStorageService.storeExamFile(
-                originalFilename,
-                contentType,
-                size,
-                content
-        );
+  
 
         Exam exam = new Exam();
         exam.setUploader(uploader);
@@ -84,11 +81,15 @@ public class ExamService implements IExamService {
         exam.setAcademicYear(academicYear);
         exam.setExamType(examType);
         exam.setDescription(description);
-        exam.setFileUrl(storedFile.publicUrl());
+        exam.setFileUrl("string"); // sera mis à jour après stockage
         exam.setFileHash(fileHash);
         exam.setHidden(false);
 
-        return examRepository.save(exam);
+     Exam exam1= examRepository.save(exam);
+              StoredFileDescriptor storedFile = fileStorageService.storeExamFile(file, exam1.getId().toString());
+              exam1.setFileUrl(storedFile.publicUrl());
+                return examRepository.save(exam1);
+     
     }
 
     @Override

@@ -3,11 +3,13 @@ package com.upf.backend.application.services.Interfaces;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.upf.backend.application.model.entity.Exam;
 import com.upf.backend.application.model.enums.ExamType;
 import com.upf.backend.application.model.enums.FileType;
 
+import java.io.File;
 import java.util.UUID;
 
 public interface IExamService {
@@ -21,7 +23,7 @@ public interface IExamService {
                     String originalFilename,
                     FileType contentType,
                     long size,
-                    byte[] content,
+                    MultipartFile file,
                     String fileHash);
 
     Page<Exam> listExams(String subject,
