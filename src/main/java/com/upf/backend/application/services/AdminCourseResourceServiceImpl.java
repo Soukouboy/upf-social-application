@@ -35,42 +35,6 @@ public class AdminCourseResourceServiceImpl implements IAdminCourseResourceServi
     }
 
     @Override
-    public CourseResource uploadCourseResourceFile(UUID courseId,
-                                                   String title,
-                                                   String description,
-                                                   String originalFilename,
-                                                   FileType contentType,
-                                                   long size,
-                                                   byte[] content) {
-        validateTitle(title);
-
-        Course course = loadCourse(courseId);
-
-        StoredFileDescriptor storedFile = fileStorageService.storeCourseResource(
-                originalFilename,
-                contentType,
-                size,
-                content
-        );
-
-        CourseResource resource = new CourseResource();
-
-        // ===== ADAPTE CES SETTERS SI TON ENTITÉ A D’AUTRES NOMS =====
-        resource.setTitle(title.trim());
-        resource.setFileUrl(storedFile.publicUrl());
-        resource.setFileType(storedFile.fileType());
-        resource.setFileSizeBytes(storedFile.size());
-      
-        // ============================================================
-
-        course.addResource(resource);
-
-        Course savedCourse = courseRepository.save(course);
-        notificationService.notifyNewResource(resource);
-        return savedCourse.getResources().get(savedCourse.getResources().size() - 1);
-    }
-
-    @Override
     public CourseResource addExternalCourseResourceLink(UUID courseId,
                                                         String title,
                                                         String description,

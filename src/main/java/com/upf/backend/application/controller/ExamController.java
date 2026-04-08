@@ -9,13 +9,10 @@ import com.upf.backend.application.model.enums.ExamType;
 import com.upf.backend.application.model.enums.FileType;
 import com.upf.backend.application.security.SecurityUser;
 import com.upf.backend.application.services.ExamService;
-import com.upf.backend.application.services.Interfaces.IFileStorageService;
-import org.springframework.core.io.Resource;
+import com.upf.backend.application.services.SupabaseStorageService;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.ContentDisposition;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
@@ -34,17 +31,19 @@ import java.util.UUID;
 public class ExamController {
 
     private final ExamService examService;
-    private final IFileStorageService fileStorageService;
+    private final SupabaseStorageService fileStorageService;
 
     public ExamController(ExamService examService,
-                          IFileStorageService fileStorageService) {
+                          SupabaseStorageService fileStorageService) {
         this.examService = examService;
         this.fileStorageService = fileStorageService;
     }
 
+    // ─── Upload d'un examen ───────────────────────────────────────────────────
+
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ExamResponse> uploadExam(
-             @AuthenticationPrincipal SecurityUser currentUser,
+            @AuthenticationPrincipal SecurityUser currentUser,
             @RequestParam UUID courseId,
             @RequestParam String subject,
             @RequestParam String academicYear,
@@ -65,14 +64,16 @@ public class ExamController {
                 file.getOriginalFilename(),
                 FileType.fromContentType(file.getContentType()),
                 file.getSize(),
-                content,
+                file,       // MultipartFile directement
                 fileHash
         );
 
         return ResponseEntity.status(201).body(ExamMapper.toResponse(created));
     }
 
- @GetMapping("/listExams")
+    // ─── Liste des examens ────────────────────────────────────────────────────
+
+    @GetMapping("/listExams")
     public ResponseEntity<Page<ExamSummary>> listExams(
             @RequestParam(required = false) String subject,
             @RequestParam(required = false) String major,
@@ -83,16 +84,12 @@ public class ExamController {
             Pageable pageable
     ) {
         Page<Exam> page = examService.listExams(
-                subject,
-                major,
-                courseYear,
-                academicYear,
-                examType,
-                uploaderId,
-                pageable
+                subject, major, courseYear, academicYear, examType, uploaderId, pageable
         );
         return ResponseEntity.ok(page.map(ExamMapper::toSummary));
     }
+
+    // ─── Détail d'un examen ───────────────────────────────────────────────────
 
     @GetMapping("/{examId}")
     public ResponseEntity<ExamDetails> getExam(@PathVariable UUID examId) {
@@ -100,37 +97,31 @@ public class ExamController {
         return ResponseEntity.ok(ExamMapper.toDetails(exam));
     }
 
+    // ─── Téléchargement d'un examen ──────────────────────────────────────────
+    /**
+     * Le bucket "exams" est PRIVÉ → on génère une URL signée valable 1 heure,
+     * puis on redirige le navigateur vers cette URL.
+     * Supabase envoie directement le fichier au client, sans passer par Spring Boot.
+     */
     @GetMapping("/{examId}/download")
-    public ResponseEntity<Resource> downloadExam(@PathVariable UUID examId) {
+    public ResponseEntity<Void> downloadExam(@PathVariable UUID examId) {
         Exam exam = examService.getExam(examId);
         examService.registerDownload(examId);
 
-        String publicUrl = exam.getFileUrl();
-        String relativePath = extractRelativePath(publicUrl);
-
-        Resource resource = fileStorageService.loadAsResource(relativePath);
-
-    //     // ✅ 1 — Détecter le vrai Content-Type depuis le FileType stocké
-    // MediaType mediaType = resolveMediaType(exam.);
-    //     if (mediaType == null) {
-    //         mediaType = MediaType.APPLICATION_OCTET_STREAM; // fallback générique
-    //     }
-
-   
-        String filename = "exam-" + examId + ".pdf"; // ou extraire depuis l'URL si possible
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentDisposition(
-                ContentDisposition.inline()
-                        .filename(filename, StandardCharsets.UTF_8)
-                        .build()
+        // exam.getStoragePath() = "exam-{uuid}/nom-fichier.pdf" (chemin dans le bucket)
+        String signedUrl = fileStorageService.generateSignedUrl(
+                "exams",
+                exam.getFileUrl(),
+                3600  // 1 heure
         );
 
-        return ResponseEntity.ok()
-                .headers(headers)
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(resource);
+        // Redirection 302 → le client télécharge directement depuis Supabase
+        return ResponseEntity.status(302)
+                .location(URI.create(signedUrl))
+                .build();
     }
+
+    // ─── Utilitaires ─────────────────────────────────────────────────────────
 
     private String sha256(byte[] content) {
         try {
@@ -141,53 +132,4 @@ public class ExamController {
             throw new IllegalStateException("SHA-256 indisponible.", e);
         }
     }
-
-    /**
-     * Hypothèse :
-     * exam.getFileUrl() ressemble à "/files/exams/uuid.pdf"
-     * ou "http://host/files/exams/uuid.pdf"
-     *
-     * Cette méthode extrait la partie relative attendue par FileStorageService :
-     * "exams/uuid.pdf"
-     */
-    private String extractRelativePath(String fileUrl) {
-        if (fileUrl == null || fileUrl.isBlank()) {
-            throw new IllegalArgumentException("URL de fichier invalide.");
-        }
-
-        int index = fileUrl.indexOf("/exams/");
-        if (index >= 0) {
-            return fileUrl.substring(index + 1); // => "exams/uuid.pdf"
-        }
-
-        index = fileUrl.indexOf("/course-resources/");
-        if (index >= 0) {
-            return fileUrl.substring(index + 1);
-        }
-
-        // fallback simple si déjà relatif
-        if (!fileUrl.startsWith("http://") && !fileUrl.startsWith("https://") && !fileUrl.startsWith("/")) {
-            return fileUrl;
-        }
-
-        throw new IllegalArgumentException("Impossible d'extraire le chemin relatif depuis l'URL : " + fileUrl);
-    }
-
-
-    // ✅ Résoudre le bon MediaType depuis ton enum FileType
-private MediaType resolveMediaType(FileType examType) {
-    if (examType == null) return MediaType.APPLICATION_OCTET_STREAM;
-
-    return switch (examType) {
-        case PDF        -> MediaType.APPLICATION_PDF;
-      
-        case DOCX  -> MediaType.parseMediaType(
-                               "application/vnd.openxmlformats-officedocument"
-                               + ".wordprocessingml.document");
-        case PPT -> MediaType.parseMediaType(
-                               "application/vnd.openxmlformats-officedocument"
-                               + ".presentationml.presentation");
-        default         -> MediaType.APPLICATION_OCTET_STREAM;
-    };
-}
 }
