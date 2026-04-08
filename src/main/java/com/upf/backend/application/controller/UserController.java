@@ -148,4 +148,26 @@ public class UserController {
         }
         return ResponseEntity.ok(responses);
     }
+
+
+    @GetMapping("/test-supabase")
+public ResponseEntity<String> testSupabase() {
+    try {
+        org.springframework.web.client.RestTemplate rt = 
+            new org.springframework.web.client.RestTemplate();
+        String url = "https://upf_application.supabase.co/storage/v1/bucket";
+        org.springframework.http.HttpHeaders headers = 
+            new org.springframework.http.HttpHeaders();
+        headers.set("apikey", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hYWlscWFmb3d4am9peGJoYXJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NjIzNzIsImV4cCI6MjA5MTAzODM3Mn0.gO_q0SwqLeIW3Kn0E9A8bISPQr5zV4mtS1LWHfwXCsY");
+        headers.set("Authorization", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hYWlscWFmb3d4am9peGJoYXJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NjIzNzIsImV4cCI6MjA5MTAzODM3Mn0.gO_q0SwqLeIW3Kn0E9A8bISPQr5zV4mtS1LWHfwXCsY");
+        var response = rt.exchange(url, 
+            org.springframework.http.HttpMethod.GET,
+            new org.springframework.http.HttpEntity<>(headers), 
+            String.class);
+        return ResponseEntity.ok("OK: " + response.getStatusCode());
+    } catch (Exception e) {
+        return ResponseEntity.status(500).body("ERREUR: " + e.getMessage());
+    }
+}
+
 }
