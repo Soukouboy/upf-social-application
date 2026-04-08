@@ -23,11 +23,11 @@ public class AdminCourseResourceServiceImpl implements IAdminCourseResourceServi
     private final NotificationService notificationService;
     private final CourseRepository courseRepository;
     private final CourseResourceRepository courseResourceRepository;
-    private final LocalFileStorageService fileStorageService;
+    private final SupabaseStorageService fileStorageService;
 
     public AdminCourseResourceServiceImpl(CourseRepository courseRepository,
                                           CourseResourceRepository courseResourceRepository,
-                                          LocalFileStorageService fileStorageService, NotificationService notificationService) {
+                                          SupabaseStorageService fileStorageService, NotificationService notificationService) {
         this.courseRepository = courseRepository;
         this.courseResourceRepository = courseResourceRepository;
         this.fileStorageService = fileStorageService;

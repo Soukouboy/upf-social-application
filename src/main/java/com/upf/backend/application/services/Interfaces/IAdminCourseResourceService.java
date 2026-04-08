@@ -8,13 +8,13 @@ import com.upf.backend.application.model.enums.FileType;
 
 public interface IAdminCourseResourceService {
 
-    CourseResource uploadCourseResourceFile(UUID courseId,
-                                            String title,
-                                            String description,
-                                            String originalFilename,
-                                            FileType contentType,
-                                            long size,
-                                            byte[] content);
+    // CourseResource uploadCourseResourceFile(UUID courseId,
+    //                                         String title,
+    //                                         String description,
+    //                                         String originalFilename,
+    //                                         FileType contentType,
+    //                                         long size,
+    //                                         byte[] content);
 
     CourseResource addExternalCourseResourceLink(UUID courseId,
                                                  String title,

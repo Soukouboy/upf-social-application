@@ -38,7 +38,7 @@ import com.upf.backend.application.model.entity.CourseResource;
 import com.upf.backend.application.model.entity.StudentProfile;
 import com.upf.backend.application.model.enums.FileType;
 import com.upf.backend.application.security.SecurityUser;
-import com.upf.backend.application.services.LocalFileStorageService;
+import com.upf.backend.application.services.SupabaseStorageService;
 import com.upf.backend.application.services.Interfaces.IProfessorService;
 import com.upf.backend.application.services.Interfaces.StoredFileDescriptor;
 
@@ -48,11 +48,13 @@ import com.upf.backend.application.services.Interfaces.StoredFileDescriptor;
 public class ProfessorController {
     
     private final IProfessorService professorService;
-    private final LocalFileStorageService fileStorageService;
+ 
+    private final SupabaseStorageService supabaseStorageService;
 
-    public ProfessorController(IProfessorService professorService, LocalFileStorageService fileStorageService) {
+    public ProfessorController(IProfessorService professorService, SupabaseStorageService supabaseStorageService) {
         this.professorService = professorService;
-        this.fileStorageService = fileStorageService;
+ 
+        this.supabaseStorageService = supabaseStorageService;
     }
 
     // Mes cours 
@@ -98,8 +100,7 @@ public ResponseEntity<CourseResourceResponse> uploadResource(
     String fileName   = file.getOriginalFilename();
 
     // ✅ Déléguer le stockage à IFileStorageService (même que pour les exams)
-    StoredFileDescriptor storedFile = fileStorageService.storeCourseResource(fileName,fileType,fileSize,content );
-
+    StoredFileDescriptor storedFile = supabaseStorageService.storeDocument(file, courseId.toString());
     CourseResource resource = professorService.uploadResource(
             currentUser.getProfileId(),
             courseId,
