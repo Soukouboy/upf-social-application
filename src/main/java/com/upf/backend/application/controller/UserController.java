@@ -23,6 +23,7 @@ import com.upf.backend.application.services.Interfaces.StoredFileDescriptor;
 
 import java.util.List;
 
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -76,33 +77,68 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+  
+    // ── PUT /users/me — mise à jour du profil (sans image) ────────────────────
+    // Reçoit les champs directement en @RequestParam pour éviter
+    // la dépendance à UpdateProfileFormData
+
     @PutMapping("/me")
     public ResponseEntity<StudentProfileResponse> updateMyProfile(
             @AuthenticationPrincipal SecurityUser currentUser,
-            @RequestPart("data") UpdateProfileFormData request,
-            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage
+            @RequestParam(required = false) String bio,
+            @RequestParam(required = false) String major,
+            @RequestParam(required = false) Integer currentYear,
+            @RequestParam(required = false) Boolean profilePublic,
+            @RequestParam(required = false) String profilePhotoUrl
     ) {
-        String profilePhotoUrl = request.getProfilePhotoUrl();
+        StudentProfile updated = userService.updateProfile(
+                currentUser.getProfileId(),
+                bio,
+                profilePhotoUrl,
+                major,
+                currentYear,
+                profilePublic
+        );
+        return ResponseEntity.ok(StudentMapper.toResponse(updated));
+    }
 
-        // Si une nouvelle image est uploadée, la stocker et obtenir l'URL
-        if (profileImage != null && !profileImage.isEmpty()) {
-            StoredFileDescriptor descriptor = supabaseStorageService.storeAvatar(
-                    profileImage,
-                    currentUser.getProfileId().toString()
+
+    // ── POST /users/me/avatar — upload de la photo de profil ─────────────────
+
+    @PostMapping(value = "/me/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<StudentProfileResponse> updateAvatar(
+            @AuthenticationPrincipal SecurityUser currentUser,
+            @RequestPart("profileImage") MultipartFile profileImage
+    ) {
+        if (profileImage == null || profileImage.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        StoredFileDescriptor descriptor = supabaseStorageService.storeAvatar(
+                profileImage,
+                currentUser.getProfileId().toString()
+        );
+
+        // Le bucket avatars doit être PUBLIC dans Supabase pour avoir une publicUrl
+        String avatarUrl = descriptor.publicUrl();
+        if (avatarUrl == null) {
+            throw new IllegalStateException(
+                "Le bucket 'avatars' est privé — passez-le en public dans Supabase " +
+                "ou utilisez generateSignedUrl() à la place."
             );
-            profilePhotoUrl = descriptor.publicUrl();
         }
 
         StudentProfile updated = userService.updateProfile(
                 currentUser.getProfileId(),
-                request.getBio(),
-                profilePhotoUrl,
-                request.getMajor(),
-                request.getCurrentYear(),
-                request.getProfilePublic()
+                null,
+                avatarUrl,
+                null,
+                null,
+                null
         );
         return ResponseEntity.ok(StudentMapper.toResponse(updated));
     }
+
 
     @GetMapping
     public ResponseEntity<List<StudentProfileSummary>> getAllStudents() {
