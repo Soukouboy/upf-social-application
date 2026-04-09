@@ -1,3 +1,4 @@
+
 # ── Étape 1 : Compiler ────────────────────────────────────────────
 FROM eclipse-temurin:17-jdk-alpine AS build
 WORKDIR /app
@@ -19,5 +20,4 @@ COPY --from=build /app/target/*.jar app.jar
 # ✅ Port 7860 imposé par Hugging Face Spaces
 EXPOSE 7860
 
- 
 ENTRYPOINT ["java", "-jar", "app.jar"]
