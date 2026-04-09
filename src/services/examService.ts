@@ -22,7 +22,7 @@ import type {
 
 /** Liste des épreuves avec filtres et pagination */
 export const getExams = async (filters?: ExamFilters): Promise<PaginatedResponse<ExamResponseDto>> => {
-  const { data } = await api.get<PaginatedResponse<ExamResponseDto>>('/exams/listExams', { params: filters });
+  const { data } = await api.get<PaginatedResponse<ExamResponseDto>>('/exams', { params: filters });
   return data;
 };
 
@@ -75,7 +75,7 @@ export const reportExam = async (
 
 /** Épreuves uploadées par l'utilisateur connecté (pour le dashboard) */
 export const getMyExams = async (): Promise<PaginatedResponse<ExamResponseDto>> => {
-  const { data } = await api.get<PaginatedResponse<ExamResponseDto>>('/exams/listExams', {
+  const { data } = await api.get<PaginatedResponse<ExamResponseDto>>('/exams', {
     params: { uploadedByMe: true, size: 100 },
   });
   return data;

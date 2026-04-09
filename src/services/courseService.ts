@@ -10,8 +10,8 @@ import api from './api';
 import type { CourseDetails, CourseResourceResponse, CourseFilters, PaginatedResponse, CourseSummary } from '../types';
 
 /** Liste des cours avec filtres et pagination */
-export const getCourses = async (filters?: CourseFilters): Promise<PaginatedResponse<CourseDetails>> => {
-  const { data } = await api.get<PaginatedResponse<CourseDetails>>('/courses', { params: filters });
+export const getCourses = async (filters?: CourseFilters): Promise<PaginatedResponse<CourseSummary>> => {
+  const { data } = await api.get<PaginatedResponse<CourseSummary>>('/courses/me', { params: filters });
   return data;
 };
 
