@@ -26,11 +26,11 @@ public interface GroupRepository extends JpaRepository<AcademicGroup, UUID> {
            from AcademicGroup g
            where g.isActive = true
              and (:type is null or g.type = :type)
-             and (:major is null or lower(g.major) = lower(:major))
+             and (:major is null or lower(cast(g.major as String)) = lower(:major))
              and (
                    :search is null
-                   or lower(g.name) like lower(concat('%', :search, '%'))
-                   or lower(g.description) like lower(concat('%', :search, '%'))
+                   or lower(cast(g.name as String)) like lower(concat('%', :search, '%'))
+                   or lower(cast(g.description as String)) like lower(concat('%', :search, '%'))
                  )
            """)
     Page<AcademicGroup> searchActiveGroups(

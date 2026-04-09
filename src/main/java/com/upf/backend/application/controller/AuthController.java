@@ -8,8 +8,10 @@ import com.upf.backend.application.mapper.StudentMapper;
 import com.upf.backend.application.model.entity.StudentProfile;
 import com.upf.backend.application.services.Interfaces.IAuthService;
 import com.upf.backend.application.services.Interfaces.AuthTokens;
+import com.upf.backend.application.security.SecurityUser;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -48,5 +50,15 @@ public class AuthController {
     public ResponseEntity<AuthTokens> refresh(@RequestBody RefreshTokenRequest request) {
         AuthTokens tokens = authService.refreshToken(request.refreshToken());
         return ResponseEntity.ok(tokens);
+    }
+
+    @GetMapping("/test-auth")
+    public ResponseEntity<String> testAuth(@AuthenticationPrincipal SecurityUser currentUser) {
+        if (currentUser == null) {
+            return ResponseEntity.status(401).body("❌ No authentication found");
+        }
+        return ResponseEntity.ok("✅ Authenticated as: " + currentUser.getUsername() + 
+                " | ProfileId: " + currentUser.getProfileId() + 
+                " | Authorities: " + currentUser.getAuthorities());
     }
 }

@@ -73,7 +73,7 @@ public class ExamController {
 
     // ─── Liste des examens ────────────────────────────────────────────────────
 
-    @GetMapping("/listExams")
+    @GetMapping
     public ResponseEntity<Page<ExamSummary>> listExams(
             @RequestParam(required = false) String subject,
             @RequestParam(required = false) String major,
