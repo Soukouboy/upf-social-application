@@ -259,14 +259,7 @@ public class AdminController {
         return ResponseEntity.noContent().build();
     }
     
-    // Delete un cours (en cas de signalement, par exemple)
-     
-    @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/courses/{courseId}")
-    public ResponseEntity<Void> deleteCourse(@PathVariable UUID courseId) {
-        adminService.deleteCourse(courseId);
-        return ResponseEntity.noContent().build();
-    }
-
+ 
+  
 
 }
