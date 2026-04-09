@@ -17,13 +17,6 @@ import UPFModal from '../../components/ui/UPFModal';
 import type { ExamReport, ReportStatus } from '../../types';
 import { getReports, updateReportStatus, toggleExamVisibility } from '../../services/adminService';
 
-const MOCK_REPORTS: ExamReport[] = [
-  { id: 1, examId: 5, examTitle: 'Partiel Algo 2024 — Corrigé', userId: 3, reporterName: 'Youssef K.', reason: 'ERROR', status: 'PENDING', description: 'Le corrigé contient des erreurs à la question 3.', createdAt: new Date(Date.now() - 86400000).toISOString() },
-  { id: 2, examId: 8, examTitle: 'TP Base de données — Série 2', userId: 6, reporterName: 'Kenza M.', reason: 'DUPLICATE', status: 'PENDING', description: 'Cette épreuve existe déjà (doublon).', createdAt: new Date(Date.now() - 172800000).toISOString() },
-  { id: 3, examId: 12, examTitle: 'Final Réseaux 2023', userId: 2, reporterName: 'Sarah A.', reason: 'PLAGIARISM', status: 'REVIEWED', description: 'Contenu copié sans autorisation.', createdAt: new Date(Date.now() - 259200000).toISOString() },
-  { id: 4, examId: 3, examTitle: 'CC Maths Discrètes', userId: 5, reporterName: 'Omar F.', reason: 'INAPPROPRIATE', status: 'ACTIONED', description: 'Le fichier ne correspond pas à une épreuve.', createdAt: new Date(Date.now() - 604800000).toISOString() },
-  { id: 5, examId: 15, examTitle: 'Rattrapage Java S3', userId: 4, reporterName: 'Lina T.', reason: 'OTHER', status: 'DISMISSED', description: 'Mauvaise matière sélectionnée.', createdAt: new Date(Date.now() - 864000000).toISOString() },
-];
 
 const statusColors: Record<ReportStatus, 'warning' | 'info' | 'error' | 'default'> = {
   PENDING: 'warning',
@@ -59,9 +52,10 @@ const AdminReportsPage: React.FC = () => {
       setLoading(true);
       try {
         const data = await getReports(statusFilter !== 'ALL' ? statusFilter : undefined);
-        setReports(data);
+        setReports(Array.isArray(data) ? data : (data as any)?.content ?? []);
       } catch {
-        setReports(MOCK_REPORTS);
+        // Afficher un état vide si l'API échoue (pas de fallback sur des données fictives)
+        setReports([]);
       } finally {
         setLoading(false);
       }
@@ -74,14 +68,15 @@ const AdminReportsPage: React.FC = () => {
   const handleAction = async () => {
     if (!actionModal.report) return;
     const report = actionModal.report;
+    const examId = String(report.examId);
     try {
       if (actionModal.action === 'hide') {
-        await toggleExamVisibility(report.examId, true);
-        await updateReportStatus(report.id, 'ACTIONED');
+        await toggleExamVisibility(examId, true);
+        await updateReportStatus(String(report.id), 'ACTIONED');
       } else {
-        await updateReportStatus(report.id, 'DISMISSED');
+        await updateReportStatus(String(report.id), 'DISMISSED');
       }
-    } catch { /* mock */ }
+    } catch { /* Ignorer les erreurs de mise à jour du statut */ }
 
     const newStatus: ReportStatus = actionModal.action === 'hide' ? 'ACTIONED' : 'DISMISSED';
     setReports((prev) => prev.map((r) => r.id === report.id ? { ...r, status: newStatus } : r));

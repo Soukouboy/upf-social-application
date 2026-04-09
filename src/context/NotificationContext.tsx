@@ -1,24 +1,23 @@
 /**
  * Contexte de notifications in-app
  *
- * Gère une liste de notifications (toasts) et un compteur de non-lues.
- * Peut être enrichi plus tard avec des notifications push / WebSocket.
+ * Gère une liste de notifications et un compteur de non-lues.
+ * Au montage : charge les annonces récentes des cours comme notifications.
+ * WebSocket : s'abonne à /user/queue/notifications pour les notifs en temps réel.
  */
-import React, { createContext, useState, useCallback, type ReactNode } from 'react';
+import React, { createContext, useState, useCallback, useEffect, type ReactNode } from 'react';
+import { Client } from '@stomp/stompjs';
+import SockJS from 'sockjs-client';
 import type { Notification } from '../types';
 
+const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:8080/ws';
+
 interface NotificationContextValue {
-  /** Liste des notifications */
   notifications: Notification[];
-  /** Nombre de notifications non lues */
   unreadCount: number;
-  /** Ajouter une notification */
   addNotification: (notification: Notification) => void;
-  /** Marquer une notification comme lue */
   markAsRead: (id: number) => void;
-  /** Marquer toutes les notifications comme lues */
   markAllAsRead: () => void;
-  /** Effacer toutes les notifications */
   clearAll: () => void;
 }
 
@@ -39,6 +38,54 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
+
+  // ── Connexion WebSocket pour les notifications temps réel ──────────────────
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    const client = new Client({
+      webSocketFactory: () => new SockJS(WS_URL),
+      connectHeaders: { Authorization: `Bearer ${token}` },
+      onConnect: () => {
+        // Abonnement aux notifications personnelles
+        client.subscribe('/user/queue/notifications', (frame) => {
+          try {
+            const raw = JSON.parse(frame.body);
+            const notif: Notification = {
+              id: raw.id ?? Date.now(),
+              title: raw.title ?? raw.type ?? 'Nouvelle notification',
+              message: raw.message ?? raw.content ?? '',
+              read: false,
+              type: raw.type ?? 'INFO',
+              createdAt: raw.createdAt ?? new Date().toISOString(),
+            };
+            setNotifications((prev) => [notif, ...prev]);
+          } catch { /* ignore */ }
+        });
+
+        // Abonnement aux nouvelles annonces de cours
+        client.subscribe('/topic/announcements', (frame) => {
+          try {
+            const raw = JSON.parse(frame.body);
+            const notif: Notification = {
+              id: raw.id ?? Date.now(),
+              title: `📢 ${raw.title ?? 'Nouvelle annonce'}`,
+              message: raw.courseName ? `Cours : ${raw.courseName}` : '',
+              read: false,
+              type: 'ANNOUNCEMENT',
+              createdAt: raw.createdAt ?? new Date().toISOString(),
+            };
+            setNotifications((prev) => [notif, ...prev]);
+          } catch { /* ignore */ }
+        });
+      },
+      reconnectDelay: 10000,
+    });
+
+    client.activate();
+    return () => { client.deactivate(); };
+  }, []);
 
   const addNotification = useCallback((notification: Notification) => {
     setNotifications((prev) => [notification, ...prev]);

@@ -89,3 +89,19 @@ export const getDirectMessages = (userId: string, page = 0, size = 30) =>
 /** @deprecated Utiliser sendPrivateMessage() */
 export const sendDirectMessage = (userId: string, content: string) =>
   sendPrivateMessage(userId, content);
+
+// ─── Modification / Suppression de messages ──────────────────────────────────
+
+/** Modifier le contenu d'un message (propre à l'utilisateur connecté) */
+export const editMessage = async (
+  messageId: string,
+  content: string
+): Promise<ChatMessageResponse> => {
+  const { data } = await api.put<ChatMessageResponse>(`/messages/${messageId}`, { content });
+  return data;
+};
+
+/** Supprimer un message (propre à l'utilisateur connecté) */
+export const deleteMessage = async (messageId: string): Promise<void> => {
+  await api.delete(`/messages/${messageId}`);
+};

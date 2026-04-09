@@ -1,7 +1,5 @@
 /**
  * Service Professeur
- *
- * Endpoints réels (backend ENDPIN.md) :
  *   GET    /professors/me/courses                          — cours du professeur connecté
  *   GET    /professors/me/courses/{courseId}/students      — étudiants inscrits à un cours
  *   POST   /professors/me/courses/{courseId}/resources     — upload une ressource (multipart)
@@ -100,3 +98,23 @@ export interface StudentProfileSummary {
   currentYear: number;
   profilePictureUrl?: string;
 }
+
+/**
+ * Inscrire un étudiant dans un cours du professeur connecté.
+ */
+export const enrollStudentInMyCourse = async (
+  courseId: string,
+  studentId: string
+): Promise<void> => {
+  // Tentative d'abord sur l'endpoint prof
+  try {
+    await api.post(`/professors/me/courses/${courseId}/students/${studentId}`);
+  } catch (err: any) {
+    if (err?.response?.status === 404 || err?.response?.status === 405) {
+      // Fallback sur l'endpoint admin
+      await api.post(`/admin/students/${studentId}/enroll/${courseId}`);
+    } else {
+      throw err;
+    }
+  }
+};

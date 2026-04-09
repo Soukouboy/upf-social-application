@@ -7,7 +7,7 @@
  *   - Cloche de notifications avec badge
  *   - Avatar de l'utilisateur avec menu dropdown (profil, déconnexion)
  */
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -34,6 +34,7 @@ import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { NotificationContext } from '../../context/NotificationContext';
 import { SIDEBAR_WIDTH } from './Sidebar';
 
 interface TopbarProps {
@@ -46,8 +47,11 @@ const Topbar: React.FC<TopbarProps> = ({ onMenuToggle }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
+  const { unreadCount, notifications, markAllAsRead } = useContext(NotificationContext);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [notifAnchorEl, setNotifAnchorEl] = useState<null | HTMLElement>(null);
   const menuOpen = Boolean(anchorEl);
+  const notifMenuOpen = Boolean(notifAnchorEl);
 
   const handleAvatarClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -59,7 +63,19 @@ const Topbar: React.FC<TopbarProps> = ({ onMenuToggle }) => {
 
   const handleProfile = () => {
     handleMenuClose();
-    navigate('/profile');
+    const role = user?.role;
+    if (role === 'PROFESSOR') navigate('/professor/profile');
+    else if (role === 'ADMIN') navigate('/admin/dashboard');
+    else navigate('/student/profile');
+  };
+
+  const handleNotifOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setNotifAnchorEl(event.currentTarget);
+  };
+
+  const handleNotifClose = () => {
+    setNotifAnchorEl(null);
+    markAllAsRead();
   };
 
   const handleLogout = async () => {
@@ -132,13 +148,14 @@ const Topbar: React.FC<TopbarProps> = ({ onMenuToggle }) => {
         {/* Notifications */}
         <Tooltip title="Notifications">
           <IconButton
+            onClick={handleNotifOpen}
             sx={{
               bgcolor: alpha(theme.palette.primary.main, 0.05),
               '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.1) },
             }}
           >
             <Badge
-              badgeContent={3}
+              badgeContent={unreadCount > 0 ? unreadCount : null}
               color="error"
               sx={{
                 '& .MuiBadge-badge': {
@@ -152,6 +169,61 @@ const Topbar: React.FC<TopbarProps> = ({ onMenuToggle }) => {
             </Badge>
           </IconButton>
         </Tooltip>
+
+        {/* Menu des notifications */}
+        <Menu
+          anchorEl={notifAnchorEl}
+          open={notifMenuOpen}
+          onClose={handleNotifClose}
+          transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+          anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+          PaperProps={{
+            sx: {
+              mt: 1.5,
+              minWidth: 320,
+              maxWidth: 360,
+              borderRadius: 3,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+            },
+          }}
+        >
+          <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Typography variant="subtitle2" fontWeight={700}>Notifications</Typography>
+            {unreadCount > 0 && (
+              <Typography variant="caption" color="primary.main" sx={{ cursor: 'pointer' }} onClick={markAllAsRead}>
+                Tout marquer lu
+              </Typography>
+            )}
+          </Box>
+          <Divider />
+          {notifications.length === 0 ? (
+            <Box sx={{ px: 2, py: 3, textAlign: 'center' }}>
+              <Typography variant="body2" color="text.secondary">Aucune notification</Typography>
+            </Box>
+          ) : (
+            notifications.slice(0, 5).map((notif: any) => (
+              <MenuItem
+                key={notif.id}
+                onClick={handleNotifClose}
+                sx={{
+                  py: 1.5,
+                  borderLeft: notif.read ? 'none' : `3px solid ${theme.palette.primary.main}`,
+                  bgcolor: notif.read ? 'transparent' : alpha(theme.palette.primary.main, 0.04),
+                  whiteSpace: 'normal',
+                }}
+              >
+                <Box>
+                  <Typography variant="body2" fontWeight={notif.read ? 400 : 600}>
+                    {notif.title || notif.message || 'Nouvelle notification'}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {notif.createdAt ? new Date(notif.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : ''}
+                  </Typography>
+                </Box>
+              </MenuItem>
+            ))
+          )}
+        </Menu>
 
         {/* Avatar utilisateur */}
         <Tooltip title="Mon profil">

@@ -71,5 +71,12 @@ export const reportExam = async (
 ): Promise<ExamReport> => {
   const { data } = await api.post<ExamReport>(`/exams/${id}/report`, { reason, description });
   return data;
+};
 
+/** Épreuves uploadées par l'utilisateur connecté (pour le dashboard) */
+export const getMyExams = async (): Promise<PaginatedResponse<ExamResponseDto>> => {
+  const { data } = await api.get<PaginatedResponse<ExamResponseDto>>('/exams/listExams', {
+    params: { uploadedByMe: true, size: 100 },
+  });
+  return data;
 };

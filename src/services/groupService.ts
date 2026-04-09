@@ -64,8 +64,8 @@ export const getGroupMembers = async (groupId: string): Promise<GroupMembership[
 
 /** Modifier le rôle d'un membre */
 export const updateMemberRole = async (
-  groupId: number,
-  userId: number,
+  groupId: string,
+  userId: string,
   role: MemberRole
 ): Promise<void> => {
   await api.put(`/groups/${groupId}/members/${userId}`, { role });

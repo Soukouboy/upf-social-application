@@ -836,3 +836,14 @@ export interface Professor {
   title?: string;
   courses?: CourseSummary[];
 }
+
+/** Notification in-app — utilisé par NotificationContext */
+export interface Notification {
+  id: number | string;
+  title: string;
+  message: string;
+  read: boolean;
+  type?: string;
+  createdAt?: string;
+}
+

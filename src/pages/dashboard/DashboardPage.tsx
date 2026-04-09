@@ -1,13 +1,12 @@
 /**
- * DashboardPage — Page d'accueil après connexion
+ * DashboardPage — Page d'accueil après connexion (Student)
  *
- * Affiche :
- *   - Carte de bienvenue avec nom de l'utilisateur
- *   - Stats rapides (cours, épreuves, groupes)
- *   - Raccourcis vers les sections principales
- *   - Fil d'activité récente
+ * Données dynamiques :
+ *   - Stats : cours inscrits, épreuves partagées, groupes, contributions
+ *   - Activité récente : dernières annonces des cours
+ *   - Top contributeurs : à partir du réseau
  */
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -29,104 +28,99 @@ import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import NotificationsActiveRoundedIcon from '@mui/icons-material/NotificationsActiveRounded';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
+import CampaignRoundedIcon from '@mui/icons-material/CampaignRounded';
 import UPFCard from '../../components/ui/UPFCard';
 import UPFButton from '../../components/ui/UPFButton';
 import UPFAvatar from '../../components/ui/UPFAvatar';
 import UPFChip from '../../components/ui/UPFChip';
 import { useAuth } from '../../hooks/useAuth';
-
-// Données fictives pour la démo (seront remplacées par des appels API)
-const MOCK_STATS = [
-  {
-    label: 'Mes cours',
-    value: 12,
-    icon: <MenuBookRoundedIcon />,
-    color: '#3B82F6',
-    path: '/courses',
-  },
-  {
-    label: 'Épreuves partagées',
-    value: 8,
-    icon: <DescriptionRoundedIcon />,
-    color: '#10B981',
-    path: '/exams',
-  },
-  {
-    label: 'Mes groupes',
-    value: 5,
-    icon: <GroupsRoundedIcon />,
-    color: '#F59E0B',
-    path: '/groups',
-  },
-  {
-    label: 'Contributions',
-    value: 23,
-    icon: <TrendingUpRoundedIcon />,
-    color: '#8B5CF6',
-    path: '/profile',
-  },
-];
-
-const MOCK_ACTIVITIES = [
-  {
-    id: 1,
-    user: 'Amina B.',
-    action: 'a partagé une épreuve de',
-    target: 'Algorithmique — Final 2025',
-    time: 'Il y a 15 min',
-    type: 'EXAM_SHARED' as const,
-  },
-  {
-    id: 2,
-    user: 'Youssef K.',
-    action: 'a rejoint le groupe',
-    target: 'Dev Web S4',
-    time: 'Il y a 1h',
-    type: 'GROUP_JOINED' as const,
-  },
-  {
-    id: 3,
-    user: 'Prof. Ahmed',
-    action: 'a ajouté une ressource dans',
-    target: 'Base de données avancées',
-    time: 'Il y a 2h',
-    type: 'COURSE_VIEWED' as const,
-  },
-  {
-    id: 4,
-    user: 'Sara M.',
-    action: 'a commenté sur',
-    target: 'Partiel Maths Discrètes 2024',
-    time: 'Il y a 3h',
-    type: 'COMMENT_POSTED' as const,
-  },
-];
+import { getMyCourses as getMyStudentCourses } from '../../services/courseService';
+import { getMyGroups } from '../../services/groupService';
+import { getMyExams } from '../../services/examService';
+import type { CourseSummary, AnnouncementResponse, GroupSummary, ExamSummary } from '../../types';
 
 const QUICK_ACTIONS = [
   {
     label: 'Déposer une épreuve',
     icon: <DescriptionRoundedIcon />,
-    path: '/exams/upload',
+    path: '/student/exams/upload',
     color: '#10B981',
   },
   {
     label: 'Créer un groupe',
     icon: <GroupsRoundedIcon />,
-    path: '/groups',
+    path: '/student/groups/create',
     color: '#3B82F6',
   },
   {
     label: 'Explorer les cours',
     icon: <MenuBookRoundedIcon />,
-    path: '/courses',
+    path: '/student/courses',
     color: '#F59E0B',
   },
 ];
+
+interface DashboardStats {
+  coursesCount: number;
+  examsCount: number;
+  groupsCount: number;
+  contributions: number;
+}
 
 const DashboardPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [recentAnnouncements, setRecentAnnouncements] = useState<AnnouncementResponse[]>([]);
+  const [recentGroups, setRecentGroups] = useState<GroupSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      setLoading(true);
+      try {
+        const [coursesData, groupsData, examsData] = await Promise.allSettled([
+          getMyStudentCourses(),
+          getMyGroups(),
+          getMyExams(),
+        ]);
+
+        const courses = coursesData.status === 'fulfilled' ? coursesData.value : [];
+        const groups = groupsData.status === 'fulfilled' ? groupsData.value : [];
+        const exams = examsData.status === 'fulfilled' ? examsData.value : [];
+
+        // Extraire les annonces des cours récents
+        const announcements: AnnouncementResponse[] = [];
+        if (coursesData.status === 'fulfilled') {
+          coursesData.value.forEach((course: any) => {
+            if (course.announcements) {
+              course.announcements.slice(0, 2).forEach((a: AnnouncementResponse) => {
+                announcements.push(a);
+              });
+            }
+          });
+        }
+
+        setStats({
+          coursesCount: courses.length,
+          examsCount: Array.isArray(exams) ? exams.length : (exams as any)?.totalElements ?? 0,
+          groupsCount: groups.length,
+          contributions: Array.isArray(exams) ? exams.length : (exams as any)?.totalElements ?? 0,
+        });
+
+        setRecentAnnouncements(announcements.slice(0, 4));
+        setRecentGroups((groups as any[]).slice(0, 3) as GroupSummary[]);
+      } catch {
+        // Fallback silencieux : afficher des zéros
+        setStats({ coursesCount: 0, examsCount: 0, groupsCount: 0, contributions: 0 });
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboardData();
+  }, []);
 
   const greeting = () => {
     const hour = new Date().getHours();
@@ -134,6 +128,37 @@ const DashboardPage: React.FC = () => {
     if (hour < 18) return 'Bon après-midi';
     return 'Bonsoir';
   };
+
+  const statCards = stats ? [
+    {
+      label: 'Mes cours',
+      value: stats.coursesCount,
+      icon: <MenuBookRoundedIcon />,
+      color: '#3B82F6',
+      path: '/student/courses',
+    },
+    {
+      label: 'Épreuves partagées',
+      value: stats.examsCount,
+      icon: <DescriptionRoundedIcon />,
+      color: '#10B981',
+      path: '/student/exams',
+    },
+    {
+      label: 'Mes groupes',
+      value: stats.groupsCount,
+      icon: <GroupsRoundedIcon />,
+      color: '#F59E0B',
+      path: '/student/groups',
+    },
+    {
+      label: 'Contributions',
+      value: stats.contributions,
+      icon: <TrendingUpRoundedIcon />,
+      color: '#8B5CF6',
+      path: '/student/profile',
+    },
+  ] : [];
 
   return (
     <Box>
@@ -207,201 +232,286 @@ const DashboardPage: React.FC = () => {
 
       {/* ────────── Stats rapides ────────── */}
       <Grid container spacing={2.5} sx={{ mb: 4 }}>
-        {MOCK_STATS.map((stat) => (
-          <Grid size={{ xs: 6, md: 3 }} key={stat.label}>
-            <UPFCard
-              sx={{
-                cursor: 'pointer',
-                '&:hover': {
-                  borderColor: alpha(stat.color, 0.3),
-                },
-              }}
-              onClick={() => navigate(stat.path)}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography variant="h3" fontWeight={700} color={stat.color}>
-                    {stat.value}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" mt={0.5}>
-                    {stat.label}
-                  </Typography>
-                </Box>
-                <Box
+        {loading
+          ? Array.from({ length: 4 }).map((_, i) => (
+              <Grid size={{ xs: 6, md: 3 }} key={i}>
+                <Skeleton variant="rounded" height={110} sx={{ borderRadius: 3 }} />
+              </Grid>
+            ))
+          : statCards.map((stat) => (
+              <Grid size={{ xs: 6, md: 3 }} key={stat.label}>
+                <UPFCard
                   sx={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: '12px',
-                    bgcolor: alpha(stat.color, 0.1),
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: stat.color,
+                    cursor: 'pointer',
+                    '&:hover': {
+                      borderColor: alpha(stat.color, 0.3),
+                    },
                   }}
+                  onClick={() => navigate(stat.path)}
                 >
-                  {stat.icon}
-                </Box>
-              </Box>
-            </UPFCard>
-          </Grid>
-        ))}
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                    <Box>
+                      <Typography variant="h3" fontWeight={700} color={stat.color}>
+                        {stat.value}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" mt={0.5}>
+                        {stat.label}
+                      </Typography>
+                    </Box>
+                    <Box
+                      sx={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: '12px',
+                        bgcolor: alpha(stat.color, 0.1),
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: stat.color,
+                      }}
+                    >
+                      {stat.icon}
+                    </Box>
+                  </Box>
+                </UPFCard>
+              </Grid>
+            ))}
       </Grid>
 
       {/* ────────── Contenu principal (2 colonnes) ────────── */}
       <Grid container spacing={3}>
-        {/* Fil d'activité */}
+        {/* Annonces récentes */}
         <Grid size={{ xs: 12, md: 8 }}>
           <UPFCard noHover>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <NotificationsActiveRoundedIcon sx={{ color: 'primary.main' }} />
                 <Typography variant="h6" fontWeight={600}>
-                  Activité récente
+                  Annonces récentes
                 </Typography>
               </Box>
               <UPFButton
                 variant="text"
                 size="small"
                 endIcon={<ArrowForwardRoundedIcon />}
+                onClick={() => navigate('/student/courses')}
               >
-                Tout voir
+                Mes cours
               </UPFButton>
             </Box>
 
-            <List disablePadding>
-              {MOCK_ACTIVITIES.map((activity, index) => (
-                <React.Fragment key={activity.id}>
-                  <ListItem
-                    alignItems="flex-start"
-                    sx={{
-                      px: 1,
-                      py: 1.5,
-                      borderRadius: 2,
-                      cursor: 'pointer',
-                      transition: 'background 0.15s',
-                      '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.04) },
-                    }}
-                  >
-                    <ListItemAvatar>
-                      <UPFAvatar
-                        firstName={activity.user.split(' ')[0]}
-                        lastName={activity.user.split(' ')[1] || ''}
-                        size="small"
+            {loading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <Box key={i} sx={{ display: 'flex', gap: 2, py: 1.5 }}>
+                  <Skeleton variant="circular" width={40} height={40} />
+                  <Box sx={{ flex: 1 }}>
+                    <Skeleton width="60%" height={16} />
+                    <Skeleton width="40%" height={12} sx={{ mt: 0.5 }} />
+                  </Box>
+                </Box>
+              ))
+            ) : recentAnnouncements.length > 0 ? (
+              <List disablePadding>
+                {recentAnnouncements.map((ann, index) => (
+                  <React.Fragment key={ann.id}>
+                    <ListItem
+                      alignItems="flex-start"
+                      sx={{
+                        px: 1,
+                        py: 1.5,
+                        borderRadius: 2,
+                        cursor: 'pointer',
+                        transition: 'background 0.15s',
+                        '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.04) },
+                      }}
+                    >
+                      <ListItemAvatar>
+                        <Box
+                          sx={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: '10px',
+                            bgcolor: alpha(theme.palette.warning.main, 0.1),
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: theme.palette.warning.main,
+                          }}
+                        >
+                          <CampaignRoundedIcon fontSize="small" />
+                        </Box>
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={
+                          <Typography variant="body2">
+                            <strong>{ann.title}</strong>
+                          </Typography>
+                        }
+                        secondary={
+                          <Typography variant="caption" color="text.secondary">
+                            {ann.course?.title ?? 'Cours'} · {ann.professor ? `${ann.professor.firstName ?? ''} ${ann.professor.lastName ?? ''}`.trim() : ''} · {new Date(ann.createdAt).toLocaleDateString('fr-FR')}
+                          </Typography>
+                        }
                       />
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={
-                        <Typography variant="body2">
-                          <strong>{activity.user}</strong> {activity.action}{' '}
-                          <strong>{activity.target}</strong>
-                        </Typography>
-                      }
-                      secondary={activity.time}
-                    />
-                    <UPFChip
-                      label={
-                        activity.type === 'EXAM_SHARED'
-                          ? 'Épreuve'
-                          : activity.type === 'GROUP_JOINED'
-                          ? 'Groupe'
-                          : activity.type === 'COURSE_VIEWED'
-                          ? 'Cours'
-                          : 'Commentaire'
-                      }
-                      size="small"
-                      colorVariant={
-                        activity.type === 'EXAM_SHARED'
-                          ? 'success'
-                          : activity.type === 'GROUP_JOINED'
-                          ? 'info'
-                          : activity.type === 'COURSE_VIEWED'
-                          ? 'secondary'
-                          : 'primary'
-                      }
-                    />
-                  </ListItem>
-                  {index < MOCK_ACTIVITIES.length - 1 && <Divider variant="inset" />}
-                </React.Fragment>
-              ))}
-            </List>
+                      <UPFChip label="Annonce" size="small" colorVariant="secondary" />
+                    </ListItem>
+                    {index < recentAnnouncements.length - 1 && <Divider variant="inset" />}
+                  </React.Fragment>
+                ))}
+              </List>
+            ) : (
+              <Box sx={{ py: 4, textAlign: 'center' }}>
+                <CampaignRoundedIcon sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
+                <Typography variant="body2" color="text.secondary">
+                  Aucune annonce récente.{' '}
+                  <Box
+                    component="span"
+                    sx={{ color: 'primary.main', cursor: 'pointer', textDecoration: 'underline' }}
+                    onClick={() => navigate('/student/courses')}
+                  >
+                    Consultez vos cours
+                  </Box>
+                </Typography>
+              </Box>
+            )}
           </UPFCard>
         </Grid>
 
         {/* Panneau latéral */}
         <Grid size={{ xs: 12, md: 4 }}>
-          {/* Top contributeurs */}
+          {/* Mes groupes récents */}
           <UPFCard noHover sx={{ mb: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <EmojiEventsRoundedIcon sx={{ color: theme.palette.secondary.main }} />
               <Typography variant="h6" fontWeight={600}>
-                Top contributeurs
+                Mes groupes récents
               </Typography>
             </Box>
+            {loading ? (
+              [1, 2, 3].map((i) => (
+                <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                  <Skeleton variant="circular" width={36} height={36} />
+                  <Box sx={{ flex: 1 }}>
+                    <Skeleton width="70%" height={16} />
+                    <Skeleton width="40%" height={12} sx={{ mt: 0.5 }} />
+                  </Box>
+                </Box>
+              ))
+            ) : recentGroups.length > 0 ? (
+              <>
+                {recentGroups.map((group: any) => (
+                  <Box
+                    key={group.id}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2,
+                      py: 1,
+                      cursor: 'pointer',
+                      '&:hover': { opacity: 0.8 },
+                    }}
+                    onClick={() => navigate(`/student/groups/${group.id}`)}
+                  >
+                    <Box
+                      sx={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: '10px',
+                        bgcolor: alpha(theme.palette.primary.main, 0.1),
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: theme.palette.primary.main,
+                        flexShrink: 0,
+                      }}
+                    >
+                      <GroupsRoundedIcon fontSize="small" />
+                    </Box>
+                    <Box sx={{ flex: 1, overflow: 'hidden' }}>
+                      <Typography
+                        variant="body2"
+                        fontWeight={600}
+                        noWrap
+                      >
+                        {group.name}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {group.memberCount ?? 0} membre{(group.memberCount ?? 0) > 1 ? 's' : ''} · {group.type === 'PUBLIC' ? 'Public' : 'Privé'}
+                      </Typography>
+                    </Box>
+                  </Box>
+                ))}
+                <UPFButton
+                  variant="text"
+                  size="small"
+                  endIcon={<ArrowForwardRoundedIcon />}
+                  onClick={() => navigate('/student/groups')}
+                  sx={{ mt: 1 }}
+                  fullWidth
+                >
+                  Tous mes groupes
+                </UPFButton>
+              </>
+            ) : (
+              <Box sx={{ py: 2, textAlign: 'center' }}>
+                <Typography variant="body2" color="text.secondary" mb={1}>
+                  Vous n'avez pas encore rejoint de groupe.
+                </Typography>
+                <UPFButton
+                  variant="outlined"
+                  size="small"
+                  startIcon={<GroupsRoundedIcon />}
+                  onClick={() => navigate('/student/groups')}
+                >
+                  Explorer les groupes
+                </UPFButton>
+              </Box>
+            )}
+          </UPFCard>
+
+          {/* Liens rapides */}
+          <UPFCard noHover>
+            <Typography variant="h6" fontWeight={600} mb={2}>
+              Accès rapides
+            </Typography>
             {[
-              { name: 'Amina B.', points: 156, rank: 1 },
-              { name: 'Youssef K.', points: 132, rank: 2 },
-              { name: 'Sara M.', points: 98, rank: 3 },
-            ].map((contributor) => (
+              { label: 'Mes cours', path: '/student/courses', icon: <MenuBookRoundedIcon />, color: '#3B82F6' },
+              { label: 'Épreuves', path: '/student/exams', icon: <DescriptionRoundedIcon />, color: '#10B981' },
+              { label: 'Réseau étudiant', path: '/student/network', icon: <GroupsRoundedIcon />, color: '#8B5CF6' },
+            ].map((item) => (
               <Box
-                key={contributor.name}
+                key={item.label}
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: 2,
-                  py: 1,
+                  py: 1.2,
+                  px: 1,
+                  borderRadius: 2,
+                  cursor: 'pointer',
+                  transition: 'background 0.15s',
+                  '&:hover': { bgcolor: alpha(item.color, 0.06) },
                 }}
+                onClick={() => navigate(item.path)}
               >
-                <Typography
-                  variant="body2"
-                  fontWeight={700}
+                <Box
                   sx={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: '50%',
-                    bgcolor:
-                      contributor.rank === 1
-                        ? theme.palette.secondary.main
-                        : contributor.rank === 2
-                        ? '#C0C0C0'
-                        : '#CD7F32',
-                    color: contributor.rank === 1 ? theme.palette.primary.main : '#fff',
+                    width: 32,
+                    height: 32,
+                    borderRadius: '8px',
+                    bgcolor: alpha(item.color, 0.1),
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '0.75rem',
+                    color: item.color,
                   }}
                 >
-                  {contributor.rank}
+                  {item.icon}
+                </Box>
+                <Typography variant="body2" fontWeight={500} sx={{ flex: 1 }}>
+                  {item.label}
                 </Typography>
-                <UPFAvatar
-                  firstName={contributor.name.split(' ')[0]}
-                  lastName={contributor.name.split(' ')[1]}
-                  size="small"
-                />
-                <Box sx={{ flex: 1 }}>
-                  <Typography variant="body2" fontWeight={600}>
-                    {contributor.name}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {contributor.points} pts
-                  </Typography>
-                </Box>
-              </Box>
-            ))}
-          </UPFCard>
-
-          {/* Skeleton pour contenu futur */}
-          <UPFCard noHover>
-            <Typography variant="h6" fontWeight={600} mb={2}>
-              Mes groupes récents
-            </Typography>
-            {[1, 2, 3].map((i) => (
-              <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                <Skeleton variant="circular" width={36} height={36} />
-                <Box sx={{ flex: 1 }}>
-                  <Skeleton width="70%" height={16} />
-                  <Skeleton width="40%" height={12} sx={{ mt: 0.5 }} />
-                </Box>
+                <ArrowForwardRoundedIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
               </Box>
             ))}
           </UPFCard>
