@@ -1,5 +1,6 @@
 package com.upf.backend.application.repository;
 
+import com.upf.backend.application.dto.PrivateConversationSummaryProjection;
 import com.upf.backend.application.dto.PrivateConversationSummaryResponse;
 import com.upf.backend.application.model.entity.Messages;
 import com.upf.backend.application.model.enums.ContextMessage;
@@ -41,25 +42,31 @@ public interface MessageRepository extends JpaRepository<Messages, UUID> {
             Pageable pageable);
 
     @Query(value = """
-        SELECT new com.upf.backend.application.dto.PrivateConversationSummaryResponse(
-            CASE WHEN m.senderId = :userId THEN m.recipientId ELSE m.senderId END,
-            MAX(m.createdAt)
-        )
-        FROM Messages m
-        WHERE m.isDeleted = false
-          AND m.context = com.upf.backend.application.model.enums.ContextMessage.PRIVATE
-          AND (m.senderId = :userId OR m.recipientId = :userId)
-        GROUP BY CASE WHEN m.senderId = :userId THEN m.recipientId ELSE m.senderId END
-        ORDER BY MAX(m.createdAt) DESC
+        SELECT t.other_user_id AS otherUserId,
+               MAX(t.created_at) AS lastMessageAt
+        FROM (
+            SELECT CASE WHEN sender_id = :userId THEN recipient_id ELSE sender_id END AS other_user_id,
+                   created_at
+            FROM messages
+            WHERE is_deleted = false
+              AND context = 'PRIVATE'
+              AND (sender_id = :userId OR recipient_id = :userId)
+        ) t
+        GROUP BY t.other_user_id
+        ORDER BY MAX(t.created_at) DESC
     """,
     countQuery = """
-        SELECT COUNT(DISTINCT CASE WHEN m.senderId = :userId THEN m.recipientId ELSE m.senderId END)
-        FROM Messages m
-        WHERE m.isDeleted = false
-          AND m.context = com.upf.backend.application.model.enums.ContextMessage.PRIVATE
-          AND (m.senderId = :userId OR m.recipientId = :userId)
-    """)
-    Page<PrivateConversationSummaryResponse> findPrivateConversationSummaries(
+        SELECT COUNT(*)
+        FROM (
+            SELECT DISTINCT CASE WHEN sender_id = :userId THEN recipient_id ELSE sender_id END AS other_user_id
+            FROM messages
+            WHERE is_deleted = false
+              AND context = 'PRIVATE'
+              AND (sender_id = :userId OR recipient_id = :userId)
+        ) t
+    """,
+    nativeQuery = true)
+    Page<PrivateConversationSummaryProjection> findPrivateConversationSummaries(
             @Param("userId") UUID userId,
             Pageable pageable);
 }

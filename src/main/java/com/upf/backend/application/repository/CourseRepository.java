@@ -42,14 +42,14 @@ public interface CourseRepository extends JpaRepository<Course, UUID> {
            select c
            from Course c
            where c.isActive = true
-             and (:major is null or lower(c.major) = lower(:major))
+             and (:major is null or lower(cast(c.major as String)) = lower(:major))
              and (:year is null or c.year = :year)
              and (:semester is null or c.semester = :semester)
              and (
                    :search is null
-                   or lower(c.title) like lower(concat('%', :search, '%'))
-                   or lower(c.description) like lower(concat('%', :search, '%'))
-                   or lower(c.instructorName) like lower(concat('%', :search, '%'))
+                   or lower(cast(c.title as String)) like lower(concat('%', :search, '%'))
+                   or lower(cast(c.description as String)) like lower(concat('%', :search, '%'))
+                   or lower(cast(c.instructorName as String)) like lower(concat('%', :search, '%'))
                  )
            """)
     Page<Course> searchActiveCourses(
