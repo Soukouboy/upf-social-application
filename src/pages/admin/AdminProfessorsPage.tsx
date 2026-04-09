@@ -22,7 +22,10 @@ import UPFModal from '../../components/ui/UPFModal';
 import UPFSearchBar from '../../components/ui/UPFSearchBar';
 import type { CourseSummary } from '../../types';
 import type { ProfessorProfileResponse } from '../../services/adminService';
-import { getProfessors, createProfessor, assignCourseToProf, getAdminCourses } from '../../services/adminService';
+import {
+  getProfessors, createProfessor, assignCourseToProf, getAdminCourses,
+  deleteProfessor, deactivateProfessor
+} from '../../services/adminService';
 
 // Filières disponibles
 const DEPARTMENTS = [
@@ -61,6 +64,11 @@ const AdminProfessorsPage: React.FC = () => {
   const [assignProfId, setAssignProfId] = useState<string | null>(null);
   const [assignCourseId, setAssignCourseId] = useState<number | string>('');
   const [assignLoading, setAssignLoading] = useState(false);
+
+  // Modal — Supprimer prof
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [profToDelete, setProfToDelete] = useState<ProfessorProfileResponse | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -139,6 +147,34 @@ const AdminProfessorsPage: React.FC = () => {
     setAssignOpen(true);
   };
 
+  const handleDeactivate = async (profId: string) => {
+    try {
+      await deactivateProfessor(profId);
+      setSuccess('Professeur désactivé avec succès !');
+      setTimeout(() => setSuccess(null), 3000);
+      // Optionnel: rafraîchir la liste ou mettre à jour le state local si on avait un statut actif
+    } catch {
+      // Gérer l'erreur
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!profToDelete) return;
+    setDeleteLoading(true);
+    try {
+      await deleteProfessor(profToDelete.id);
+      setProfessors((prev) => prev.filter((p) => p.id !== profToDelete.id));
+      setDeleteOpen(false);
+      setProfToDelete(null);
+      setSuccess('Professeur supprimé avec succès !');
+      setTimeout(() => setSuccess(null), 3000);
+    } catch {
+      // Gérer l'erreur
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 4, flexWrap: 'wrap', gap: 2 }}>
@@ -203,13 +239,27 @@ const AdminProfessorsPage: React.FC = () => {
                     </Box>
                   </TableCell>
                   <TableCell align="right">
-                    <UPFButton
-                      size="small" variant="outlined" color="primary"
-                      startIcon={<LinkRoundedIcon />}
-                      onClick={() => openAssignModal(prof.id)}
-                    >
-                      Affecter un cours
-                    </UPFButton>
+                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                      <UPFButton
+                        size="small" variant="outlined" color="primary"
+                        startIcon={<LinkRoundedIcon />}
+                        onClick={() => openAssignModal(prof.id)}
+                      >
+                        Affecter
+                      </UPFButton>
+                      <UPFButton
+                        size="small" variant="outlined" color="warning"
+                        onClick={() => handleDeactivate(prof.id)}
+                      >
+                        Désactiver
+                      </UPFButton>
+                      <UPFButton
+                        size="small" variant="outlined" color="error"
+                        onClick={() => { setProfToDelete(prof); setDeleteOpen(true); }}
+                      >
+                        Supprimer
+                      </UPFButton>
+                    </Box>
                   </TableCell>
                 </TableRow>
               ))}
@@ -278,6 +328,25 @@ const AdminProfessorsPage: React.FC = () => {
             ))}
           </TextField>
         </Box>
+      </UPFModal>
+
+      {/* Modal — Supprimer prof */}
+      <UPFModal
+        open={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        title="Confirmer la suppression"
+        actions={
+          <>
+            <UPFButton variant="outlined" onClick={() => setDeleteOpen(false)}>Annuler</UPFButton>
+            <UPFButton variant="contained" color="error" onClick={handleDelete} loading={deleteLoading}>Supprimer</UPFButton>
+          </>
+        }
+      >
+        <Typography>
+          Êtes-vous sûr de vouloir supprimer le professeur{' '}
+          <strong>{profToDelete?.firstName} {profToDelete?.lastName}</strong> ?
+          Cette action est irréversible.
+        </Typography>
       </UPFModal>
     </Box>
   );

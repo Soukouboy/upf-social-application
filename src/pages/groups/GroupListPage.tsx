@@ -16,9 +16,12 @@ import UPFCard from '../../components/ui/UPFCard';
 import UPFSearchBar from '../../components/ui/UPFSearchBar';
 import UPFChip from '../../components/ui/UPFChip';
 import UPFButton from '../../components/ui/UPFButton';
+import UPFModal from '../../components/ui/UPFModal';
 import EmptyState from '../../components/common/EmptyState';
-import type { Group } from '../../types';
 import { getGroups } from '../../services/groupService';
+import { deleteGroup, deactivateGroup } from '../../services/adminService';
+import { useAuth } from '../../hooks/useAuth';
+import type { Group } from '../../types';
 
 const GroupListPage: React.FC = () => {
   const theme = useTheme();
@@ -26,6 +29,12 @@ const GroupListPage: React.FC = () => {
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+
+  // Admin delete modal
+  const [deleteModal, setDeleteModal] = useState<{ open: boolean; group: Group | null }>({ open: false, group: null });
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     const fetchGroups = async () => {
@@ -46,6 +55,30 @@ const GroupListPage: React.FC = () => {
     g.name.toLowerCase().includes(search.toLowerCase()) ||
     g.description?.toLowerCase().includes(search.toLowerCase())
   );
+
+  const handleDeleteGroup = async () => {
+    if (!deleteModal.group) return;
+    setActionLoading(true);
+    try {
+      await deleteGroup(String(deleteModal.group.id));
+      setGroups((prev) => prev.filter((g) => g.id !== deleteModal.group!.id));
+      setDeleteModal({ open: false, group: null });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeactivateGroup = async (e: React.MouseEvent, groupId: string) => {
+    e.stopPropagation();
+    try {
+      await deactivateGroup(groupId);
+      // Optional: Refresh groups or show an alert
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
     <Box>
@@ -115,26 +148,51 @@ const GroupListPage: React.FC = () => {
                       {group.memberCount} membre{group.memberCount > 1 ? 's' : ''}
                     </Typography>
                   </Box>
-                  <UPFButton size="small" variant="text" endIcon={<ArrowForwardRoundedIcon />} sx={{ color: 'primary.main' }}>
-                    Voir
-                  </UPFButton>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    {isAdmin && (
+                      <>
+                        <UPFButton size="small" variant="outlined" color="warning" onClick={(e) => handleDeactivateGroup(e, String(group.id))}>
+                          Désactiver
+                        </UPFButton>
+                        <UPFButton size="small" variant="outlined" color="error" onClick={(e) => { e.stopPropagation(); setDeleteModal({ open: true, group }); }}>
+                          Supprimer
+                        </UPFButton>
+                      </>
+                    )}
+                    {!isAdmin && (
+                      <UPFButton size="small" variant="text" endIcon={<ArrowForwardRoundedIcon />} sx={{ color: 'primary.main' }}>
+                        Voir
+                      </UPFButton>
+                    )}
+                  </Box>
                 </Box>
               </UPFCard>
             </Grid>
           ))}
         </Grid>
       )}
+
+      {isAdmin && (
+        <UPFModal
+          open={deleteModal.open}
+          onClose={() => setDeleteModal({ open: false, group: null })}
+          title="Confirmer la suppression"
+          actions={
+            <>
+              <UPFButton variant="outlined" onClick={() => setDeleteModal({ open: false, group: null })}>Annuler</UPFButton>
+              <UPFButton variant="contained" color="error" onClick={handleDeleteGroup} loading={actionLoading}>Supprimer</UPFButton>
+            </>
+          }
+        >
+          <Typography>
+            Êtes-vous sûr de vouloir supprimer le groupe{' '}
+            <strong>{deleteModal.group?.name}</strong> ?
+            Cette action est irréversible.
+          </Typography>
+        </UPFModal>
+      )}
     </Box>
   );
 };
-
-// const MOCK_GROUPS: Group[] = [
-//   { id: 1, name: 'Dev Web S4', description: 'Groupe d\'entraide pour le module Développement Web du semestre 4. React, Node.js, API REST.', visibility: 'PUBLIC', memberCount: 28, createdBy: { id: 1, firstName: 'Amina', lastName: 'Benali' }, createdAt: '2025-02-10', coverImageUrl: undefined },
-//   { id: 2, name: 'Prépa Examen Algo', description: 'Préparation intensive pour l\'examen final d\'algorithmique. Exercices, annales, discussions.', visibility: 'PUBLIC', memberCount: 45, createdBy: { id: 2, firstName: 'Youssef', lastName: 'Karimi' }, createdAt: '2025-05-01', coverImageUrl: undefined },
-//   { id: 3, name: 'Projet PFE — IA Médicale', description: 'Groupe privé pour le projet de fin d\'études sur l\'intelligence artificielle appliquée au diagnostic médical.', visibility: 'PRIVATE', memberCount: 6, createdBy: { id: 3, firstName: 'Sara', lastName: 'Moussaoui' }, createdAt: '2025-01-15', coverImageUrl: undefined },
-//   { id: 4, name: 'Club Entrepreneuriat UPF', description: 'Le club entrepreneuriat de l\'UPF Campus Rabat. Business plans, networking, pitch sessions.', visibility: 'PUBLIC', memberCount: 62, createdBy: { id: 4, firstName: 'Omar', lastName: 'Tazi' }, createdAt: '2024-09-20', coverImageUrl: undefined },
-//   { id: 5, name: 'BDD Avancées — Projet', description: 'Collaboration sur le projet de base de données avancées. PostgreSQL, optimisation.', visibility: 'PRIVATE', memberCount: 8, createdBy: { id: 1, firstName: 'Amina', lastName: 'Benali' }, createdAt: '2025-03-01', coverImageUrl: undefined },
-//   { id: 6, name: 'Stage & Emploi', description: 'Partage d\'offres de stages et d\'emploi pour les étudiants UPF.', visibility: 'PUBLIC', memberCount: 120, createdBy: { id: 5, firstName: 'Leila', lastName: 'Fassi' }, createdAt: '2024-10-01', coverImageUrl: undefined },
-// ];
 
 export default GroupListPage;

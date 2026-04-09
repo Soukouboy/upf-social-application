@@ -138,8 +138,7 @@ export const promoteStudentToAdmin = async (
 ): Promise<AdminProfileResponse> => {
   const { data } = await api.post<AdminProfileResponse>(
     `/admin/students/${studentId}/promote`,
-    null,
-    { params: { adminLevel } }
+    { adminLevel }
   );
   return data;
 };
@@ -151,8 +150,7 @@ export const updateAdminLevel = async (
 ): Promise<AdminProfileResponse> => {
   const { data } = await api.put<AdminProfileResponse>(
     `/admin/accounts/${adminProfileId}/level`,
-    null,
-    { params: { adminLevel } }
+    { adminLevel }
   );
   return data;
 };
@@ -261,7 +259,7 @@ export const activateCourse = async (courseId: string): Promise<CourseSummary> =
 
 /** Désactiver un cours */
 export const deactivateCourse = async (courseId: string): Promise<CourseSummary> => {
-  const { data } = await api.patch<CourseSummary>(`/admin/courses/${courseId}/deactivate`);
+  const { data } = await api.put<CourseSummary>(`/admin/courses/${courseId}/deactivate`);
   return data;
 };
 
@@ -272,11 +270,11 @@ export const getReports = async (status?: ReportStatus): Promise<ExamReport[]> =
   return Array.isArray(data) ? data : [];
 };
 
-export const updateReportStatus = async (
+export const resolveReport = async (
   reportId: string,
-  status: ReportStatus
+  accept: boolean
 ): Promise<void> => {
-  await api.put(`/admin/reports/${reportId}`, { status });
+  await api.put(`/admin/reports/${reportId}/resolve`, null, { params: { accept } });
 };
 
 export const toggleExamVisibility = async (
@@ -335,7 +333,11 @@ export const getUsers = async (filters?: Record<string, unknown>) => {
 };
 
 export const updateUserStatus = async (userId: string, isActive: boolean): Promise<void> => {
-  await api.put(`/admin/users/${userId}/status`, { isActive });
+  if (isActive) {
+    await api.put(`/admin/users/${userId}/reactivate`);
+  } else {
+    await api.put(`/admin/users/${userId}/suspend`);
+  }
 };
 
 export const getProfessors = async () => {
@@ -343,4 +345,22 @@ export const getProfessors = async () => {
   // Cet endpoint est à ajouter côté backend
   const { data } = await api.get('/admin/professors');
   return Array.isArray(data) ? data : [];
+};
+
+// ────────── Groupes ──────────
+export const deleteGroup = async (groupId: string): Promise<void> => {
+  await api.delete(`/admin/groups/${groupId}`);
+};
+
+export const deactivateGroup = async (groupId: string): Promise<void> => {
+  await api.put(`/admin/groups/${groupId}/deactivate`);
+};
+
+// ────────── Suppression / Désactivation des professeurs ──────────
+export const deleteProfessor = async (professorId: string): Promise<void> => {
+  await api.delete(`/admin/professors/${professorId}`);
+};
+
+export const deactivateProfessor = async (professorId: string): Promise<void> => {
+  await api.put(`/admin/professors/${professorId}/deactivate`);
 };

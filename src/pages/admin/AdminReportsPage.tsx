@@ -15,7 +15,7 @@ import UPFCard from '../../components/ui/UPFCard';
 import UPFButton from '../../components/ui/UPFButton';
 import UPFModal from '../../components/ui/UPFModal';
 import type { ExamReport, ReportStatus } from '../../types';
-import { getReports, updateReportStatus, toggleExamVisibility } from '../../services/adminService';
+import { getReports, resolveReport, toggleExamVisibility } from '../../services/adminService';
 
 
 const statusColors: Record<ReportStatus, 'warning' | 'info' | 'error' | 'default'> = {
@@ -72,9 +72,9 @@ const AdminReportsPage: React.FC = () => {
     try {
       if (actionModal.action === 'hide') {
         await toggleExamVisibility(examId, true);
-        await updateReportStatus(String(report.id), 'ACTIONED');
+        await resolveReport(String(report.id), true);
       } else {
-        await updateReportStatus(String(report.id), 'DISMISSED');
+        await resolveReport(String(report.id), false);
       }
     } catch { /* Ignorer les erreurs de mise à jour du statut */ }
 
