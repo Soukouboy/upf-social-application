@@ -379,7 +379,7 @@ public class AdminServiceImpl implements IAdminService {
     @Transactional(readOnly = true)
     public AdminStatsResponse getAdminStats() {
         int totalUsers = (int) userRepository.count();
-        int activeUsers = (int) userRepository.countByActive(true);
+        int activeUsers = (int) userRepository.countByIsActive(true);
         int totalStudents = (int) studentRepository.count();
         int totalProfessors = (int) professorRepository.count();
         int totalCourses = (int) courseRepository.count();
