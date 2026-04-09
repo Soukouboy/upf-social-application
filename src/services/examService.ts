@@ -22,7 +22,20 @@ import type {
 
 /** Liste des épreuves avec filtres et pagination */
 export const getExams = async (filters?: ExamFilters): Promise<PaginatedResponse<ExamResponseDto>> => {
-  const { data } = await api.get<PaginatedResponse<ExamResponseDto>>('/exams', { params: filters });
+  const { data } = await api.get<any>('/exams', { params: filters });
+  
+  if (Array.isArray(data)) {
+    return {
+      content: data,
+      totalPages: 1,
+      totalElements: data.length,
+      number: 0,
+      size: data.length || 10,
+      first: true,
+      last: true,
+    };
+  }
+  
   return data;
 };
 
@@ -75,8 +88,21 @@ export const reportExam = async (
 
 /** Épreuves uploadées par l'utilisateur connecté (pour le dashboard) */
 export const getMyExams = async (): Promise<PaginatedResponse<ExamResponseDto>> => {
-  const { data } = await api.get<PaginatedResponse<ExamResponseDto>>('/exams', {
+  const { data } = await api.get<any>('/exams', {
     params: { uploadedByMe: true, size: 100 },
   });
+  
+  if (Array.isArray(data)) {
+    return {
+      content: data,
+      totalPages: 1,
+      totalElements: data.length,
+      number: 0,
+      size: data.length || 10,
+      first: true,
+      last: true,
+    };
+  }
+  
   return data;
 };

@@ -11,7 +11,20 @@ import type { CourseDetails, CourseResourceResponse, CourseFilters, PaginatedRes
 
 /** Liste des cours avec filtres et pagination */
 export const getCourses = async (filters?: CourseFilters): Promise<PaginatedResponse<CourseSummary>> => {
-  const { data } = await api.get<PaginatedResponse<CourseSummary>>('/courses/me', { params: filters });
+  const { data } = await api.get<any>('/courses/me', { params: filters });
+  
+  if (Array.isArray(data)) {
+    return {
+      content: data,
+      totalPages: 1,
+      totalElements: data.length,
+      number: 0,
+      size: data.length || 10,
+      first: true,
+      last: true,
+    };
+  }
+  
   return data;
 };
 
