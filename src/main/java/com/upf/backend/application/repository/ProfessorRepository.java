@@ -21,7 +21,7 @@ public interface ProfessorRepository extends JpaRepository<ProfessorProfile, UUI
     Optional<ProfessorProfile> findByUser_Email(String email);
 
     // ✅ Correct — retourne des ProfessorProfile qui ont des cours dans cette filière
-    List<ProfessorProfile> findByCourses_Major(String filiere);
+    List<ProfessorProfile> findByCourses_major(String filiere);
 
     // ✅ Correct — retourne des ProfessorProfile qui ont ce cours
     Optional<ProfessorProfile> findByCourses_Code(String code);

@@ -106,8 +106,7 @@ public ResponseEntity<CourseResourceResponse> uploadResource(
         @RequestParam(required = false, defaultValue = "false") boolean isExternal,
         @RequestPart("file") MultipartFile file) throws IOException {
 
-    byte[] content    = file.getBytes();
-    long   fileSize   = file.getSize();
+     long   fileSize   = file.getSize();
     String fileName   = file.getOriginalFilename();
 
     // ✅ Déléguer le stockage à IFileStorageService (même que pour les exams)

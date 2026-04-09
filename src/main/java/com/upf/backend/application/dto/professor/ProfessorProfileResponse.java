@@ -7,7 +7,7 @@ import java.util.UUID;
  * Utilisée pour les endpoints de détail (GET, POST, PUT).
  */
 import java.util.List;
-import java.util.UUID;
+ 
 
 public record ProfessorProfileResponse(
     UUID id,

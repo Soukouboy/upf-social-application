@@ -2,8 +2,6 @@ package com.upf.backend.application.mapper;
 
 import com.upf.backend.application.dto.ChatMessageResponse;
 import com.upf.backend.application.model.entity.Messages;
-import com.upf.backend.application.model.entity.StudentProfile;
-
 public class ChatMapper {
 
     public static ChatMessageResponse toResponse(Messages message) {
