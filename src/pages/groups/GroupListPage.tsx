@@ -19,7 +19,7 @@ import UPFButton from '../../components/ui/UPFButton';
 import UPFModal from '../../components/ui/UPFModal';
 import EmptyState from '../../components/common/EmptyState';
 import { getGroups } from '../../services/groupService';
-import { deleteGroup, deactivateGroup } from '../../services/adminService';
+import { deleteGroup, deactivateGroup, activateGroup } from '../../services/adminService';
 import { useAuth } from '../../hooks/useAuth';
 import type { Group } from '../../types';
 
@@ -70,11 +70,16 @@ const GroupListPage: React.FC = () => {
     }
   };
 
-  const handleDeactivateGroup = async (e: React.MouseEvent, groupId: string) => {
+  const handleToggleActiveGroup = async (e: React.MouseEvent, group: Group) => {
     e.stopPropagation();
+    const isActive = group.isActive !== false;
     try {
-      await deactivateGroup(groupId);
-      // Optional: Refresh groups or show an alert
+      if (isActive) {
+        await deactivateGroup(String(group.id));
+      } else {
+        await activateGroup(String(group.id));
+      }
+      setGroups(prev => prev.map(g => g.id === group.id ? { ...g, isActive: !isActive } : g));
     } catch (err) {
       console.error(err);
     }
@@ -124,13 +129,20 @@ const GroupListPage: React.FC = () => {
                     : `linear-gradient(90deg, ${theme.palette.warning.main}, ${theme.palette.secondary.main})`,
                 }} />
 
-                <Box sx={{ display: 'flex', gap: 1, mb: 2, mt: 1 }}>
+                <Box sx={{ display: 'flex', gap: 1, mb: 2, mt: 1, alignItems: 'center' }}>
                   <UPFChip
                     label={group.type === 'PUBLIC' ? 'Public' : 'Privé'}
                     size="small"
                     colorVariant={group.type === 'PUBLIC' ? 'info' : 'secondary'}
                     icon={group.type === 'PUBLIC' ? <PublicRoundedIcon /> : <LockRoundedIcon />}
                   />
+                  {isAdmin && (
+                    <UPFChip
+                      label={group.isActive !== false ? 'Actif' : 'Inactif'}
+                      size="small"
+                      colorVariant={group.isActive !== false ? 'success' : 'error'}
+                    />
+                  )}
                 </Box>
 
                 <Typography variant="h6" fontWeight={600} mb={0.5}>{group.name}</Typography>
@@ -151,8 +163,13 @@ const GroupListPage: React.FC = () => {
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     {isAdmin && (
                       <>
-                        <UPFButton size="small" variant="outlined" color="warning" onClick={(e) => handleDeactivateGroup(e, String(group.id))}>
-                          Désactiver
+                        <UPFButton
+                          size="small"
+                          variant={group.isActive !== false ? 'outlined' : 'contained'}
+                          color={group.isActive !== false ? 'warning' : 'success'}
+                          onClick={(e) => handleToggleActiveGroup(e, group)}
+                        >
+                          {group.isActive !== false ? 'Désactiver' : 'Activer'}
                         </UPFButton>
                         <UPFButton size="small" variant="outlined" color="error" onClick={(e) => { e.stopPropagation(); setDeleteModal({ open: true, group }); }}>
                           Supprimer

@@ -66,6 +66,7 @@ export interface ProfessorProfileResponse {
   department?: string;
   title?: string;
   courseNames: string[];
+  isActive?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -356,6 +357,10 @@ export const deactivateGroup = async (groupId: string): Promise<void> => {
   await api.put(`/admin/groups/${groupId}/deactivate`);
 };
 
+export const activateGroup = async (groupId: string): Promise<void> => {
+  await api.put(`/admin/groups/${groupId}/activate`);
+};
+
 // ────────── Suppression / Désactivation des professeurs ──────────
 export const deleteProfessor = async (professorId: string): Promise<void> => {
   await api.delete(`/admin/professors/${professorId}`);
@@ -363,4 +368,8 @@ export const deleteProfessor = async (professorId: string): Promise<void> => {
 
 export const deactivateProfessor = async (professorId: string): Promise<void> => {
   await api.put(`/admin/professors/${professorId}/deactivate`);
+};
+
+export const activateProfessor = async (professorId: string): Promise<void> => {
+  await api.put(`/admin/professors/${professorId}/activate`);
 };

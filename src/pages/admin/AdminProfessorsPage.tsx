@@ -24,7 +24,7 @@ import type { CourseSummary } from '../../types';
 import type { ProfessorProfileResponse } from '../../services/adminService';
 import {
   getProfessors, createProfessor, assignCourseToProf, getAdminCourses,
-  deleteProfessor, deactivateProfessor
+  deleteProfessor, deactivateProfessor, activateProfessor
 } from '../../services/adminService';
 
 // Filières disponibles
@@ -147,12 +147,18 @@ const AdminProfessorsPage: React.FC = () => {
     setAssignOpen(true);
   };
 
-  const handleDeactivate = async (profId: string) => {
+  const handleToggleActive = async (prof: ProfessorProfileResponse) => {
+    const isActive = prof.isActive !== false;
     try {
-      await deactivateProfessor(profId);
-      setSuccess('Professeur désactivé avec succès !');
+      if (isActive) {
+        await deactivateProfessor(prof.id);
+        setSuccess('Professeur désactivé avec succès !');
+      } else {
+        await activateProfessor(prof.id);
+        setSuccess('Professeur réactivé avec succès !');
+      }
+      setProfessors(prev => prev.map(p => p.id === prof.id ? { ...p, isActive: !isActive } : p));
       setTimeout(() => setSuccess(null), 3000);
-      // Optionnel: rafraîchir la liste ou mettre à jour le state local si on avait un statut actif
     } catch {
       // Gérer l'erreur
     }
@@ -206,17 +212,20 @@ const AdminProfessorsPage: React.FC = () => {
                 <TableCell sx={{ fontWeight: 600 }}>Département</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Titre</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Cours affectés</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Statut</TableCell>
                 <TableCell sx={{ fontWeight: 600 }} align="right">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={6} sx={{ p: 3, textAlign: 'center' }}>Chargement…</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} sx={{ p: 3, textAlign: 'center' }}>Chargement…</TableCell></TableRow>
               ) : filteredProfessors.length === 0 ? (
-                <TableRow><TableCell colSpan={6} sx={{ p: 4, textAlign: 'center' }}>
+                <TableRow><TableCell colSpan={7} sx={{ p: 4, textAlign: 'center' }}>
                   <Typography color="text.secondary">Aucun professeur trouvé</Typography>
                 </TableCell></TableRow>
-              ) : filteredProfessors.map((prof) => (
+              ) : filteredProfessors.map((prof) => {
+                const isActive = prof.isActive !== false;
+                return (
                 <TableRow key={prof.id} hover>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -238,8 +247,11 @@ const AdminProfessorsPage: React.FC = () => {
                       )}
                     </Box>
                   </TableCell>
+                  <TableCell>
+                    <Chip label={isActive ? 'Actif' : 'Inactif'} size="small" color={isActive ? 'success' : 'default'} variant="outlined" />
+                  </TableCell>
                   <TableCell align="right">
-                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                       <UPFButton
                         size="small" variant="outlined" color="primary"
                         startIcon={<LinkRoundedIcon />}
@@ -248,10 +260,10 @@ const AdminProfessorsPage: React.FC = () => {
                         Affecter
                       </UPFButton>
                       <UPFButton
-                        size="small" variant="outlined" color="warning"
-                        onClick={() => handleDeactivate(prof.id)}
+                        size="small" variant={isActive ? 'outlined' : 'contained'} color={isActive ? 'warning' : 'success'}
+                        onClick={() => handleToggleActive(prof)}
                       >
-                        Désactiver
+                        {isActive ? 'Désactiver' : 'Activer'}
                       </UPFButton>
                       <UPFButton
                         size="small" variant="outlined" color="error"
@@ -262,7 +274,8 @@ const AdminProfessorsPage: React.FC = () => {
                     </Box>
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
         </TableContainer>

@@ -238,7 +238,8 @@ export interface CourseSummary {
   year: number,
   semester: number,
   credits: number,
-  professorName: string
+  professorName: string,
+  isActive?: boolean
 }
 
 // Correspond à CourseDetails.java (détail complet)
@@ -418,6 +419,7 @@ export interface GroupSummary {
   description?: string;
   visibility: GroupVisibility;
   memberCount: number;
+  isActive?: boolean;
   createdAt: string;
 }
 
