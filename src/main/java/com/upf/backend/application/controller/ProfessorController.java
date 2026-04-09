@@ -92,6 +92,8 @@ public class ProfessorController {
         return ResponseEntity.status(HttpStatus.CREATED).body(EnrollmentMapper.toResponse(enrollment));
     }
 
+ 
+
     
     // ─── Ressources ──────────────────────────────────────────────────────────
 

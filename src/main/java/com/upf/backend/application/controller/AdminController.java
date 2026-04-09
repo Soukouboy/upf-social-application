@@ -196,4 +196,77 @@ public class AdminController {
         return ResponseEntity.ok(adminService.getReports());
     }
 
+    // Résolution d'un signalement (examen ou groupe)
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/reports/{reportId}/resolve")
+    public ResponseEntity<Void> resolveReport(@PathVariable UUID reportId, @RequestParam boolean accept) {
+        adminService.resolveReport(reportId, accept);
+        return ResponseEntity.noContent().build();
+    }
+
+    // Suppression d'un compte professeur
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/professors/{professorId}")
+    public ResponseEntity<Void> deleteProfessor(@PathVariable UUID professorId) {
+        adminService.deleteProfessor(professorId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // Désactiver un compte professeur 
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/professors/{professorId}/deactivate")
+    public ResponseEntity<Void> desactivateProfessor(@PathVariable UUID professorId) {
+        adminService.desactivateProfessor(professorId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // Suspendre un compte utilisateur (étudiant ou professeur)
+      @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/users/{userId}/suspend")
+    public ResponseEntity<Void> suspendUser(@PathVariable UUID userId) {
+        adminService.suspendUser(userId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // Réactiver un compte utilisateur suspendu
+      @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/users/{userId}/reactivate")
+    public ResponseEntity<Void> reactivateUser(@PathVariable UUID userId) {
+        adminService.reactivateUser(userId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // Supprimer un groupes d'un étudiant (en cas de signalement, par exemple)
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/groups/{groupId}")
+    public ResponseEntity<Void> deleteGroup(@PathVariable UUID groupId) {
+        adminService.deleteGroup(groupId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/groups/{groupId}/deactivate")
+    public ResponseEntity<Void> desactivateGroup(@PathVariable UUID groupId) {
+        adminService.desactivateGroup(groupId);
+        return ResponseEntity.noContent().build();
+    }
+    
+    // Desactiver un cours (en cas de signalement, par exemple)
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/courses/{courseId}/deactivate")
+    public ResponseEntity<Void> desactivateCourse(@PathVariable UUID courseId) {
+        adminService.desactivateCourse(courseId);
+        return ResponseEntity.noContent().build();
+    }
+    
+    // Delete un cours (en cas de signalement, par exemple)
+     
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/courses/{courseId}")
+    public ResponseEntity<Void> deleteCourse(@PathVariable UUID courseId) {
+        adminService.deleteCourse(courseId);
+        return ResponseEntity.noContent().build();
+    }
+
+
 }

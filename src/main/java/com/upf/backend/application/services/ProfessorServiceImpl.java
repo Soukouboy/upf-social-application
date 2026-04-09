@@ -286,4 +286,7 @@ public class ProfessorServiceImpl implements IProfessorService {
         findProfessorOrThrow(professorId); // valider l'existence du prof
         return announcementRepository.findByProfessor_Id(professorId);
     }
+
+    
+    
 }

@@ -408,4 +408,95 @@ public class AdminServiceImpl implements IAdminService {
                 .toList();
     }
 
+    public void resolveReport(UUID reportId, boolean accept) {
+        ExamReport report = examReportRepository.findById(reportId)
+                .orElseThrow(() -> new ResourceNotFoundException("Rapport introuvable."));
+
+        if (report.getStatus() != ReportStatus.PENDING) {
+            throw new BusinessException("Ce rapport a déjà été traité.");
+        }
+
+        if (accept) {
+            // Par exemple, supprimer l'examen signalé
+            examRepository.delete(report.getExam());
+            report.setStatus(ReportStatus.ACTIONED);
+        } else {
+            report.setStatus(ReportStatus.DISMISSED);
+        }
+
+        examReportRepository.save(report);
+    }
+
+
+      @Override
+    public void suspendUser(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable."));
+        user.setActive(false);
+        userRepository.save(user);
+    }
+
+    @Override
+    public void deleteProfessor(UUID professorProfileId) {
+        ProfessorProfile professor = professorRepository.findById(professorProfileId)
+                .orElseThrow(() -> new ResourceNotFoundException("Professeur introuvable."));
+
+        User user = professor.getUser();
+        user.setRole(UserRole.STUDENT); // ou un rôle par défaut
+        user.setProfessorProfile(null);
+        professorRepository.delete(professor);
+    }
+
+    @Override
+    public void desactivateProfessor(UUID professorProfileId) {
+        ProfessorProfile professor = professorRepository.findById(professorProfileId)
+                .orElseThrow(() -> new ResourceNotFoundException("Professeur introuvable."));
+
+        User user = professor.getUser();
+        user.setActive(false);
+        userRepository.save(user);
+    }
+    @Override
+    public void reactivateUser(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable."));
+        user.setActive(true);
+        userRepository.save(user);
+    }
+
+    @Override
+    public void deleteGroup(UUID groupId) {
+        AcademicGroup group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable."));
+
+        // Suppression en cascade grâce à la relation définie dans AcademicGroup
+        groupRepository.delete(group);
+    }
+
+     @Override
+    public void desactivateGroup(UUID groupId) {
+        AcademicGroup group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable."));
+
+        group.setActive(false);
+        groupRepository.save(group);
+    }
+    @Override
+     public void desactivateCourse(UUID courseId) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cours introuvable."));
+
+        course.setActive(false);
+        courseRepository.save(course);
+     }
+
+        @Override
+        public void deleteCourse(UUID courseId) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cours introuvable."));
+        courseRepository.delete(course);
+        } 
+        
+  
+
 }

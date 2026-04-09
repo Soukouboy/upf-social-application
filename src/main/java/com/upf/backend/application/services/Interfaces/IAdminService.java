@@ -57,4 +57,16 @@ public interface IAdminService {
     // Reports
     List<ExamReportResponse> getReports();
 
+      void desactivateProfessor(UUID professorProfileId) ;
+
+      void deleteProfessor(UUID professorProfileId) ;
+       void suspendUser(UUID userId) ;
+       void reactivateUser(UUID userId) ;
+
+       void deleteGroup(UUID groupId) ;
+       void desactivateGroup(UUID groupId) ;
+       void desactivateCourse(UUID courseId) ;
+       void deleteCourse(UUID courseId) ;
+
+       void resolveReport(UUID reportId, boolean accept);
 }

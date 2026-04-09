@@ -3,3 +3,26 @@ git filter-branch --force --index-filter \
   "git rm -rf --cached --ignore-unmatch uploads/" \
   --prune-empty --tag-name-filter cat -- --all
 
+
+
+
+
+Je veux que tu ajoutes les modifications suivants:
+1.L'admin peut supprimer ou desactiver un groupe en utilisant joint.
+2. Supprimer ou desactiver un prof en utilisant les urls suivants dans le fichier joint:   
+L'admin peut également désactiver ou supprimer un Cours. 
+Je veux que tu analyses le ficher AdminServices pour voir s'il y'a des incohérences entre les endpoints et les valeurs que les données que le backend attends. 
+Ensuite toutes les nouvelles fonctionnalités doivent implementés dans leurs pages dediés par exemple dans la liste des Profs on  va ajouter d'autres actions pour permettre à l'admins de gérer les professeurs. 
+
+ADMIN_ADMIN_ENDPOINTS_REQUESTS.md
+
+
+
+Ensuite Pour le professeur:
+
+La fonctionnalité qui lui permet d'enroller des étudiants dans son cours n'a été implementé sur la page du professeur. 
+L'endpoint qui lui permet de lister la listes des étudiants inscrits dans son cours est: @GetMapping("/me/courses/{courseId}/students")
+
+Pour enroller un étudiant:  @PostMapping("/me/courses/{courseId}/students/{studentId}")
+
+En prenant en comptes toutes ces informations ajoutes les maéliorations 

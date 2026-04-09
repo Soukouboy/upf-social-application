@@ -197,6 +197,16 @@ public class GroupService implements IGroupService {
         return membership;
     }
 
+    private void deleteGroup(AcademicGroup group) {
+        // Suppression en cascade grâce à la relation définie dans AcademicGroup
+        groupRepository.delete(group);
+    }
+
+    private void deactivateGroup(AcademicGroup group) {
+        group.setActive(false);
+        groupRepository.save(group);
+    }
+
     private String normalize(String value) {
         return (value == null || value.isBlank()) ? null : value.trim();
     }
