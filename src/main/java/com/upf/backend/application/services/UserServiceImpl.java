@@ -141,8 +141,8 @@ public class UserServiceImpl implements IUserService {
         // Compter les examens uploadés par cet étudiant
         int uploadedExamsCount = (int) examRepository.countByUploader_Id(studentId);
 
-        // Compter les groupes actifs
-        int myGroupsCount = (int) groupMembershipRepository.countByUser_IdAndStatus(
+        // Compter les groupes actif
+        int myGroupsCount = (int) groupMembershipRepository.countByStudentProfile_User_IdAndStatus(
                 studentId, MembershipStatus.ACTIVE);
 
         // Compter le total des téléchargements de tous ses examens

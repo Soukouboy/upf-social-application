@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.upf.backend.application.model.entity.GroupMembership;
+import com.upf.backend.application.model.enums.MembershipStatus;
 
 import java.util.List;
 import java.util.Optional;
@@ -36,5 +37,6 @@ public interface GroupMembershipRepository extends JpaRepository<GroupMembership
     Page<GroupMembership> findByGroup_IdWithUserFetch(@Param("groupId") UUID groupId, Pageable pageable);
 
     // Méthodes de comptage
-    long countByUser_IdAndStatus(UUID userId, com.upf.backend.application.model.enums.MembershipStatus status);
+    // ✅ Correct — naviguer via studentProfile puis user
+        long countByStudentProfile_User_IdAndStatus(UUID userId, MembershipStatus status);
 }
