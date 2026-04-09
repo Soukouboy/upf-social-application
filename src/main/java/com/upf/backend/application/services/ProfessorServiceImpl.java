@@ -28,6 +28,7 @@ import com.upf.backend.application.repository.CourseRepository;
 import com.upf.backend.application.repository.CourseResourceRepository;
 import com.upf.backend.application.repository.EnrollmentRepository;
 import com.upf.backend.application.repository.ProfessorRepository;
+import com.upf.backend.application.repository.StudentRepository;
 import com.upf.backend.application.services.Exceptions.BusinessException;
 import com.upf.backend.application.services.Exceptions.ResourceNotFoundException;
 import com.upf.backend.application.services.Interfaces.IProfessorService;
@@ -42,6 +43,7 @@ public class ProfessorServiceImpl implements IProfessorService {
     private final CourseResourceRepository courseResourceRepository;
     private final AnnouncementRepository announcementRepository;
     private final EnrollmentRepository enrollmentRepository;
+    private final StudentRepository studentRepository;
     private final NotificationService notificationService;
     private final IFollowService followService;
 
@@ -50,6 +52,7 @@ public class ProfessorServiceImpl implements IProfessorService {
                                 CourseResourceRepository courseResourceRepository,
                                 AnnouncementRepository announcementRepository,
                                 EnrollmentRepository enrollmentRepository,
+                                StudentRepository studentRepository,
                                 NotificationService notificationService,
                                 IFollowService followService) {
         this.professorRepository = professorRepository;
@@ -57,6 +60,7 @@ public class ProfessorServiceImpl implements IProfessorService {
         this.courseResourceRepository = courseResourceRepository;
         this.announcementRepository = announcementRepository;
         this.enrollmentRepository = enrollmentRepository;
+        this.studentRepository = studentRepository;
         this.notificationService = notificationService;
         this.followService = followService;
     }
@@ -133,6 +137,21 @@ public class ProfessorServiceImpl implements IProfessorService {
                 .map(Enrollment::getStudentProfile)
                 .map(student -> StudentMapper.toSummaryWithFollowers(student, (int) followService.countFollowers(student.getId())))
                 .toList();
+    }
+
+    @Override
+    public Enrollment enrollStudent(UUID professorId, UUID courseId, UUID studentId) {
+        Course course = findCourseOrThrow(courseId);
+        validateProfessorOwnsCourse(course, professorId);
+
+        StudentProfile student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Étudiant introuvable."));
+
+        if (enrollmentRepository.existsByStudentProfile_IdAndCourse_Id(studentId, courseId)) {
+            throw new BusinessException("L'étudiant est déjà inscrit à ce cours.");
+        }
+
+        return enrollmentRepository.save(new Enrollment(student, course));
     }
 
  @Override

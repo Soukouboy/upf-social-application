@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.upf.backend.application.model.enums.MembershipStatus;
 import com.upf.backend.application.model.enums.RoleMember;
 
 /**
@@ -49,6 +50,11 @@ public class GroupMembership {
     @Column(name = "role", nullable = false, length = 15)
     private RoleMember role ;
 
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 15)
+    private MembershipStatus status = MembershipStatus.ACTIVE;
+
     @Column(name = "joined_at", nullable = false, updatable = false)
     private LocalDateTime joinedAt;
 
@@ -67,6 +73,14 @@ public class GroupMembership {
         this.group          = group;
         this.studentProfile = studentProfile;
         this.role           = role;
+        this.status         = MembershipStatus.ACTIVE;
+    }
+
+    public GroupMembership(AcademicGroup group, StudentProfile studentProfile, RoleMember role, MembershipStatus status) {
+        this.group          = group;
+        this.studentProfile = studentProfile;
+        this.role           = role;
+        this.status         = status;
     }
 
     public UUID getId() { return id; }
@@ -76,6 +90,8 @@ public class GroupMembership {
     public void setStudentProfile(StudentProfile studentProfile) { this.studentProfile = studentProfile; }
     public RoleMember getRole() { return role; }
     public void setRole(RoleMember role) { this.role = role; }
+    public MembershipStatus getStatus() { return status; }
+    public void setStatus(MembershipStatus status) { this.status = status; }
     public LocalDateTime getJoinedAt() { return joinedAt; }
     public LocalDateTime getLastReadAt() { return lastReadAt; }
     public void setLastReadAt(LocalDateTime lastReadAt) { this.lastReadAt = lastReadAt; }

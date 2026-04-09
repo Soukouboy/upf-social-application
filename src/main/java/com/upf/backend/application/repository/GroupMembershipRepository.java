@@ -34,4 +34,7 @@ public interface GroupMembershipRepository extends JpaRepository<GroupMembership
            "WHERE gm.group.id = :groupId " +
            "ORDER BY gm.joinedAt ASC")
     Page<GroupMembership> findByGroup_IdWithUserFetch(@Param("groupId") UUID groupId, Pageable pageable);
+
+    // Méthodes de comptage
+    long countByUser_IdAndStatus(UUID userId, com.upf.backend.application.model.enums.MembershipStatus status);
 }

@@ -53,4 +53,8 @@ and (:uploaderId is null or e.uploader.id = :uploaderId)
             @Param("uploaderId") UUID uploaderId,
             Pageable pageable
     );
+
+    // Méthodes de comptage
+    long countByUploader_Id(UUID uploaderId);
+    List<Exam> findByUploader_Id(UUID uploaderId);
 }

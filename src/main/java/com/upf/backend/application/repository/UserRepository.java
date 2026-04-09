@@ -19,6 +19,8 @@ Optional<User> findByEmail(String email);
 
     List<User> findByRole(UserRole admin);
 
+    int countByActive(boolean b);
+
 }
 
 

@@ -3,6 +3,7 @@ package com.upf.backend.application.mapper;
 import com.upf.backend.application.dto.student.StudentProfileDetails;
 import com.upf.backend.application.dto.student.StudentProfileResponse;
 import com.upf.backend.application.dto.student.StudentProfileSummary;
+import com.upf.backend.application.dto.student.StudentPublicProfileResponse;
 import com.upf.backend.application.model.entity.StudentProfile;
 import com.upf.backend.application.model.entity.User;
 
@@ -123,5 +124,26 @@ public class StudentMapper {
         }
         User user = studentProfile.getUser();
         return toDetails(studentProfile, user);
+    }
+
+    /**
+     * Convertit une entité StudentProfile en StudentPublicProfileResponse.
+     * Utilisé pour consulter le profil public d'un autre étudiant.
+     */
+    public static StudentPublicProfileResponse toPublicResponse(StudentProfile studentProfile) {
+        if (studentProfile == null) {
+            return null;
+        }
+
+        return new StudentPublicProfileResponse(
+            studentProfile.getId(),
+            studentProfile.getUser().getFirstName(),
+            studentProfile.getUser().getLastName(),
+            studentProfile.getMajor(),
+            studentProfile.getCurrentYear(),
+            studentProfile.getProfilePictureUrl(),
+            studentProfile.getBio(),
+            studentProfile.getLastLoginAt()
+        );
     }
 }

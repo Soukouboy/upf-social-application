@@ -23,6 +23,7 @@ public interface IProfessorService {
 
     // Étudiants
     List<StudentProfileSummary> getStudentsInCourse(UUID professorId, UUID courseId);
+    Enrollment enrollStudent(UUID professorId, UUID courseId, UUID studentId);
 
     // Ressources
     CourseResource uploadResource(UUID professorId, UUID courseId, String title,

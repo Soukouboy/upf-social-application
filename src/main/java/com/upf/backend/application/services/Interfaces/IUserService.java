@@ -1,6 +1,9 @@
 package com.upf.backend.application.services.Interfaces;
 
 import com.upf.backend.application.dto.student.StudentProfileSummary;
+import com.upf.backend.application.dto.student.StudentPublicProfileResponse;
+import com.upf.backend.application.dto.student.StudentStatsResponse;
+import com.upf.backend.application.dto.student.StudentStatsResponse;
 import com.upf.backend.application.model.entity.StudentProfile;
 
 import org.springframework.data.domain.Page;
@@ -22,11 +25,15 @@ StudentProfile getCurrentUserProfile(UUID studentId);
 
     Optional<StudentProfile> getPublicProfile(UUID studentId);
 
+    Optional<StudentPublicProfileResponse> getPublicProfileResponse(UUID studentId);
+
     Page<StudentProfile> searchPublicProfiles(String major,
                                               Integer currentYear,
                                               Pageable pageable);
 
     List<StudentProfileSummary> getAllStudents();
+
+    StudentStatsResponse getStudentStats(UUID studentId);
 
 
 }

@@ -1,5 +1,7 @@
 package com.upf.backend.application.services.Interfaces;
 
+import com.upf.backend.application.dto.admin.AdminStatsResponse;
+import com.upf.backend.application.dto.exam.ExamReportResponse;
 import com.upf.backend.application.dto.student.StudentProfileSummary;
 import com.upf.backend.application.model.entity.AdminProfile;
 import com.upf.backend.application.model.entity.Enrollment;
@@ -48,5 +50,11 @@ public interface IAdminService {
     Enrollment enrollStudentToCourse(UUID studentId, UUID courseId);
     void unenrollStudentFromCourse(UUID studentId, UUID courseId);
     List<StudentProfile> listStudents();
+
+    // Stats dashboard admin
+    AdminStatsResponse getAdminStats();
+
+    // Reports
+    List<ExamReportResponse> getReports();
 
 }

@@ -1,17 +1,28 @@
 package com.upf.backend.application.services;
 
+import com.upf.backend.application.dto.admin.AdminStatsResponse;
+import com.upf.backend.application.dto.exam.ExamReportResponse;
+import com.upf.backend.application.mapper.ExamMapper;
 import com.upf.backend.application.model.entity.AdminProfile;
+import com.upf.backend.application.model.entity.AcademicGroup;
 import com.upf.backend.application.model.entity.Course;
 import com.upf.backend.application.model.entity.Enrollment;
+import com.upf.backend.application.model.entity.Exam;
+import com.upf.backend.application.model.entity.ExamReport;
 import com.upf.backend.application.model.entity.ProfessorProfile;
 import com.upf.backend.application.model.entity.StudentProfile;
 import com.upf.backend.application.model.entity.User;
 import com.upf.backend.application.model.enums.AdminLevel;
 import com.upf.backend.application.model.enums.EnrollmentStatus;
+import com.upf.backend.application.model.enums.ReportStatus;
 import com.upf.backend.application.model.enums.UserRole;
+import com.upf.backend.application.repository.AcademicGroupRepository;
 import com.upf.backend.application.repository.AdminProfileRepository;
+import com.upf.backend.application.repository.AcademicGroupRepository;
 import com.upf.backend.application.repository.CourseRepository;
 import com.upf.backend.application.repository.EnrollmentRepository;
+import com.upf.backend.application.repository.ExamReportRepository;
+import com.upf.backend.application.repository.ExamRepository;
 import com.upf.backend.application.repository.ProfessorRepository;
 import com.upf.backend.application.repository.StudentRepository;
 import com.upf.backend.application.repository.UserRepository;
@@ -40,11 +51,18 @@ public class AdminServiceImpl implements IAdminService {
 
     private final EnrollmentRepository enrollmentRepository;
     private final CourseRepository courseRepository;
+    private final ExamRepository examRepository;
+    private final AcademicGroupRepository groupRepository;
+    private final ExamReportRepository examReportRepository;
+
     public AdminServiceImpl(AdminProfileRepository adminProfileRepository,
                             UserRepository userRepository,
                             StudentRepository studentRepository,
                             PasswordEncoder passwordEncoder,ProfessorRepository professorRepository,
                             CourseRepository courseRepository,EnrollmentRepository enrollmentRepository,
+                            ExamRepository examRepository,
+                            AcademicGroupRepository groupRepository,
+                            ExamReportRepository examReportRepository,
                             NotificationService notificationService) {
         this.adminProfileRepository = adminProfileRepository;
         this.userRepository = userRepository;
@@ -53,6 +71,9 @@ public class AdminServiceImpl implements IAdminService {
         this.professorRepository = professorRepository;
         this.courseRepository = courseRepository;
         this.enrollmentRepository = enrollmentRepository;
+        this.examRepository = examRepository;
+        this.groupRepository = groupRepository;
+        this.examReportRepository = examReportRepository;
         this.notificationService = notificationService;
     }
 
@@ -352,6 +373,39 @@ public class AdminServiceImpl implements IAdminService {
     @Transactional(readOnly = true)
     public List<StudentProfile> listStudents() {
         return studentRepository.findAll();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AdminStatsResponse getAdminStats() {
+        int totalUsers = (int) userRepository.count();
+        int activeUsers = (int) userRepository.countByActive(true);
+        int totalStudents = (int) studentRepository.count();
+        int totalProfessors = (int) professorRepository.count();
+        int totalCourses = (int) courseRepository.count();
+        int totalExams = (int) examRepository.count();
+        int totalGroups = (int) groupRepository.count();
+        int pendingReports = (int) examReportRepository.countByStatus(ReportStatus.PENDING);
+
+        return new AdminStatsResponse(
+            totalUsers,
+            activeUsers,
+            totalStudents,
+            totalProfessors,
+            totalCourses,
+            totalExams,
+            totalGroups,
+            pendingReports
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ExamReportResponse> getReports() {
+        return examReportRepository.findAllWithExamAndReporter()
+                .stream()
+                .map(ExamMapper::toReportResponse)
+                .toList();
     }
 
 }

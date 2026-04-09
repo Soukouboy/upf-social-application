@@ -27,6 +27,8 @@ import com.upf.backend.application.controller.request.UploadResourceRequest;
 import com.upf.backend.application.dto.announcement.AnnouncementResponse;
 import com.upf.backend.application.dto.course.CourseSummary;
 import com.upf.backend.application.dto.courseresource.CourseResourceResponse;
+import com.upf.backend.application.dto.enrollment.EnrollmentResponse;
+import com.upf.backend.application.mapper.EnrollmentMapper;
 import com.upf.backend.application.dto.student.StudentProfileSummary;
 import com.upf.backend.application.mapper.AnnouncementMapper;
 import com.upf.backend.application.mapper.CourseMapper;
@@ -35,6 +37,7 @@ import com.upf.backend.application.mapper.StudentMapper;
 import com.upf.backend.application.model.entity.Announcement;
 import com.upf.backend.application.model.entity.Course;
 import com.upf.backend.application.model.entity.CourseResource;
+import com.upf.backend.application.model.entity.Enrollment;
 import com.upf.backend.application.model.entity.StudentProfile;
 import com.upf.backend.application.model.enums.FileType;
 import com.upf.backend.application.security.SecurityUser;
@@ -79,6 +82,14 @@ public class ProfessorController {
                                                              @PathVariable UUID courseId) {
        List<StudentProfileSummary> summaries = professorService.getStudentsInCourse(profileId(auth), courseId);
         return ResponseEntity.ok(summaries);
+    }
+
+    @PostMapping("/me/courses/{courseId}/students/{studentId}")
+    public ResponseEntity<EnrollmentResponse> enrollStudent(Authentication auth,
+                                                             @PathVariable UUID courseId,
+                                                             @PathVariable UUID studentId) {
+        Enrollment enrollment = professorService.enrollStudent(profileId(auth), courseId, studentId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(EnrollmentMapper.toResponse(enrollment));
     }
 
     

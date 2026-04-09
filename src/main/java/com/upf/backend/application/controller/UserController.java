@@ -7,6 +7,7 @@ import com.upf.backend.application.dto.admin.AdminProfileResponse;
 import com.upf.backend.application.dto.professor.ProfessorProfileResponse;
 import com.upf.backend.application.dto.student.StudentProfileResponse;
 import com.upf.backend.application.dto.student.StudentProfileSummary;
+import com.upf.backend.application.dto.student.StudentPublicProfileResponse;
 import com.upf.backend.application.mapper.AdminMapper;
 import com.upf.backend.application.mapper.ProfessorMapper;
 import com.upf.backend.application.mapper.StudentMapper;
@@ -22,6 +23,7 @@ import com.upf.backend.application.services.SupabaseStorageService;
 import com.upf.backend.application.services.Interfaces.StoredFileDescriptor;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -149,6 +151,13 @@ public class UserController {
         return ResponseEntity.ok(responses);
     }
 
+
+    @GetMapping("/{userId}/profile")
+    public ResponseEntity<StudentPublicProfileResponse> getUserPublicProfile(@PathVariable UUID userId) {
+        return userService.getPublicProfileResponse(userId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
 
     @GetMapping("/test-supabase")
 public ResponseEntity<String> testSupabase() {

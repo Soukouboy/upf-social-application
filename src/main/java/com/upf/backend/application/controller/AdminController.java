@@ -5,6 +5,8 @@ import com.upf.backend.application.controller.request.CreateProfessorRequest;
 import com.upf.backend.application.controller.request.PromoteStudentRequest;
 import com.upf.backend.application.controller.request.UpdateAdminLevelRequest;
 import com.upf.backend.application.dto.admin.AdminProfileResponse;
+import com.upf.backend.application.dto.admin.AdminStatsResponse;
+import com.upf.backend.application.dto.exam.ExamReportResponse;
 import com.upf.backend.application.dto.enrollment.EnrollmentResponse;
 import com.upf.backend.application.dto.professor.ProfessorProfileResponse;
 import com.upf.backend.application.dto.student.StudentProfileSummary;
@@ -180,6 +182,18 @@ public class AdminController {
                                                  @PathVariable UUID courseId) {
         adminService.unenrollStudentFromCourse(studentId, courseId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/stats")
+    public ResponseEntity<AdminStatsResponse> getAdminStats() {
+        return ResponseEntity.ok(adminService.getAdminStats());
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/reports")
+    public ResponseEntity<List<ExamReportResponse>> getReports() {
+        return ResponseEntity.ok(adminService.getReports());
     }
 
 }

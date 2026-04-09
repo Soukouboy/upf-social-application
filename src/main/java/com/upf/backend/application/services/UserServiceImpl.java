@@ -2,8 +2,20 @@ package com.upf.backend.application.services;
 import com.upf.backend.application.services.Exceptions.*;
 import com.upf.backend.application.services.Interfaces.IUserService;
 import com.upf.backend.application.dto.student.StudentProfileSummary;
+import com.upf.backend.application.dto.student.StudentPublicProfileResponse;
+import com.upf.backend.application.dto.student.StudentStatsResponse;
 import com.upf.backend.application.mapper.StudentMapper;
+import com.upf.backend.application.model.entity.AcademicGroup;
+import com.upf.backend.application.model.entity.Enrollment;
+import com.upf.backend.application.model.entity.Exam;
+import com.upf.backend.application.model.entity.GroupMembership;
 import com.upf.backend.application.model.entity.StudentProfile;
+import com.upf.backend.application.model.enums.EnrollmentStatus;
+import com.upf.backend.application.model.enums.MembershipStatus;
+import com.upf.backend.application.repository.AcademicGroupRepository;
+import com.upf.backend.application.repository.EnrollmentRepository;
+import com.upf.backend.application.repository.ExamRepository;
+import com.upf.backend.application.repository.GroupMembershipRepository;
 import com.upf.backend.application.repository.StudentRepository;
 import com.upf.backend.application.services.Interfaces.IFollowService;
 import org.springframework.data.domain.Page;
@@ -20,10 +32,20 @@ public class UserServiceImpl implements IUserService {
 
     private final StudentRepository studentRepository;
     private final IFollowService followService;
+    private final EnrollmentRepository enrollmentRepository;
+    private final ExamRepository examRepository;
+    private final GroupMembershipRepository groupMembershipRepository;
 
-    public UserServiceImpl(StudentRepository studentRepository, IFollowService followService) {
+    public UserServiceImpl(StudentRepository studentRepository,
+                           IFollowService followService,
+                           EnrollmentRepository enrollmentRepository,
+                           ExamRepository examRepository,
+                           GroupMembershipRepository groupMembershipRepository) {
         this.studentRepository = studentRepository;
         this.followService = followService;
+        this.enrollmentRepository = enrollmentRepository;
+        this.examRepository = examRepository;
+        this.groupMembershipRepository = groupMembershipRepository;
     }
 
     @Override
@@ -71,6 +93,13 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     @Transactional(readOnly = true)
+    public Optional<StudentPublicProfileResponse> getPublicProfileResponse(UUID studentId) {
+        return getPublicProfile(studentId)
+                .map(StudentMapper::toPublicResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<StudentProfile> searchPublicProfiles(String major,
                                                      Integer currentYear,
                                                      Pageable pageable) {
@@ -96,5 +125,37 @@ public class UserServiceImpl implements IUserService {
                 .stream()
                 .map(student -> StudentMapper.toSummaryWithFollowers(student, (int) followService.countFollowers(student.getId())))
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public StudentStatsResponse getStudentStats(UUID studentId) {
+        // Vérifier que l'étudiant existe
+        studentRepository.findById(studentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Profil étudiant introuvable."));
+
+        // Compter les cours inscrits actifs
+        int enrolledCoursesCount = (int) enrollmentRepository.countByStudentProfile_IdAndStatus(
+                studentId, EnrollmentStatus.ACTIVE);
+
+        // Compter les examens uploadés par cet étudiant
+        int uploadedExamsCount = (int) examRepository.countByUploader_Id(studentId);
+
+        // Compter les groupes actifs
+        int myGroupsCount = (int) groupMembershipRepository.countByUser_IdAndStatus(
+                studentId, MembershipStatus.ACTIVE);
+
+        // Compter le total des téléchargements de tous ses examens
+        int totalDownloadsReceived = examRepository.findByUploader_Id(studentId)
+                .stream()
+                .mapToInt(Exam::getDownloadCount)
+                .sum();
+
+        return new StudentStatsResponse(
+                enrolledCoursesCount,
+                uploadedExamsCount,
+                myGroupsCount,
+                totalDownloadsReceived
+        );
     }
 }
