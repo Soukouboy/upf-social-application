@@ -35,10 +35,10 @@ public interface ExamRepository extends JpaRepository<Exam, UUID> {
     List<Exam> findByIsHiddenFalse();
 
    @Query("""
-select e from Exam e 
+select e from Exam e
 where e.isHidden = false
-and (:title is null or lower(e.title) like lower(concat('%', :title, '%')))
-and (:major is null or lower(e.course.major) = lower(:major))
+and (:title is null or lower(cast(e.title as String)) like lower(concat('%', :title, '%')))
+and (:major is null or lower(cast(e.course.major as String)) = lower(:major))
 and (:courseYear is null or e.course.year = :courseYear)
 and (:academicYear is null or e.academicYear = :academicYear)
 and (:examType is null or e.examType = :examType)
