@@ -6,19 +6,23 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, IconButton, Breadcrumbs, Link, useTheme, alpha,
+  TextField, MenuItem, Alert
 } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded';
 import FolderRoundedIcon from '@mui/icons-material/FolderRounded';
+import PersonAddRoundedIcon from '@mui/icons-material/PersonAddRounded';
 import UPFCard from '../../components/ui/UPFCard';
 import UPFButton from '../../components/ui/UPFButton';
+import UPFModal from '../../components/ui/UPFModal';
 import UPFChip from '../../components/ui/UPFChip';
 import UPFAvatar from '../../components/ui/UPFAvatar';
 import UPFSearchBar from '../../components/ui/UPFSearchBar';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import type { CourseSummary } from '../../types';
+import type { CourseSummary, StudentNetwork } from '../../types';
 import type { StudentProfileSummary } from '../../services/professorService';
-import { getMyCourses, getCourseStudents } from '../../services/professorService';
+import { getMyCourses, getCourseStudents, enrollStudentInMyCourse } from '../../services/professorService';
+import { getUsers } from '../../services/userService';
 
 const ProfessorCourseDetailPage: React.FC = () => {
   const theme = useTheme();
@@ -30,6 +34,13 @@ const ProfessorCourseDetailPage: React.FC = () => {
   const [students, setStudents] = useState<StudentProfileSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+
+  const [enrollModalOpen, setEnrollModalOpen] = useState(false);
+  const [enrollStudentId, setEnrollStudentId] = useState('');
+  const [enrollLoading, setEnrollLoading] = useState(false);
+  const [allStudents, setAllStudents] = useState<StudentNetwork[]>([]);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -51,6 +62,44 @@ const ProfessorCourseDetailPage: React.FC = () => {
     fetchData();
   }, [courseId]);
 
+  const openEnrollModal = async () => {
+    setEnrollModalOpen(true);
+    setEnrollStudentId('');
+    try {
+      const data = await getUsers('');
+      const userList = Array.isArray(data) ? data : (data?.content || []);
+      
+      // Filtrer pour ne garder que ceux qui ne sont pas déjà inscrits
+      const notEnrolled = userList.filter(
+        (u) => !students.some((s) => String(s.id) === String(u.id))
+      );
+      setAllStudents(notEnrolled);
+    } catch {
+      setAllStudents([]);
+    }
+  };
+
+  const handleEnrollStudent = async () => {
+    if (!courseId || !enrollStudentId) return;
+    setEnrollLoading(true);
+    try {
+      await enrollStudentInMyCourse(courseId, enrollStudentId);
+      
+      // Rafraîchir la liste
+      const studs = await getCourseStudents(courseId);
+      setStudents(studs);
+      
+      setEnrollModalOpen(false);
+      setSuccessMsg('Étudiant inscrit avec succès !');
+      setTimeout(() => setSuccessMsg(null), 3000);
+    } catch {
+      setErrorMsg('Erreur lors de l\'inscription de l\'étudiant.');
+      setTimeout(() => setErrorMsg(null), 3000);
+    } finally {
+      setEnrollLoading(false);
+    }
+  };
+
   if (loading) return <LoadingSpinner fullPage message="Chargement…" />;
   if (!course) return null;
 
@@ -67,6 +116,9 @@ const ProfessorCourseDetailPage: React.FC = () => {
           <Typography variant="body2" color="text.primary" fontWeight={500}>{course.title}</Typography>
         </Breadcrumbs>
       </Box>
+
+      {successMsg && <Alert severity="success" onClose={() => setSuccessMsg(null)} sx={{ mb: 3, borderRadius: 2 }}>{successMsg}</Alert>}
+      {errorMsg && <Alert severity="error" onClose={() => setErrorMsg(null)} sx={{ mb: 3, borderRadius: 2 }}>{errorMsg}</Alert>}
 
       {/* Header du cours */}
       <Box sx={{
@@ -92,11 +144,19 @@ const ProfessorCourseDetailPage: React.FC = () => {
       </Box>
 
       {/* Liste des étudiants */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap', gap: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <PeopleRoundedIcon sx={{ color: 'primary.main' }} />
           <Typography variant="h6" fontWeight={600}>Étudiants inscrits ({students.length})</Typography>
         </Box>
+        <UPFButton 
+          variant="contained" 
+          size="small" 
+          startIcon={<PersonAddRoundedIcon />}
+          onClick={openEnrollModal}
+        >
+          Inscrire un étudiant
+        </UPFButton>
       </Box>
 
       <Box sx={{ mb: 2 }}>
@@ -132,6 +192,36 @@ const ProfessorCourseDetailPage: React.FC = () => {
           </Table>
         </TableContainer>
       </UPFCard>
+
+      <UPFModal
+        open={enrollModalOpen}
+        onClose={() => setEnrollModalOpen(false)}
+        title="Inscrire un étudiant"
+        actions={
+          <>
+            <UPFButton variant="outlined" onClick={() => setEnrollModalOpen(false)}>Annuler</UPFButton>
+            <UPFButton variant="contained" color="success" onClick={handleEnrollStudent} loading={enrollLoading} disabled={!enrollStudentId}>Inscrire</UPFButton>
+          </>
+        }
+      >
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            Sélectionnez l'étudiant à inscrire au cours <strong>{course?.title}</strong> :
+          </Typography>
+          <TextField
+            label="Étudiant" select fullWidth size="small"
+            value={enrollStudentId}
+            onChange={(e) => setEnrollStudentId(e.target.value)}
+          >
+            {allStudents.length === 0 && <MenuItem disabled value="">Aucun étudiant disponible ou non inscrit</MenuItem>}
+            {allStudents.map((s) => (
+              <MenuItem key={s.id} value={String(s.id)}>
+                {s.firstName} {s.lastName} — {s.major} ({s.currentYear}ème année)
+              </MenuItem>
+            ))}
+          </TextField>
+        </Box>
+      </UPFModal>
     </Box>
   );
 };
