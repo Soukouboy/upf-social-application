@@ -29,6 +29,7 @@ import com.upf.backend.application.dto.course.CourseSummary;
 import com.upf.backend.application.dto.courseresource.CourseResourceResponse;
 import com.upf.backend.application.dto.enrollment.EnrollmentResponse;
 import com.upf.backend.application.mapper.EnrollmentMapper;
+import com.upf.backend.application.mapper.StringToFileTypeConverter;
 import com.upf.backend.application.dto.student.StudentProfileSummary;
 import com.upf.backend.application.mapper.AnnouncementMapper;
 import com.upf.backend.application.mapper.CourseMapper;
@@ -53,11 +54,13 @@ public class ProfessorController {
     private final IProfessorService professorService;
  
     private final SupabaseStorageService supabaseStorageService;
+    private final StringToFileTypeConverter stringToFileTypeConverter;
 
-    public ProfessorController(IProfessorService professorService, SupabaseStorageService supabaseStorageService) {
+    public ProfessorController(IProfessorService professorService, SupabaseStorageService supabaseStorageService, StringToFileTypeConverter stringToFileTypeConverter) {
         this.professorService = professorService;
  
         this.supabaseStorageService = supabaseStorageService;
+        this.stringToFileTypeConverter = stringToFileTypeConverter;
     }
 
     // Mes cours 
@@ -104,21 +107,22 @@ public ResponseEntity<CourseResourceResponse> uploadResource(
         @AuthenticationPrincipal SecurityUser currentUser,
         @PathVariable UUID courseId,
         @RequestParam String title,
-        @RequestParam FileType fileType,
+        @RequestParam String fileType,
         @RequestParam(required = false, defaultValue = "false") boolean isExternal,
         @RequestPart("file") MultipartFile file) throws IOException {
 
      long   fileSize   = file.getSize();
     String fileName   = file.getOriginalFilename();
+    FileType fileTypeEnum = stringToFileTypeConverter.convert(fileType.toUpperCase());
 
     // ✅ Déléguer le stockage à IFileStorageService (même que pour les exams)
-    StoredFileDescriptor storedFile = supabaseStorageService.storeDocument(file, courseId.toString());
+    StoredFileDescriptor storedFile = supabaseStorageService.storeDocument(file, fileName+courseId.toString());
     CourseResource resource = professorService.uploadResource(
             currentUser.getProfileId(),
             courseId,
             title,
-            storedFile.publicUrl(),
-            fileType,
+            storedFile.relativePath(),
+            fileTypeEnum,
             fileSize,
             isExternal
     );

@@ -234,7 +234,7 @@ public class SupabaseStorageService {
         return switch (mimeType) {
             case "image/jpeg", "image/png", "image/webp", "image/gif" -> FileType.IMAGE;
             case "application/pdf"                                      -> FileType.PDF;
-            case "application/vnd.openxmlformats-officedocument.wordprocessingml.document" -> FileType.DOCX;
+            case "application/vnd.openxmlformats-officedocument.wordprocessingml.document" -> FileType.DOC;
             case "application/zip"                                      -> FileType.ZIP;
             default -> throw new BusinessException("Type MIME non reconnu : " + mimeType);
         };

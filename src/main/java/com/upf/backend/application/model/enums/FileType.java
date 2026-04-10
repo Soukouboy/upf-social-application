@@ -4,7 +4,7 @@ public enum FileType {
     PDF,
     IMAGE,
     ZIP,
-    DOCX,
+    DOC,
     PPT,
     LINK;
 
@@ -22,7 +22,7 @@ public enum FileType {
             case "image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp" -> IMAGE;
             case "application/zip", "application/x-zip-compressed"                 -> ZIP;
             case "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                 "application/msword"                                               -> DOCX;
+                 "application/msword"                                               -> DOC;
             case "application/vnd.openxmlformats-officedocument.presentationml.presentation",
                  "application/vnd.ms-powerpoint"                                            -> PPT;
             case "text/uri-list", "text/plain" -> LINK;     
