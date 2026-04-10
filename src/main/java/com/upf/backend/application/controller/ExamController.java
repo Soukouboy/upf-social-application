@@ -79,7 +79,7 @@ public class ExamController {
             @RequestParam(required = false) String major,
             @RequestParam(required = false) Integer courseYear,
             @RequestParam(required = false) String academicYear,
-            @RequestParam(required = false) ExamType examType,
+            @RequestParam(required = false) String examType,
             @RequestParam(required = false) UUID uploaderId,
             Pageable pageable
     ) {

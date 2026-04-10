@@ -98,7 +98,7 @@ public class ExamService implements IExamService {
                                 String major,
                                 Integer courseYear,
                                 String academicYear,
-                                ExamType examType,
+                                String examType,
                                 UUID uploaderId,
                                 Pageable pageable) {
         return examRepository.searchVisibleExams(

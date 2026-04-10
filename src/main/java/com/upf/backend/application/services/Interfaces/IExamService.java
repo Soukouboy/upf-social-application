@@ -30,7 +30,7 @@ public interface IExamService {
                          String major,
                          Integer courseYear,
                          String academicYear,
-                         ExamType examType,
+                         String examType,
                          UUID uploaderId,
                          Pageable pageable);
 

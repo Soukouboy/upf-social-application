@@ -67,7 +67,7 @@ public interface ExamRepository extends JpaRepository<Exam, UUID> {
             @Param("major") String major,
             @Param("courseYear") Integer courseYear,
             @Param("academicYear") String academicYear,
-            @Param("examType") ExamType examType,
+            @Param("examType") String examType,
             @Param("uploaderId") UUID uploaderId,
             Pageable pageable
     );
