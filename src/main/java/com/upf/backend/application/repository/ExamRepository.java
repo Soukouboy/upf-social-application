@@ -34,16 +34,34 @@ public interface ExamRepository extends JpaRepository<Exam, UUID> {
 
     List<Exam> findByIsHiddenFalse();
 
-   @Query("""
-select e from Exam e
-where e.isHidden = false
-and (:title is null or lower(cast(e.title as String)) like lower(concat('%', :title, '%')))
-and (:major is null or lower(cast(e.course.major as String)) = lower(:major))
-and (:courseYear is null or e.course.year = :courseYear)
-and (:academicYear is null or e.academicYear = :academicYear)
-and (:examType is null or e.examType = :examType)
-and (:uploaderId is null or e.uploader.id = :uploaderId)
-""")
+   @Query(value = """
+        SELECT e.id, e.academic_year, e.course_id, e.created_at, e.description,
+               e.download_count, e.downvote_count, e.exam_date, e.exam_type,
+               e.file_hash, e.file_size_bytes, e.file_url, e.is_hidden, e.title,
+               e.updated_at, e.uploader_id, e.upvote_count
+        FROM exams e
+        JOIN courses c ON c.id = e.course_id
+        WHERE e.is_hidden = false
+          AND (:title IS NULL OR LOWER(e.title) LIKE LOWER(CONCAT('%', :title, '%')))
+          AND (:major IS NULL OR LOWER(c.major) = LOWER(:major))
+          AND (:courseYear IS NULL OR c.year = :courseYear)
+          AND (:academicYear IS NULL OR e.academic_year = :academicYear)
+          AND (:examType IS NULL OR e.exam_type = :examType)
+          AND (:uploaderId IS NULL OR e.uploader_id = :uploaderId)
+    """,
+    countQuery = """
+        SELECT COUNT(*)
+        FROM exams e
+        JOIN courses c ON c.id = e.course_id
+        WHERE e.is_hidden = false
+          AND (:title IS NULL OR LOWER(e.title) LIKE LOWER(CONCAT('%', :title, '%')))
+          AND (:major IS NULL OR LOWER(c.major) = LOWER(:major))
+          AND (:courseYear IS NULL OR c.year = :courseYear)
+          AND (:academicYear IS NULL OR e.academic_year = :academicYear)
+          AND (:examType IS NULL OR e.exam_type = :examType)
+          AND (:uploaderId IS NULL OR e.uploader_id = :uploaderId)
+    """,
+    nativeQuery = true)
     Page<Exam> searchVisibleExams(
             @Param("title") String title,
             @Param("major") String major,

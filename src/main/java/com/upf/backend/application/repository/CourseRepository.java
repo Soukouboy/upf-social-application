@@ -38,20 +38,37 @@ public interface CourseRepository extends JpaRepository<Course, UUID> {
 
     List<Course> findByInstructorName(String instructorName);
 
-    @Query("""
-           select c
-           from Course c
-           where c.isActive = true
-             and (:major is null or lower(cast(c.major as String)) = lower(:major))
-             and (:year is null or c.year = :year)
-             and (:semester is null or c.semester = :semester)
-             and (
-                   :search is null
-                   or lower(cast(c.title as String)) like lower(concat('%', :search, '%'))
-                   or lower(cast(c.description as String)) like lower(concat('%', :search, '%'))
-                   or lower(cast(c.instructorName as String)) like lower(concat('%', :search, '%'))
+    @Query(value = """
+           SELECT c.id, c.code, c.created_at, c.credits, c.description, c.instructor_name,
+                  c.is_active, c.major, c.objectives, c.prerequisites, c.professor_id,
+                  c.semester, c.title, c.updated_at, c.year
+           FROM courses c
+           WHERE c.is_active = true
+             AND (:major IS NULL OR LOWER(c.major) = LOWER(:major))
+             AND (:year IS NULL OR c.year = :year)
+             AND (:semester IS NULL OR c.semester = :semester)
+             AND (
+                   :search IS NULL
+                   OR LOWER(c.title) LIKE LOWER(CONCAT('%', :search, '%'))
+                   OR LOWER(c.description) LIKE LOWER(CONCAT('%', :search, '%'))
+                   OR LOWER(c.instructor_name) LIKE LOWER(CONCAT('%', :search, '%'))
                  )
-           """)
+           """,
+           countQuery = """
+           SELECT COUNT(*)
+           FROM courses c
+           WHERE c.is_active = true
+             AND (:major IS NULL OR LOWER(c.major) = LOWER(:major))
+             AND (:year IS NULL OR c.year = :year)
+             AND (:semester IS NULL OR c.semester = :semester)
+             AND (
+                   :search IS NULL
+                   OR LOWER(c.title) LIKE LOWER(CONCAT('%', :search, '%'))
+                   OR LOWER(c.description) LIKE LOWER(CONCAT('%', :search, '%'))
+                   OR LOWER(c.instructor_name) LIKE LOWER(CONCAT('%', :search, '%'))
+                 )
+           """,
+           nativeQuery = true)
     Page<Course> searchActiveCourses(
             @Param("major") String major,
             @Param("year") Integer year,

@@ -21,18 +21,33 @@ public interface GroupRepository extends JpaRepository<AcademicGroup, UUID> {
 
     Page<AcademicGroup> findByCreatedBy(UUID createdBy, Pageable pageable);
 
-    @Query("""
-           select g
-           from AcademicGroup g
-           where g.isActive = true
-             and (:type is null or g.type = :type)
-             and (:major is null or lower(cast(g.major as String)) = lower(:major))
-             and (
-                   :search is null
-                   or lower(cast(g.name as String)) like lower(concat('%', :search, '%'))
-                   or lower(cast(g.description as String)) like lower(concat('%', :search, '%'))
+    @Query(value = """
+           SELECT g.id, g.cover_image_url, g.created_at, g.created_by, g.description,
+                  g.is_active, g.major, g.member_count, g.message_count, g.name,
+                  g.type, g.updated_at
+           FROM groups g
+           WHERE g.is_active = true
+             AND (:type IS NULL OR g.type = :type)
+             AND (:major IS NULL OR LOWER(g.major) = LOWER(:major))
+             AND (
+                   :search IS NULL
+                   OR LOWER(g.name) LIKE LOWER(CONCAT('%', :search, '%'))
+                   OR LOWER(g.description) LIKE LOWER(CONCAT('%', :search, '%'))
                  )
-           """)
+           """,
+           countQuery = """
+           SELECT COUNT(*)
+           FROM groups g
+           WHERE g.is_active = true
+             AND (:type IS NULL OR g.type = :type)
+             AND (:major IS NULL OR LOWER(g.major) = LOWER(:major))
+             AND (
+                   :search IS NULL
+                   OR LOWER(g.name) LIKE LOWER(CONCAT('%', :search, '%'))
+                   OR LOWER(g.description) LIKE LOWER(CONCAT('%', :search, '%'))
+                 )
+           """,
+           nativeQuery = true)
     Page<AcademicGroup> searchActiveGroups(
             @Param("type") GroupType type,
             @Param("major") String major,
