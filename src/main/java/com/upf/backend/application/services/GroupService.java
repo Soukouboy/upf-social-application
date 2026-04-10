@@ -88,7 +88,7 @@ public class GroupService implements IGroupService {
                                                 String search,
                                                 Pageable pageable) {
         return groupRepository.searchActiveGroups(
-                GroupType.PUBLIC,
+                "PUBLIC",
                 normalize(major),
                 normalize(search),
                 pageable

@@ -58,8 +58,8 @@ public interface ExamRepository extends JpaRepository<Exam, UUID> {
           AND (:major IS NULL OR LOWER(c.major) = LOWER(:major))
           AND (:courseYear IS NULL OR c.year = :courseYear)
           AND (:academicYear IS NULL OR e.academic_year = :academicYear)
-          AND (:examType IS NULL OR e.exam_type = :examType)
-          AND (:uploaderId IS NULL OR e.uploader_id = :uploaderId)
+          AND (:examType IS NULL OR e.exam_type = :examType AS VARCHAR)
+          AND (:uploaderId IS NULL OR e.uploader_id = :uploaderId AS UUID)
     """,
     nativeQuery = true)
     Page<Exam> searchVisibleExams(

@@ -49,7 +49,7 @@ public interface GroupRepository extends JpaRepository<AcademicGroup, UUID> {
            """,
            nativeQuery = true)
     Page<AcademicGroup> searchActiveGroups(
-            @Param("type") GroupType type,
+            @Param("type") String type,
             @Param("major") String major,
             @Param("search") String search,
             Pageable pageable
