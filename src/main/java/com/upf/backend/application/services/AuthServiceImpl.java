@@ -17,6 +17,8 @@ import com.upf.backend.application.services.NotificationService;
 import java.util.List;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -28,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class AuthServiceImpl implements IAuthService {
 
+     private static final Logger log = LoggerFactory.getLogger(AuthServiceImpl.class);
     private final StudentRepository studentRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
@@ -86,7 +89,11 @@ public class AuthServiceImpl implements IAuthService {
         profile.setProfilePublic(true);
         user.setStudentProfile(profile);// important : le helper method dans User gère la relation bidirectionnelle
          userRepository.save(user);
+          log.info("👤 User créé : {}", user.getEmail());
         notificationService.notifyWelcome(user);
+
+        log.info("📧 notifyWelcome() appelé pour : {}", user.getEmail());
+
         return profile;
     }
 

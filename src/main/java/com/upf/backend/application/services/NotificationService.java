@@ -67,6 +67,7 @@ public class NotificationService {
     @Async
     public void notifyWelcome(User user) {
         String subject = "🎓 Bienvenue sur " + APP_NAME + " !";
+         log.info("🔔 notifyWelcome() exécuté pour : {}", user.getEmail());
         send(user, NotificationType.WELCOME, subject, buildWelcome(user));
     }
 
@@ -198,6 +199,9 @@ public class NotificationService {
     // =========================================================================
 
     private void send(User user, NotificationType type, String subject, String htmlContent) {
+
+        log.info("📨 send() appelé — type:{} pour:{}", type, user.getEmail());
+
         // 1. Persister en BDD
         Notification notification = new Notification();
         notification.setRecipient(user);
