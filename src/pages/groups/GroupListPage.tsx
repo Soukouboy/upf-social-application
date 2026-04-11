@@ -97,11 +97,11 @@ const GroupListPage: React.FC = () => {
           <Typography variant="h5" fontWeight={800}>Groupes</Typography>
           <IconButton size="small" sx={{ bgcolor: alpha(theme.palette.text.primary, 0.05) }}><SettingsRoundedIcon /></IconButton>
         </Box>
-        
+
         <Box sx={{ mb: 2 }}>
           <UPFSearchBar placeholder="Rechercher des groupes" value={search} onChange={setSearch} fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '24px', bgcolor: alpha(theme.palette.text.primary, 0.05), '& fieldset': { border: 'none' } } }} />
         </Box>
-        
+
         <List disablePadding sx={{ mb: 2 }}>
           <ListItemButton sx={{ borderRadius: 2, mb: 0.5, bgcolor: alpha(theme.palette.primary.main, 0.1), color: 'primary.main', '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.15) } }}>
             <ListItemIcon sx={{ minWidth: 40, color: 'inherit' }}><ExploreRoundedIcon /></ListItemIcon>
@@ -117,12 +117,12 @@ const GroupListPage: React.FC = () => {
           </ListItemButton>
         </List>
 
-        <Button 
-          variant="contained" 
-          fullWidth 
-          startIcon={<AddRoundedIcon />} 
+        <Button
+          variant="contained"
+          fullWidth
+          startIcon={<AddRoundedIcon />}
           onClick={() => navigate('/student/groups/create')}
-          sx={{ borderRadius: 2, py: 1.2, fontWeight: 600, mb: 3, textTransform: 'none', bgcolor: alpha(theme.palette.primary.main, 0.1), color: 'primary.main', boxShadow: 'none', '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.2), boxShadow: 'none' } }}
+          sx={{ borderRadius: 2, py: 1.2, fontWeight: 600, mb: 3, textTransform: 'none', bgcolor: alpha(theme.palette.primary.main, 0.1), color: '#e4dedeff', boxShadow: 'none', '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.2), boxShadow: 'none' } }}
         >
           Créer un nouveau groupe
         </Button>
@@ -137,24 +137,24 @@ const GroupListPage: React.FC = () => {
         <List disablePadding>
           {loading ? (
             Array.from({ length: 4 }).map((_, i) => (
-               <Box key={i} sx={{ display: 'flex', gap: 2, p: 1 }}>
-                 <Skeleton variant="rounded" width={48} height={48} sx={{ borderRadius: 2 }} />
-                 <Box sx={{ flex: 1 }}>
-                   <Skeleton width="70%" />
-                   <Skeleton width="40%" height={12} />
-                 </Box>
-               </Box>
+              <Box key={i} sx={{ display: 'flex', gap: 2, p: 1 }}>
+                <Skeleton variant="rounded" width={48} height={48} sx={{ borderRadius: 2 }} />
+                <Box sx={{ flex: 1 }}>
+                  <Skeleton width="70%" />
+                  <Skeleton width="40%" height={12} />
+                </Box>
+              </Box>
             ))
           ) : groups.slice(0, 5).map((g) => (
-             <ListItemButton key={g.id} onClick={() => navigate(`/student/groups/${g.id}`)} sx={{ borderRadius: 2, mb: 0.5, p: 1 }}>
-               <Avatar sx={{ width: 48, height: 48, borderRadius: 2, mr: 2, bgcolor: g.type === 'PUBLIC' ? 'info.main' : 'secondary.main' }}>
-                 {g.name.substring(0, 1).toUpperCase()}
-               </Avatar>
-               <ListItemText
-                 primary={<Typography variant="body2" fontWeight={600} sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{g.name}</Typography>}
-                 secondary={<Typography variant="caption" color="text.secondary">En ligne il y a peu</Typography>}
-               />
-             </ListItemButton>
+            <ListItemButton key={g.id} onClick={() => navigate(`/student/groups/${g.id}`)} sx={{ borderRadius: 2, mb: 0.5, p: 1 }}>
+              <Avatar sx={{ width: 48, height: 48, borderRadius: 2, mr: 2, bgcolor: g.type === 'PUBLIC' ? 'info.main' : 'secondary.main' }}>
+                {g.name.substring(0, 1).toUpperCase()}
+              </Avatar>
+              <ListItemText
+                primary={<Typography variant="body2" fontWeight={600} sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{g.name}</Typography>}
+                secondary={<Typography variant="caption" color="text.secondary">En ligne il y a peu</Typography>}
+              />
+            </ListItemButton>
           ))}
         </List>
       </Box>
@@ -163,13 +163,13 @@ const GroupListPage: React.FC = () => {
       <Box sx={{ flex: 1, maxWidth: 800, pt: { xs: 0, lg: 2 } }}>
         {/* Mobile Header elements hidden on desktop */}
         <Box sx={{ display: { xs: 'flex', lg: 'none' }, justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 2 }}>
-           <Typography variant="h4" fontWeight={700}>👥 Groupes</Typography>
-           <UPFButton variant="contained" startIcon={<AddRoundedIcon />} onClick={() => navigate('/student/groups/create')}>
-             Créer un groupe
-           </UPFButton>
+          <Typography variant="h4" fontWeight={700}>👥 Groupes</Typography>
+          <UPFButton variant="contained" startIcon={<AddRoundedIcon />} onClick={() => navigate('/student/groups/create')}>
+            Créer un groupe
+          </UPFButton>
         </Box>
         <Box sx={{ display: { xs: 'block', lg: 'none' }, mb: 4 }}>
-           <UPFSearchBar placeholder="Rechercher un groupe…" value={search} onChange={setSearch} fullWidth />
+          <UPFSearchBar placeholder="Rechercher un groupe…" value={search} onChange={setSearch} fullWidth />
         </Box>
 
         <Typography variant="h6" fontWeight={700} mb={3} sx={{ display: { xs: 'none', lg: 'block' } }}>
@@ -217,8 +217,8 @@ const GroupListPage: React.FC = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}>
-                   {/* Optional: big icon in cover */}
-                   {group.type === 'PUBLIC' ? <PublicRoundedIcon sx={{ fontSize: 64, color: 'rgba(255,255,255,0.4)' }} /> : <LockRoundedIcon sx={{ fontSize: 64, color: 'rgba(255,255,255,0.4)' }} />}
+                  {/* Optional: big icon in cover */}
+                  {group.type === 'PUBLIC' ? <PublicRoundedIcon sx={{ fontSize: 64, color: 'rgba(255,255,255,0.4)' }} /> : <LockRoundedIcon sx={{ fontSize: 64, color: 'rgba(255,255,255,0.4)' }} />}
                 </Box>
 
                 <Box sx={{ p: 3 }}>
@@ -252,7 +252,7 @@ const GroupListPage: React.FC = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Avatar sx={{ width: 32, height: 32, bgcolor: alpha(theme.palette.primary.main, 0.1), color: 'primary.main' }}>
-                         <PeopleRoundedIcon fontSize="small" />
+                        <PeopleRoundedIcon fontSize="small" />
                       </Avatar>
                       <Typography variant="body2" fontWeight={600} color="text.secondary">
                         {group.memberCount} membre{group.memberCount > 1 ? 's' : ''}

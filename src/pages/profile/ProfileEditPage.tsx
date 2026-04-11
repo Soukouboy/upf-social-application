@@ -62,7 +62,7 @@ const ProfileEditPage: React.FC = () => {
     setAvatarUploading(true);
     try {
       const formData = new FormData();
-      formData.append('avatar', avatarFile);
+      formData.append('profileImage', avatarFile);
       await api.post('/users/me/avatar', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
       setAvatarFile(null);
     } catch {
