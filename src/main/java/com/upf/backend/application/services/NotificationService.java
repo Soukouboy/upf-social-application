@@ -1,28 +1,19 @@
 package com.upf.backend.application.services;
 
 import java.util.List;
-import java.util.Properties;
 import java.util.UUID;
 
-
-import java.util.Optional;
- 
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
- 
 import org.springframework.stereotype.Service;
 
 import com.upf.backend.application.dto.WsNotification;
 import com.upf.backend.application.model.entity.AcademicGroup;
 import com.upf.backend.application.model.entity.Announcement;
- 
 import com.upf.backend.application.model.entity.Course;
- 
-import com.upf.backend.application.model.entity.Course;     
- 
 import com.upf.backend.application.model.entity.CourseResource;
 import com.upf.backend.application.model.entity.Enrollment;
-import com.upf.backend.application.model.entity.Messages;
 import com.upf.backend.application.model.entity.Notification;
 import com.upf.backend.application.model.entity.ProfessorProfile;
 import com.upf.backend.application.model.entity.StudentProfile;
@@ -35,259 +26,147 @@ import com.upf.backend.application.repository.NotificationRepository;
 import com.upf.backend.application.repository.UserRepository;
 import com.upf.backend.application.repository.EnrollmentRepository;
 
-
-// ── JavaMail — SMTP, Session, Message ─────────────────────────────────────────
-import jakarta.mail.Authenticator;
- import jakarta.mail.Message;
-import jakarta.mail.PasswordAuthentication;
-import jakarta.mail.Session;
-import jakarta.mail.Transport;
-import jakarta.mail.internet.InternetAddress;
-import jakarta.mail.internet.MimeMessage;
-
-
-
 @Service
 public class NotificationService {
 
+    private static final Logger log = LoggerFactory.getLogger(NotificationService.class);
+
+    // ── Couleurs de la charte graphique UPF Connect ───────────────────────────
+    private static final String COLOR_PRIMARY    = "#4F46E5"; // Indigo
+    private static final String COLOR_SECONDARY  = "#7C3AED"; // Violet
+    private static final String COLOR_SUCCESS    = "#059669"; // Vert
+    private static final String COLOR_WARNING    = "#D97706"; // Orange
+    private static final String COLOR_BG         = "#F9FAFB"; // Gris clair
+    private static final String COLOR_TEXT       = "#111827"; // Gris foncé
+    private static final String COLOR_MUTED      = "#6B7280"; // Gris moyen
+    private static final String APP_NAME         = "UPF Social";
+    private static final String APP_URL          = "https://upf-social2.vercel.app";
+
     private final NotificationRepository notificationRepository;
-    private final UserRepository userRepository;
-    private final EnrollmentRepository enrollmentRepository;
-
-     
-    private final EmailService emailService;
-
-        private final WsNotificationSender wsNotificationSender;
-
-    
-        // Injections à ajouter dans le constructeur
-        // private final WsNotificationSender wsNotificationSender;
-
-    // ── SMTP config ────────────────────────────────────────────────────────
-
-    private static final String SMTP_HOST     = "smtp.mail.me.com";
-    private static final String SMTP_PORT     = "587";
-    private static final String SMTP_USERNAME = "soukounadiadie6@icloud.com";
-    private static final String SMTP_PASSWORD = "wxqpxutvzbmxwagl";
-    private static final String FROM_EMAIL    = SMTP_USERNAME;
-
-    private static final String FROM_NAME     = "UPF University";
+    private final UserRepository         userRepository;
+    private final EnrollmentRepository   enrollmentRepository;
+    private final EmailService           emailService;
+    private final WsNotificationSender   wsNotificationSender;
 
     public NotificationService(NotificationRepository notificationRepository,
-                                UserRepository userRepository,
-                                EnrollmentRepository enrollmentRepository,
- 
-                                WsNotificationSender wsNotificationSender,
-                                EmailService emailService)  {
- 
+                               UserRepository userRepository,
+                               EnrollmentRepository enrollmentRepository,
+                               WsNotificationSender wsNotificationSender,
+                               EmailService emailService) {
         this.notificationRepository = notificationRepository;
         this.userRepository         = userRepository;
         this.enrollmentRepository   = enrollmentRepository;
         this.wsNotificationSender   = wsNotificationSender;
- 
-        this.emailService = emailService;
- 
+        this.emailService           = emailService;
     }
 
     // =========================================================================
     // TRIGGERS — appelés depuis les services métier
     // =========================================================================
 
-    // ── Compte ────────────────────────────────────────────────────────────────
-
-    /**
-     * Appelé dans AuthServiceImpl.registerStudent()
-     * et AdminServiceImpl.createProfessorAccount()
-     */ 
     @Async
-
     public void notifyWelcome(User user) {
-        String subject = "Bienvenue sur UPF Connect !";
-        send(user, null, NotificationType.WELCOME, subject,
-             buildWelcome(user));
+        String subject = "🎓 Bienvenue sur " + APP_NAME + " !";
+        send(user, NotificationType.WELCOME, subject, buildWelcome(user));
     }
 
-    /**
-     * Appelé dans AdminServiceImpl.createProfessorAccount()
-     * Notifie le professeur que son compte a été créé par un admin
-     */
- 
     @Async
- 
- 
     public void notifyAccountCreated(User professor, String rawPassword) {
-        String subject = "Votre compte UPF Connect a été créé";
-        send(professor, null, NotificationType.ACCOUNT_CREATED, subject,
+        String subject = "🔐 Votre compte " + APP_NAME + " a été créé";
+        send(professor, NotificationType.ACCOUNT_CREATED, subject,
              buildAccountCreated(professor, rawPassword));
     }
 
-    // ── Cours & ressources ────────────────────────────────────────────────────
-
-    /**
-     * Appelé dans AdminServiceImpl.enrollStudentToCourse()
-     * Notifie l'étudiant qu'il a été inscrit à un cours
-     */
- 
     @Async
- 
     public void notifyEnrollment(StudentProfile student, Course course) {
         User user = student.getUser();
-        String subject = "Inscription confirmée — " + course.getTitle();
-        send(user, null, NotificationType.ENROLLMENT_CONFIRMED, subject,
+        String subject = "✅ Inscription confirmée — " + course.getTitle();
+        send(user, NotificationType.ENROLLMENT_CONFIRMED, subject,
              buildEnrollment(user, course));
     }
 
-    /**
-     * Appelé dans ProfessorServiceImpl.uploadResource()
-     * Notifie tous les étudiants ACTIFS du cours
-     */
     @Async
     public void notifyNewResource(CourseResource resource) {
-        Course course       = resource.getCourse();
-        User prof = resource.getUploadedBy();
-        String subject      = "Nouveau document — " + course.getTitle();
+        Course course = resource.getCourse();
+        User prof     = resource.getUploadedBy();
+        String subject = "📄 Nouveau document — " + course.getTitle();
 
-        // ✅ Notifier uniquement les étudiants actifs du cours
         List<StudentProfile> students = getActiveStudents(course);
         students.forEach(student ->
-            send(student.getUser(), null, NotificationType.NEW_RESOURCE,
+            send(student.getUser(), NotificationType.NEW_RESOURCE,
                  subject, buildNewResource(student.getUser(), resource, prof))
         );
     }
 
-    /**
-     * Appelé dans ProfessorServiceImpl.createAnnouncement()
-     * Notifie tous les étudiants ACTIFS du cours
-     */
-    // public void notifyNewAnnouncement(Announcement announcement) {
-    //     Course course = announcement.getCourse();
-    //     String subject = "Annonce — " + course.getTitle()
-    //                    + " : " + announcement.getTitle();
-
-    //     List<StudentProfile> students = getActiveStudents(course);
-    //     students.forEach(student ->
-    //         send(student.getUser(), null, NotificationType.NEW_ANNOUNCEMENT,
-    //              subject, buildAnnouncement(student.getUser(), announcement))
-    //     );
-    // }
-
-
-
-    // Dans NotificationService — injecter WsNotificationSender
- 
- @Async   
- 
-public void notifyNewAnnouncement(Announcement announcement) {
-    Course course = announcement.getCourse();
-    List<StudentProfile> students = getActiveStudents(course);
-
-    students.forEach(student -> {
-        // Email
-        send(student.getUser(), null, NotificationType.NEW_ANNOUNCEMENT,
-             "Annonce — " + course.getTitle() + " : " + announcement.getTitle(),
-             buildAnnouncement(student.getUser(), announcement));
-
-        // ✅ Temps réel WebSocket
-        wsNotificationSender.notify(
-            student.getUser().getEmail(),
-            new WsNotification(
-                "NEW_ANNOUNCEMENT",
-                "Nouvelle annonce — " + course.getTitle(),
-                announcement.getTitle(),
-                announcement.getId()
-            )
-        );
-    });
-}
-
-    // ── Social ────────────────────────────────────────────────────────────────
-
-    /**
-     * Appelé dans MessageService (ou GroupService) lors d'un nouveau message
-     * Notifie le destinataire (message privé) ou les membres (groupe)
-     */
- 
     @Async
- 
+    public void notifyNewAnnouncement(Announcement announcement) {
+        Course course = announcement.getCourse();
+        List<StudentProfile> students = getActiveStudents(course);
+
+        students.forEach(student -> {
+            String subject = "📢 Annonce — " + course.getTitle();
+            send(student.getUser(), NotificationType.NEW_ANNOUNCEMENT,
+                 subject, buildAnnouncement(student.getUser(), announcement));
+
+            wsNotificationSender.notify(
+                student.getUser().getEmail(),
+                new WsNotification(
+                    "NEW_ANNOUNCEMENT",
+                    "Nouvelle annonce — " + course.getTitle(),
+                    announcement.getTitle(),
+                    announcement.getId()
+                )
+            );
+        });
+    }
+
+    @Async
     public void notifyNewMessage(User recipient, User sender, String messagePreview) {
-        String subject = "Nouveau message de "
+        String subject = "💬 Nouveau message de "
                        + sender.getFirstName() + " " + sender.getLastName();
-        send(recipient, null, NotificationType.NEW_MESSAGE, subject,
+        send(recipient, NotificationType.NEW_MESSAGE, subject,
              buildNewMessage(recipient, sender, messagePreview));
     }
 
-    /**
-     * Appelé dans FollowService lors d'un nouveau follower
-     */
- 
     @Async
- 
     public void notifyNewFollower(User followed, User follower) {
-        String subject = follower.getFirstName() + " " + follower.getLastName()
+        String subject = "👥 " + follower.getFirstName() + " " + follower.getLastName()
                        + " vous suit maintenant";
-        send(followed, null, NotificationType.NEW_FOLLOWER, subject,
+        send(followed, NotificationType.NEW_FOLLOWER, subject,
              buildNewFollower(followed, follower));
     }
 
-    /**
-     * Appelé dans GroupService quand un membre rejoint un groupe
-     * Notifie le créateur du groupe
-     */
- 
     @Async
- 
-    public void notifyNewGroupMember(User groupOwner, User newMember,
-                                      AcademicGroup group) {
-        String subject = newMember.getFirstName() + " a rejoint "
-                       + group.getName();
-        send(groupOwner, null, NotificationType.NEW_GROUP_MEMBER, subject,
+    public void notifyNewGroupMember(User groupOwner, User newMember, AcademicGroup group) {
+        String subject = "🏫 " + newMember.getFirstName() + " a rejoint " + group.getName();
+        send(groupOwner, NotificationType.NEW_GROUP_MEMBER, subject,
              buildNewGroupMember(groupOwner, newMember, group));
     }
 
-    // ── Admin ─────────────────────────────────────────────────────────────────
-
-    /**
-     * Alertes système envoyées à tous les admins
-     */
- 
     @Async
- 
     public void notifyAdmins(String alertSubject, String alertMessage) {
         List<User> admins = userRepository.findByRole(UserRole.ADMIN);
         admins.forEach(admin ->
-            send(admin, null, NotificationType.ADMIN_ALERT,
-                 alertSubject, alertMessage)
+            send(admin, NotificationType.ADMIN_ALERT, alertSubject,
+                 buildAdminAlert(admin, alertSubject, alertMessage))
         );
     }
 
     // =========================================================================
-    // GESTION DES NOTIFICATIONS (lecture, marquage)
+    // GESTION DES NOTIFICATIONS
     // =========================================================================
 
- 
-    @Async
- 
     public List<Notification> getNotificationsForUser(UUID userId) {
         return notificationRepository.findByRecipient_IdOrderByCreatedAtDesc(userId);
     }
- 
-    @Async
- 
- 
+
     public List<Notification> getUnreadForUser(UUID userId) {
         return notificationRepository.findByRecipient_IdAndIsReadFalse(userId);
     }
 
- 
-    @Async
- 
     public long countUnread(UUID userId) {
         return notificationRepository.countByRecipient_IdAndIsReadFalse(userId);
     }
-
-
-    @Async
-
 
     public void markAsRead(UUID notificationId) {
         notificationRepository.findById(notificationId).ifPresent(n -> {
@@ -296,204 +175,467 @@ public void notifyNewAnnouncement(Announcement announcement) {
         });
     }
 
- 
-    @Async
- 
     public void markAllAsRead(UUID userId) {
         List<Notification> unread = getUnreadForUser(userId);
-        unread.forEach(n -> n.isRead());
+        unread.forEach(Notification::isRead);
         notificationRepository.saveAll(unread);
     }
 
- 
     @Async
     public void retryFailed() {
-        notificationRepository.findByStatus(NotificationStatus.FAILED)
-            .forEach(n -> {
-                emailService.sendEmail(
- 
-                    n.getRecipient().getEmail(),
-                    n.getTitle(),
-                    n.getContent()
-                );
-                //if (sent) n.markAsSent();
-                notificationRepository.save(n);
-            });
+        notificationRepository.findByStatus(NotificationStatus.FAILED).forEach(n -> {
+            emailService.sendEmail(
+                n.getRecipient().getEmail(),
+                n.getTitle(),
+                n.getContent()
+            );
+            notificationRepository.save(n);
+        });
     }
 
     // =========================================================================
-    // MÉTHODE GÉNÉRIQUE D'ENVOI
+    // MÉTHODE GÉNÉRIQUE D'ENVOI — utilise EmailService (Brevo / Spring Mail)
     // =========================================================================
 
- 
-
-    private void send(User user, Object relatedEntity,
-                      NotificationType type, String subject, String message) {
+    private void send(User user, NotificationType type, String subject, String htmlContent) {
         // 1. Persister en BDD
         Notification notification = new Notification();
         notification.setRecipient(user);
         notification.setType(type);
         notification.setTitle(subject);
-        notification.setContent(message);
+        notification.setContent(htmlContent);
         notification.setStatus(NotificationStatus.PENDING);
         Notification saved = notificationRepository.save(notification);
 
-        // 2. Envoyer l'email
-        boolean sent = sendEmail(user.getEmail(), subject, message);
-
-        // 3. Mettre à jour le statut
-        if (sent) {
+        // 2. Envoyer via EmailService (Brevo SMTP)
+        try {
+            emailService.sendEmail(user.getEmail(), subject, htmlContent);
             saved.markAsSent();
-        } else {
+            log.info("✅ Notification envoyée à : {}", user.getEmail());
+        } catch (Exception e) {
             saved.markAsFailed();
-            System.err.println("❌ Échec envoi email à : " + user.getEmail());
+            log.error("❌ Échec envoi notification à {} : {}", user.getEmail(), e.getMessage());
         }
+
         notificationRepository.save(saved);
     }
 
- 
     // =========================================================================
-    // SMTP — inchangé, même logique que ton code existant
+    // TEMPLATES HTML PROFESSIONNELS
     // =========================================================================
 
- 
-    public boolean sendEmail(String toEmail, String subject, String body) {
-        try {
-            Properties props = new Properties();
-            props.put("mail.smtp.auth", "true");
-            props.put("mail.smtp.starttls.enable", "true");
-            props.put("mail.smtp.host", SMTP_HOST);
-            props.put("mail.smtp.port", SMTP_PORT);
-            props.put("mail.smtp.ssl.trust", SMTP_HOST);
+    // ── Wrapper commun ────────────────────────────────────────────────────────
 
-            Session session = Session.getInstance(props, new Authenticator() {
-                @Override
-                protected PasswordAuthentication getPasswordAuthentication() {
-                    return new PasswordAuthentication(SMTP_USERNAME, SMTP_PASSWORD);
-                }
-            });
+    private String wrap(String accentColor, String icon, String title, String bodyContent) {
+        return """
+            <!DOCTYPE html>
+            <html lang="fr">
+            <head>
+              <meta charset="UTF-8"/>
+              <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+              <title>%s</title>
+            </head>
+            <body style="margin:0;padding:0;background-color:%s;font-family:'Segoe UI',Arial,sans-serif;">
+              <table width="100%%" cellpadding="0" cellspacing="0" style="background-color:%s;padding:40px 0;">
+                <tr><td align="center">
+                  <table width="600" cellpadding="0" cellspacing="0"
+                         style="background:#ffffff;border-radius:12px;overflow:hidden;
+                                box-shadow:0 4px 24px rgba(0,0,0,0.08);">
 
-            Message msg = new MimeMessage(session);
-            msg.setFrom(new InternetAddress(FROM_EMAIL, FROM_NAME));
-            msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
-            msg.setSubject(subject);
-            msg.setContent(body, "text/html; charset=utf-8");
-            Transport.send(msg);
+                    <!-- Header -->
+                    <tr>
+                      <td style="background:linear-gradient(135deg,%s,%s);
+                                 padding:32px 40px;text-align:center;">
+                        <div style="font-size:36px;margin-bottom:8px;">%s</div>
+                        <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;
+                                   letter-spacing:-0.5px;">%s</h1>
+                        <p style="margin:6px 0 0;color:rgba(255,255,255,0.75);font-size:13px;">
+                          %s
+                        </p>
+                      </td>
+                    </tr>
 
-            return true;
-        } catch (Exception e) {
-            System.err.println("❌ Erreur SMTP : " + e.getMessage());
-            return false;
-        }
+                    <!-- Body -->
+                    <tr>
+                      <td style="padding:36px 40px;color:%s;font-size:15px;line-height:1.7;">
+                        %s
+                      </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                      <td style="background:#F3F4F6;padding:24px 40px;text-align:center;
+                                 border-top:1px solid #E5E7EB;">
+                        <p style="margin:0 0 8px;color:%s;font-size:12px;">
+                          Vous recevez cet email car vous êtes inscrit sur
+                          <strong>%s</strong>.
+                        </p>
+                        <p style="margin:0;color:%s;font-size:11px;">
+                          © 2025 %s · Université Polytechnique de France
+                        </p>
+                      </td>
+                    </tr>
+
+                  </table>
+                </td></tr>
+              </table>
+            </body>
+            </html>
+            """.formatted(
+                title,
+                COLOR_BG, COLOR_BG,
+                accentColor, COLOR_SECONDARY,
+                icon, title, APP_NAME,
+                COLOR_TEXT,
+                bodyContent,
+                COLOR_MUTED, APP_NAME,
+                COLOR_MUTED, APP_NAME
+        );
     }
- 
 
-    // =========================================================================
-    // TEMPLATES HTML
-    // =========================================================================
+    private String btn(String url, String label, String color) {
+        return """
+            <div style="text-align:center;margin:28px 0;">
+              <a href="%s"
+                 style="background:%s;color:#ffffff;padding:14px 32px;border-radius:8px;
+                        text-decoration:none;font-weight:600;font-size:15px;
+                        display:inline-block;letter-spacing:0.3px;">
+                %s
+              </a>
+            </div>
+            """.formatted(url, color, label);
+    }
+
+    private String infoBox(String content, String borderColor) {
+        return """
+            <div style="background:#F8FAFF;border-left:4px solid %s;
+                        border-radius:6px;padding:16px 20px;margin:20px 0;
+                        font-size:14px;color:%s;">
+              %s
+            </div>
+            """.formatted(borderColor, COLOR_TEXT, content);
+    }
+
+    private String badgeRow(String label, String value) {
+        return """
+            <tr>
+              <td style="padding:8px 0;color:%s;font-size:13px;width:140px;">%s</td>
+              <td style="padding:8px 0;font-weight:600;font-size:13px;color:%s;">%s</td>
+            </tr>
+            """.formatted(COLOR_MUTED, label, COLOR_TEXT, value);
+    }
+
+    // ── Bienvenue ─────────────────────────────────────────────────────────────
 
     private String buildWelcome(User user) {
-        return "<html><body>" +
-               "<h2>Bienvenue sur UPF Connect, " + user.getFirstName() + " !</h2>" +
-               "<p>Votre compte étudiant est actif. Vous pouvez dès maintenant :</p>" +
-               "<ul>" +
-               "<li>Consulter vos cours</li>" +
-               "<li>Accéder aux ressources pédagogiques</li>" +
-               "<li>Rejoindre des groupes académiques</li>" +
-               "</ul>" +
-               "<p>À bientôt,<br><strong>UPF University</strong></p>" +
-               "</body></html>";
+        String body = """
+            <p style="font-size:17px;font-weight:600;color:%s;margin:0 0 16px;">
+              Bonjour %s, bienvenue dans la communauté ! 👋
+            </p>
+            <p style="color:%s;margin:0 0 20px;">
+              Votre compte étudiant est désormais actif sur <strong>%s</strong>,
+              la plateforme académique de votre université.
+              Découvrez tout ce que vous pouvez faire dès maintenant :
+            </p>
+            <table cellpadding="0" cellspacing="0" width="100%%">
+              <tr>
+                <td style="padding:10px;background:#EEF2FF;border-radius:8px;
+                           text-align:center;width:30%%;">
+                  <div style="font-size:26px;">📚</div>
+                  <div style="font-size:13px;font-weight:600;color:%s;margin-top:6px;">
+                    Cours & Ressources
+                  </div>
+                </td>
+                <td width="12"></td>
+                <td style="padding:10px;background:#F0FDF4;border-radius:8px;
+                           text-align:center;width:30%%;">
+                  <div style="font-size:26px;">👥</div>
+                  <div style="font-size:13px;font-weight:600;color:%s;margin-top:6px;">
+                    Groupes Académiques
+                  </div>
+                </td>
+                <td width="12"></td>
+                <td style="padding:10px;background:#FFF7ED;border-radius:8px;
+                           text-align:center;width:30%%;">
+                  <div style="font-size:26px;">💬</div>
+                  <div style="font-size:13px;font-weight:600;color:%s;margin-top:6px;">
+                    Messagerie
+                  </div>
+                </td>
+              </tr>
+            </table>
+            %s
+            <p style="color:%s;font-size:13px;margin:20px 0 0;text-align:center;">
+              Une question ? Contactez le support via la plateforme.
+            </p>
+            """.formatted(
+                COLOR_PRIMARY,
+                user.getFirstName(),
+                COLOR_MUTED, APP_NAME,
+                COLOR_PRIMARY, COLOR_SUCCESS, COLOR_WARNING,
+                btn(APP_URL, "Accéder à ma plateforme →", COLOR_PRIMARY),
+                COLOR_MUTED
+        );
+        return wrap(COLOR_PRIMARY, "🎓", "Bienvenue sur " + APP_NAME, body);
     }
+
+    // ── Compte professeur créé ────────────────────────────────────────────────
 
     private String buildAccountCreated(User professor, String tempPassword) {
-        return "<html><body>" +
-               "<h2>Votre compte UPF Connect</h2>" +
-               "<p>Bonjour " + professor.getFirstName() + ",</p>" +
-               "<p>Un compte professeur a été créé pour vous.</p>" +
-               "<ul>" +
-               "<li><strong>Email :</strong> " + professor.getEmail() + "</li>" +
-               "<li><strong>Mot de passe temporaire :</strong> " + tempPassword + "</li>" +
-               "</ul>" +
-               "<p>Veuillez changer votre mot de passe à la première connexion.</p>" +
-               "<p><strong>UPF University</strong></p>" +
-               "</body></html>";
+        String body = """
+            <p style="font-size:17px;font-weight:600;color:%s;margin:0 0 16px;">
+              Bonjour Pr. %s %s,
+            </p>
+            <p style="color:%s;margin:0 0 20px;">
+              L'administration de <strong>%s</strong> a créé votre compte professeur.
+              Voici vos informations de connexion :
+            </p>
+            %s
+            <table cellpadding="0" cellspacing="0" width="100%%">
+              %s
+              %s
+            </table>
+            %s
+            <p style="color:%s;font-size:13px;margin:20px 0 0;">
+              ⚠️ Pour des raisons de sécurité, veuillez changer votre mot de passe
+              dès votre première connexion.
+            </p>
+            """.formatted(
+                COLOR_PRIMARY,
+                professor.getFirstName(), professor.getLastName(),
+                COLOR_MUTED, APP_NAME,
+                infoBox("🔐 Conservez ces informations en lieu sûr et ne les partagez jamais.", COLOR_WARNING),
+                badgeRow("📧 Email :", professor.getEmail()),
+                badgeRow("🔑 Mot de passe :", tempPassword),
+                btn(APP_URL + "/login", "Se connecter maintenant →", COLOR_PRIMARY),
+                COLOR_MUTED
+        );
+        return wrap(COLOR_PRIMARY, "🔐", "Votre compte " + APP_NAME, body);
     }
+
+    // ── Inscription à un cours ────────────────────────────────────────────────
 
     private String buildEnrollment(User user, Course course) {
-        return "<html><body>" +
-               "<h2>Inscription confirmée</h2>" +
-               "<p>Bonjour " + user.getFirstName() + ",</p>" +
-               "<p>Vous avez été inscrit au cours :</p>" +
-               "<ul>" +
-               "<li><strong>Cours :</strong> " + course.getTitle() + "</li>" +
-               "<li><strong>Code :</strong> " + course.getCode() + "</li>" +
-               "<li><strong>Filière :</strong> " + course.getMajor() + "</li>" +
-               "<li><strong>Semestre :</strong> " + course.getSemester() + "</li>" +
-               "</ul>" +
-               "<p><strong>UPF University</strong></p>" +
-               "</body></html>";
+        String body = """
+            <p style="font-size:17px;font-weight:600;color:%s;margin:0 0 16px;">
+              Inscription confirmée ✅
+            </p>
+            <p style="color:%s;margin:0 0 20px;">
+              Bonjour %s, vous êtes maintenant inscrit au cours suivant.
+              Retrouvez toutes les ressources et annonces directement sur la plateforme.
+            </p>
+            <div style="background:#F8FAFF;border-radius:10px;padding:20px 24px;margin:20px 0;">
+              <table cellpadding="0" cellspacing="0" width="100%%">
+                %s
+                %s
+                %s
+                %s
+              </table>
+            </div>
+            %s
+            """.formatted(
+                COLOR_PRIMARY,
+                COLOR_MUTED,
+                user.getFirstName(),
+                badgeRow("📘 Cours :", course.getTitle()),
+                badgeRow("🏷️ Code :", course.getCode()),
+                badgeRow("🎓 Filière :", course.getMajor()),
+                badgeRow("📅 Semestre :", String.valueOf(course.getSemester())),
+                btn(APP_URL + "/courses", "Voir mes cours →", COLOR_SUCCESS)
+        );
+        return wrap(COLOR_SUCCESS, "✅", "Inscription confirmée", body);
     }
 
-    private String buildNewResource(User user, CourseResource resource,
-                                     User prof) {
-        return "<html><body>" +
-               "<h2>Nouveau document disponible</h2>" +
-               "<p>Bonjour " + user.getFirstName() + ",</p>" +
-               "<p>Un nouveau document a été ajouté dans <strong>"
-               + resource.getCourse().getTitle() + "</strong> :</p>" +
-               "<ul>" +
-               "<li><strong>Document :</strong> " + resource.getTitle() + "</li>" +
-               "<li><strong>Ajouté par :</strong> "
-               + prof.getFirstName() + " "
-               + prof.getLastName() + "</li>" +
-               "</ul>" +
-               "<p><strong>UPF University</strong></p>" +
-               "</body></html>";
+    // ── Nouveau document ──────────────────────────────────────────────────────
+
+    private String buildNewResource(User user, CourseResource resource, User prof) {
+        String body = """
+            <p style="font-size:17px;font-weight:600;color:%s;margin:0 0 16px;">
+              Un nouveau document est disponible 📄
+            </p>
+            <p style="color:%s;margin:0 0 20px;">
+              Bonjour %s, votre professeur vient de déposer un nouveau document
+              dans le cours <strong>%s</strong>.
+            </p>
+            <div style="background:#F8FAFF;border-radius:10px;padding:20px 24px;margin:20px 0;">
+              <table cellpadding="0" cellspacing="0" width="100%%">
+                %s
+                %s
+                %s
+              </table>
+            </div>
+            %s
+            """.formatted(
+                COLOR_PRIMARY,
+                COLOR_MUTED,
+                user.getFirstName(),
+                resource.getCourse().getTitle(),
+                badgeRow("📄 Document :", resource.getTitle()),
+                badgeRow("👨‍🏫 Déposé par :", prof.getFirstName() + " " + prof.getLastName()),
+                badgeRow("📘 Cours :", resource.getCourse().getTitle()),
+                btn(APP_URL + "/courses", "Accéder au document →", COLOR_PRIMARY)
+        );
+        return wrap(COLOR_PRIMARY, "📄", "Nouveau document disponible", body);
     }
+
+    // ── Nouvelle annonce ──────────────────────────────────────────────────────
 
     private String buildAnnouncement(User user, Announcement announcement) {
-        return "<html><body>" +
-               "<h2>Nouvelle annonce</h2>" +
-               "<p>Bonjour " + user.getFirstName() + ",</p>" +
-               "<p><strong>" + announcement.getTitle() + "</strong></p>" +
-               "<p>" + announcement.getContent() + "</p>" +
-               "<p><em>Cours : " + announcement.getCourse().getTitle() + "</em></p>" +
-               "<p><strong>UPF University</strong></p>" +
-               "</body></html>";
+        String body = """
+            <p style="font-size:17px;font-weight:600;color:%s;margin:0 0 16px;">
+              Nouvelle annonce dans %s 📢
+            </p>
+            <p style="color:%s;margin:0 0 12px;">Bonjour %s,</p>
+            <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;
+                        padding:20px 24px;margin:16px 0;">
+              <p style="margin:0 0 8px;font-weight:700;font-size:16px;color:%s;">
+                %s
+              </p>
+              <p style="margin:0;color:%s;font-size:14px;line-height:1.6;">
+                %s
+              </p>
+            </div>
+            %s
+            """.formatted(
+                COLOR_PRIMARY,
+                announcement.getCourse().getTitle(),
+                COLOR_MUTED,
+                user.getFirstName(),
+                COLOR_TEXT,
+                announcement.getTitle(),
+                COLOR_MUTED,
+                announcement.getContent(),
+                btn(APP_URL + "/courses", "Voir l'annonce complète →", COLOR_WARNING)
+        );
+        return wrap(COLOR_WARNING, "📢", "Nouvelle annonce", body);
     }
+
+    // ── Nouveau message ───────────────────────────────────────────────────────
 
     private String buildNewMessage(User recipient, User sender, String preview) {
-        return "<html><body>" +
-               "<h2>Nouveau message</h2>" +
-               "<p>Bonjour " + recipient.getFirstName() + ",</p>" +
-               "<p><strong>" + sender.getFirstName() + " "
-               + sender.getLastName() + "</strong> vous a envoyé un message :</p>" +
-               "<blockquote>" + preview + "</blockquote>" +
-               "<p>Connectez-vous pour répondre.</p>" +
-               "<p><strong>UPF University</strong></p>" +
-               "</body></html>";
+        String initials = String.valueOf(sender.getFirstName().charAt(0)).toUpperCase()
+                        + String.valueOf(sender.getLastName().charAt(0)).toUpperCase();
+        String body = """
+            <p style="font-size:17px;font-weight:600;color:%s;margin:0 0 16px;">
+              Vous avez reçu un message 💬
+            </p>
+            <p style="color:%s;margin:0 0 20px;">Bonjour %s,</p>
+            <div style="display:flex;align-items:center;margin:0 0 16px;">
+              <div style="width:44px;height:44px;border-radius:50%;background:%s;
+                          color:#fff;font-weight:700;font-size:16px;text-align:center;
+                          line-height:44px;display:inline-block;margin-right:12px;">
+                %s
+              </div>
+              <div style="display:inline-block;vertical-align:middle;">
+                <div style="font-weight:600;color:%s;">
+                  %s %s
+                </div>
+                <div style="font-size:12px;color:%s;">vous a envoyé un message</div>
+              </div>
+            </div>
+            <div style="background:#F3F4F6;border-radius:10px;padding:16px 20px;
+                        margin:16px 0;font-style:italic;color:%s;font-size:14px;
+                        border-left:3px solid %s;">
+              « %s »
+            </div>
+            %s
+            """.formatted(
+                COLOR_PRIMARY,
+                COLOR_MUTED, recipient.getFirstName(),
+                COLOR_PRIMARY,
+                initials,
+                COLOR_TEXT,
+                sender.getFirstName(), sender.getLastName(),
+                COLOR_MUTED,
+                COLOR_MUTED, COLOR_PRIMARY,
+                preview,
+                btn(APP_URL + "/messages", "Répondre au message →", COLOR_PRIMARY)
+        );
+        return wrap(COLOR_PRIMARY, "💬", "Nouveau message", body);
     }
+
+    // ── Nouveau follower ──────────────────────────────────────────────────────
 
     private String buildNewFollower(User followed, User follower) {
-        return "<html><body>" +
-               "<h2>Nouveau follower</h2>" +
-               "<p>Bonjour " + followed.getFirstName() + ",</p>" +
-               "<p><strong>" + follower.getFirstName() + " "
-               + follower.getLastName() + "</strong> suit maintenant votre profil.</p>" +
-               "<p><strong>UPF University</strong></p>" +
-               "</body></html>";
+        String initials = String.valueOf(follower.getFirstName().charAt(0)).toUpperCase()
+                        + String.valueOf(follower.getLastName().charAt(0)).toUpperCase();
+        String body = """
+            <p style="font-size:17px;font-weight:600;color:%s;margin:0 0 16px;">
+              Quelqu'un suit votre profil 👥
+            </p>
+            <p style="color:%s;margin:0 0 20px;">Bonjour %s,</p>
+            <div style="text-align:center;margin:24px 0;">
+              <div style="width:64px;height:64px;border-radius:50%;background:%s;
+                          color:#fff;font-weight:700;font-size:22px;text-align:center;
+                          line-height:64px;display:inline-block;margin-bottom:12px;">
+                %s
+              </div>
+              <p style="margin:0;font-size:18px;font-weight:700;color:%s;">
+                %s %s
+              </p>
+              <p style="margin:4px 0 0;color:%s;font-size:14px;">
+                suit maintenant votre profil
+              </p>
+            </div>
+            %s
+            """.formatted(
+                COLOR_PRIMARY,
+                COLOR_MUTED, followed.getFirstName(),
+                COLOR_SECONDARY,
+                initials,
+                COLOR_TEXT,
+                follower.getFirstName(), follower.getLastName(),
+                COLOR_MUTED,
+                btn(APP_URL + "/profile", "Voir mon profil →", COLOR_SECONDARY)
+        );
+        return wrap(COLOR_SECONDARY, "👥", "Nouveau follower", body);
     }
 
-    private String buildNewGroupMember(User owner, User newMember,
-                                        AcademicGroup group) {
-        return "<html><body>" +
-               "<h2>Nouveau membre dans votre groupe</h2>" +
-               "<p>Bonjour " + owner.getFirstName() + ",</p>" +
-               "<p><strong>" + newMember.getFirstName() + " "
-               + newMember.getLastName() + "</strong> a rejoint le groupe <strong>"
-               + group.getName() + "</strong>.</p>" +
-               "<p><strong>UPF University</strong></p>" +
-               "</body></html>";
+    // ── Nouveau membre dans un groupe ─────────────────────────────────────────
+
+    private String buildNewGroupMember(User owner, User newMember, AcademicGroup group) {
+        String body = """
+            <p style="font-size:17px;font-weight:600;color:%s;margin:0 0 16px;">
+              Votre groupe accueille un nouveau membre 🏫
+            </p>
+            <p style="color:%s;margin:0 0 20px;">Bonjour %s,</p>
+            <div style="background:#F0FDF4;border-radius:10px;padding:20px 24px;margin:20px 0;">
+              <table cellpadding="0" cellspacing="0" width="100%%">
+                %s
+                %s
+              </table>
+            </div>
+            %s
+            """.formatted(
+                COLOR_SUCCESS,
+                COLOR_MUTED, owner.getFirstName(),
+                badgeRow("👤 Nouveau membre :", newMember.getFirstName() + " " + newMember.getLastName()),
+                badgeRow("🏫 Groupe :", group.getName()),
+                btn(APP_URL + "/groups", "Gérer mon groupe →", COLOR_SUCCESS)
+        );
+        return wrap(COLOR_SUCCESS, "🏫", "Nouveau membre", body);
+    }
+
+    // ── Alerte admin ──────────────────────────────────────────────────────────
+
+    private String buildAdminAlert(User admin, String alertSubject, String alertMessage) {
+        String body = """
+            <p style="font-size:17px;font-weight:600;color:#DC2626;margin:0 0 16px;">
+              Alerte système ⚠️
+            </p>
+            <p style="color:%s;margin:0 0 20px;">Bonjour %s (Admin),</p>
+            %s
+            <p style="color:%s;font-size:14px;margin:16px 0 0;">
+              Connectez-vous au panneau d'administration pour plus de détails.
+            </p>
+            %s
+            """.formatted(
+                COLOR_MUTED, admin.getFirstName(),
+                infoBox("⚠️ <strong>" + alertSubject + "</strong><br/><br/>" + alertMessage, "#DC2626"),
+                COLOR_MUTED,
+                btn(APP_URL + "/admin", "Accéder au panneau admin →", "#DC2626")
+        );
+        return wrap("#DC2626", "⚠️", "Alerte système", body);
     }
 
     // ── Helper ────────────────────────────────────────────────────────────────

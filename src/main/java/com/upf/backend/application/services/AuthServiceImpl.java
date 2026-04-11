@@ -86,7 +86,7 @@ public class AuthServiceImpl implements IAuthService {
         profile.setProfilePublic(true);
         user.setStudentProfile(profile);// important : le helper method dans User gère la relation bidirectionnelle
          userRepository.save(user);
-         notificationService.notifyWelcome(user);
+        notificationService.notifyWelcome(user);
         return profile;
     }
 
