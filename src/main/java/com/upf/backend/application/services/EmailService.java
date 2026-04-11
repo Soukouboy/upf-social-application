@@ -1,5 +1,7 @@
 package com.upf.backend.application.services;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -16,7 +18,8 @@ import jakarta.mail.internet.MimeMessage;
 @Service
 public class EmailService {
 
-     
+     private static final Logger log = LoggerFactory.getLogger(NotificationService.class);
+
     private final JavaMailSender mailSender;
     private final MailProperties mailProperties;
 
@@ -41,14 +44,11 @@ public void sendEmail(String to, String subject, String htmlContent) {
         mailSender.send(message);
         System.out.println("✅ Email envoyé à : {}"+ to);
 
-    } catch (MailSendException e) {
-        System.out.println("❌ Échec envoi SMTP à "+ to +" : "+ e.getMessage());
-    } catch (MessagingException e) {
-        System.out.println("❌ Erreur construction email : "+ e.getMessage());
     }
     catch (Exception e) {
-        System.out.println("❌ Erreur inattendue lors de l'envoi de l'email à "+ to +" : "+ e.getMessage());
+       log.error("❌ Échec envoi à {} : {}", to, e.getMessage(), e);
     }
 }
-}
 
+
+}
