@@ -62,7 +62,7 @@ public class Notification {
     @Column(name = "title", nullable = false, length = 150)
     private String title;
 
-    @Size(max = 500)
+
     @Column(name = "content", length = 500)
     private String content;
 

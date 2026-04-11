@@ -207,7 +207,7 @@ public class NotificationService {
         notification.setRecipient(user);
         notification.setType(type);
         notification.setTitle(subject);
-        notification.setContent(htmlContent);
+        notification.setContent(subject);
         notification.setStatus(NotificationStatus.PENDING);
         Notification saved = notificationRepository.save(notification);
 
