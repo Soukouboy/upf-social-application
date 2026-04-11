@@ -14,6 +14,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.io.File;
 import java.util.UUID;
@@ -32,15 +34,18 @@ public class ExamService implements IExamService {
     private final CourseRepository courseRepository;
     private final StudentRepository studentRepository;
     private final SupabaseStorageService fileStorageService;
+    private final NotificationService notificationService;
 
     public ExamService(ExamRepository examRepository,
                         CourseRepository courseRepository,
                         StudentRepository studentRepository,
-                        SupabaseStorageService fileStorageService) {
+                        SupabaseStorageService fileStorageService,
+                        NotificationService notificationService) {
         this.examRepository = examRepository;
         this.courseRepository = courseRepository;
         this.studentRepository = studentRepository;
         this.fileStorageService = fileStorageService;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -86,10 +91,23 @@ public class ExamService implements IExamService {
         exam.setHidden(false);
 
      Exam exam1= examRepository.save(exam);
-              StoredFileDescriptor storedFile = fileStorageService.storeExamFile(file, exam1.getId().toString());
-              exam1.setFileUrl(storedFile.publicUrl());
-                return examRepository.save(exam1);
+    StoredFileDescriptor storedFile = fileStorageService.storeExamFile(file, exam1.getId().toString());
+    exam1.setFileUrl(storedFile.publicUrl());
+
+                Exam exam2 = examRepository.save(exam1);
      
+                
+// // ✅ Après — appelé après le commit
+// TransactionSynchronizationManager.registerSynchronization(
+//     new TransactionSynchronization() {
+//         @Override
+//         public void afterCommit() {
+//             notificationService.notify
+//         }
+//     }
+// );
+
+        return exam2;
     }
 
     @Override

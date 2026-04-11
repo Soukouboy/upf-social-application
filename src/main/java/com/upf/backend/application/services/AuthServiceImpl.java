@@ -25,6 +25,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @Transactional
@@ -88,12 +90,17 @@ public class AuthServiceImpl implements IAuthService {
         profile.setCurrentYear(currentYear);
         profile.setProfilePublic(true);
         user.setStudentProfile(profile);// important : le helper method dans User gère la relation bidirectionnelle
-         userRepository.save(user);
-          log.info("👤 User créé : {}", user.getEmail());
-        notificationService.notifyWelcome(user);
+       User savedUser = userRepository.save(user);
 
-        log.info("📧 notifyWelcome() appelé pour : {}", user.getEmail());
-
+    // ✅ Déclenche notifyWelcome UNIQUEMENT après que la transaction soit commitée
+    TransactionSynchronizationManager.registerSynchronization(
+        new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                notificationService.notifyWelcome(savedUser);
+            }
+        }
+    );
         return profile;
     }
 

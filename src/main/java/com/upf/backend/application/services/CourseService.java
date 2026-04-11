@@ -12,6 +12,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.upf.backend.application.services.Exceptions.BusinessException;
 import com.upf.backend.application.services.Exceptions.ResourceNotFoundException;
@@ -27,13 +29,15 @@ public class CourseService implements ICourseService {
     private final CourseRepository courseRepository;
     private final StudentRepository studentRepository;
     private final EnrollmentRepository enrollmentRepository;
+        private final NotificationService notificationService;  
 
     public CourseService(CourseRepository courseRepository,
                          StudentRepository studentRepository,
-                         EnrollmentRepository enrollmentRepository) {
+                         EnrollmentRepository enrollmentRepository, NotificationService notificationService) {
         this.courseRepository = courseRepository;
         this.studentRepository = studentRepository;
         this.enrollmentRepository = enrollmentRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -95,7 +99,20 @@ public class CourseService implements ICourseService {
             throw new BusinessException("L'étudiant est déjà inscrit à ce cours.");
         }
 
-        return enrollmentRepository.save(new Enrollment(student, course));
+
+    Enrollment enrollment = enrollmentRepository.save(new Enrollment(student, course));
+    
+// ✅ Après — appelé après le commit
+TransactionSynchronizationManager.registerSynchronization(
+    new TransactionSynchronization() {
+        @Override
+        public void afterCommit() {
+            notificationService.notifyEnrollment(student, course);
+        }
+    }
+);
+
+        return enrollment;
     }
 
     @Override
@@ -106,7 +123,20 @@ public class CourseService implements ICourseService {
 
         // ✅ On désactive — on conserve l'historique
         enrollment.setStatus(EnrollmentStatus.INACTIVE);
+
+        
         enrollmentRepository.save(enrollment);
+
+        
+// ✅ Après — appelé après le commit
+TransactionSynchronizationManager.registerSynchronization(
+    new TransactionSynchronization() {
+        @Override
+        public void afterCommit() {
+            // notificationService.notifyUnenrollment(enrollment.getStudentProfile(), enrollment.getCourse());
+        }
+    }
+);
     }
 
     @Override

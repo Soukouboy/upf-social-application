@@ -6,6 +6,8 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.upf.backend.application.dto.student.StudentProfileSummary;
 import com.upf.backend.application.mapper.StudentMapper;
@@ -151,8 +153,19 @@ public class ProfessorServiceImpl implements IProfessorService {
             throw new BusinessException("L'étudiant est déjà inscrit à ce cours.");
         }
 
-        return enrollmentRepository.save(new Enrollment(student, course));
+        Enrollment enrollment = new Enrollment(student, course);
+
+        // ✅ Après — appelé après le commit
+TransactionSynchronizationManager.registerSynchronization(
+    new TransactionSynchronization() {
+        @Override
+        public void afterCommit() {
+            notificationService.notifyEnrollment(student, course);
+        }
     }
+);
+        return enrollmentRepository.save(enrollment);
+}
 
  @Override
     public CourseResource uploadResource(UUID professorId,
@@ -187,8 +200,15 @@ public class ProfessorServiceImpl implements IProfessorService {
  
         CourseResource saved = courseResourceRepository.save(resource);
  
-        // ✅ Notifier tous les étudiants actifs du cours (email + WebSocket)
-        notificationService.notifyNewResource(saved);
+            // ✅ Après — appelé après le commit
+        TransactionSynchronizationManager.registerSynchronization(
+            new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    notificationService.notifyNewResource(resource);
+                }
+            }
+        );
  
         return saved;
     }
@@ -251,8 +271,16 @@ public class ProfessorServiceImpl implements IProfessorService {
  
         Announcement saved = announcementRepository.save(announcement);
  
-        // ✅ Notifier tous les étudiants actifs (email + WebSocket via NotificationService)
-        notificationService.notifyNewAnnouncement(saved);
+         // ✅ Après — appelé après le commit
+        TransactionSynchronizationManager.registerSynchronization(
+            new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                   notificationService.
+                    notifyNewAnnouncement(saved);
+                }
+            }
+        );
  
         return saved;
     }

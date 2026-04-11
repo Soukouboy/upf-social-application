@@ -34,6 +34,8 @@ import com.upf.backend.application.services.NotificationService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 import java.util.UUID;
@@ -146,7 +148,15 @@ public class AdminServiceImpl implements IAdminService {
         user.setAdminProfile(adminProfile); // Lien bidirectionnel
         userRepository.save(user);
 
-      notificationService.notifyAccountCreated(user, rawPassword);
+       // ✅ Après — appelé après le commit
+        TransactionSynchronizationManager.registerSynchronization(
+            new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    notificationService.notifyAccountCreated(user, rawPassword);
+                }
+            }
+        );
         return adminProfile;
     }
 
@@ -178,7 +188,17 @@ public class AdminServiceImpl implements IAdminService {
             user.setAdminProfile(adminProfile); // Lien bidirectionnel
 
             userRepository.save(user); // Sauvegarde du user avec le nouveau rôle et le lien vers adminProfile
-             
+        
+              // ✅ Après — appelé après le commit
+        TransactionSynchronizationManager.registerSynchronization(
+            new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                  //  notificationService.promoteToAdmin(user);
+                }
+            }
+        );   
+
         return adminProfile;
     }
 
@@ -289,6 +309,15 @@ public class AdminServiceImpl implements IAdminService {
             courseRepository.saveAll(courses);
         }
 
+          // ✅ Après — appelé après le commit
+        TransactionSynchronizationManager.registerSynchronization(
+            new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    notificationService.notifyAccountCreated(user, rawPassword);
+                }
+            }
+        );
         return professor;
     }
 
@@ -307,6 +336,18 @@ public class AdminServiceImpl implements IAdminService {
         course.setInstructorName(
             professor.getUser().getFirstName() + " " + professor.getUser().getLastName());
         courseRepository.save(course);
+
+
+        
+        // ✅ Après — appelé après le commit
+        TransactionSynchronizationManager.registerSynchronization(
+            new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                 //   notificationService.
+                }
+            }
+        );
         return professor;
     }
 
@@ -339,6 +380,18 @@ public class AdminServiceImpl implements IAdminService {
                 .orElseThrow(() -> new ResourceNotFoundException("Inscription introuvable."));
         enrollment.setStatus(EnrollmentStatus.INACTIVE);
         enrollmentRepository.save(enrollment);
+
+        // ✅ Après — appelé après le commit
+        TransactionSynchronizationManager.registerSynchronization(
+            new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                   // notificationService.notifyU(enrollment.getStudentProfile(), enrollment.getCourse());
+                }
+            }
+        );
+
+     // ─── Gestion cours ────────────────────────────────────────────────────────
     }
 
      // ─── Helpers ─────────────────────────────────────────────────────────────
