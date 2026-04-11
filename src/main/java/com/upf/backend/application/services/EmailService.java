@@ -8,18 +8,21 @@ import org.springframework.messaging.MessagingException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import com.upf.backend.application.config.MailProperties;
+
 import jakarta.mail.internet.MimeMessage;
 
 
 @Service
 public class EmailService {
 
-    @Value("${spring.mail.username}")
-    private String senderEmail;
+     
     private final JavaMailSender mailSender;
+    private final MailProperties mailProperties;
 
-    public EmailService(JavaMailSender mailSender) {
+    public EmailService(JavaMailSender mailSender, MailProperties mailProperties) {
         this.mailSender = mailSender;
+        this.mailProperties = mailProperties;
     }
 
 
@@ -30,7 +33,7 @@ public void sendEmail(String to, String subject, String htmlContent) {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-        helper.setFrom(senderEmail, "UPF Connect");  // Injecté depuis les variables d'env
+        helper.setFrom(mailProperties.getFrom(), "UPF Connect");  // Injecté depuis les variables d'env
         helper.setTo(to);
         helper.setSubject(subject);
         helper.setText(htmlContent, true);
