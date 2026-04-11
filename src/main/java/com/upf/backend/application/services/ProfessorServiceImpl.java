@@ -155,16 +155,24 @@ public class ProfessorServiceImpl implements IProfessorService {
 
         Enrollment enrollment = new Enrollment(student, course);
 
-        // ✅ Après — appelé après le commit
-TransactionSynchronizationManager.registerSynchronization(
-    new TransactionSynchronization() {
-        @Override
-        public void afterCommit() {
-            notificationService.notifyEnrollment(student, course);
-        }
-    }
-);
-        return enrollmentRepository.save(enrollment);
+        Enrollment savedEnrollment = enrollmentRepository.save(enrollment);
+            // ✅ 2. Extraire les données AVANT le afterCommit (évite les entités détachées)
+            String studentEmail = student.getUser().getEmail();
+            String courseTitle  = course.getTitle();
+            UUID   studentUserId = student.getUser().getId();
+
+                // ✅ Après — appelé après le commit
+        TransactionSynchronizationManager.registerSynchronization(
+            new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    notificationService.notifyEnrollment(student, course);
+                }
+            }
+        );
+
+        return savedEnrollment;
+
 }
 
  @Override
@@ -212,6 +220,8 @@ TransactionSynchronizationManager.registerSynchronization(
  
         return saved;
     }
+
+    
  @Override
     public void deleteResource(UUID professorId, UUID resourceId) {
         CourseResource resource = courseResourceRepository.findById(resourceId)
