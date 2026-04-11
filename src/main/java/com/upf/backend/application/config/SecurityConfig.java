@@ -62,6 +62,7 @@ public class SecurityConfig {
                 .requestMatchers("/admin/bootstrap/initial").permitAll()
                 // Endpoint de test pour Supabase Storage (optionnel, à sécuriser ou supprimer après tests)
                 .requestMatchers("/users/test-supabase").permitAll()
+                .requestMatchers("/test/mail").permitAll()
 
                 // Admin
                 .requestMatchers("/admin/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
