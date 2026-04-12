@@ -58,38 +58,41 @@ public interface ExamRepository extends JpaRepository<Exam, UUID> {
           AND (:major IS NULL OR LOWER(c.major) = LOWER(:major))
           AND (:courseYear IS NULL OR c.year = :courseYear)
           AND (:academicYear IS NULL OR e.academic_year = :academicYear)
-          AND (:examType IS NULL OR e.exam_type = :examType AS VARCHAR)
+          AND (:#{#examType} IS NULL OR e.exam_type = :#{#examType})
           AND (:uploaderId IS NULL OR e.uploader_id = :uploaderId AS UUID)
     """,
+
+
+    
     nativeQuery = true)
     Page<Exam> searchVisibleExams(
             @Param("title") String title,
             @Param("major") String major,
             @Param("courseYear") Integer courseYear,
             @Param("academicYear") String academicYear,
-            @Param("examType") String examType,
+            @Param("examType") ExamType examType,
             @Param("uploaderId") UUID uploaderId,
             Pageable pageable
     );
 
-    @Query("""
-        SELECT e FROM Exam e
-        JOIN e.course c
-        WHERE e.isHidden = false
-          AND LOWER(c.major) = LOWER(:studentMajor)
-          AND (:title IS NULL OR LOWER(e.title) LIKE LOWER(CONCAT('%', :title, '%')))
-          AND (:courseYear IS NULL OR c.year = :courseYear)
-          AND (:academicYear IS NULL OR e.academicYear = :academicYear)
-          AND (:examType IS NULL OR e.examType = :examType)
+ @Query("""
+    SELECT e FROM Exam e
+    JOIN e.course c
+    WHERE e.isHidden = false
+      AND LOWER(c.major) = LOWER(:studentMajor)
+      AND (:title IS NULL OR LOWER(e.title) LIKE LOWER(CONCAT('%', :title, '%')))
+      AND (:courseYear IS NULL OR c.year = :courseYear)
+      AND (:academicYear IS NULL OR e.academicYear = :academicYear)
+      AND (:#{#examType} IS NULL OR e.examType = :#{#examType})
     """)
-    Page<Exam> searchExamsByMajor(
-            @Param("studentMajor") String studentMajor,
-            @Param("title") String title,
-            @Param("courseYear") Integer courseYear,
-            @Param("academicYear") String academicYear,
-            @Param("examType") String examType,
-            Pageable pageable
-    );
+Page<Exam> searchExamsByMajor(
+        @Param("studentMajor") String studentMajor,
+        @Param("title") String title,
+        @Param("courseYear") Integer courseYear,
+        @Param("academicYear") String academicYear,
+        @Param("examType") ExamType examType,
+        Pageable pageable
+);
 
 
     // Méthodes de comptage
