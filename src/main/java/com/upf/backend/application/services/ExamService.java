@@ -8,9 +8,11 @@ import com.upf.backend.application.model.enums.ExamType;
 import com.upf.backend.application.model.enums.FileType;
 import com.upf.backend.application.repository.CourseRepository;
 import com.upf.backend.application.repository.ExamRepository;
+import com.upf.backend.application.repository.ExamSpecification;
 import com.upf.backend.application.repository.StudentRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -95,49 +97,43 @@ public class ExamService implements IExamService {
     exam1.setFileUrl(null); // URL public non utilisé, on se base sur le chemin de stockage
     exam1.setStoragePath(storedFile.relativePath());
 
-    Exam exam2 = examRepository.save(exam1);
-     
-                
-// // ✅ Après — appelé après le commit
-// TransactionSynchronizationManager.registerSynchronization(
-//     new TransactionSynchronization() {
-//         @Override
-//         public void afterCommit() {
-//             notificationService.notify
-//         }
-//     }
-// );
-
+    Exam exam2 = examRepository.save(exam1);       
+        // Envoi de notifications aux étudiants inscrits au cours
         return exam2;
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public Page<Exam> listExams(String subject,
-                                String major,
-                                Integer courseYear,
-                                String academicYear,
-                                ExamType examType,
-                                UUID uploaderId,
-                                Pageable pageable) {
-        return examRepository.searchVisibleExams(
-                normalize(subject),
-                normalize(major),
-                courseYear,
-                normalize(academicYear),
-                examType,
-                uploaderId,
-                pageable
-        );
-    }
+ 
 
-    @Override
-    public Page<Exam> listExamsByMajor(String studentMajor, String title,
+
+    // ── Recherche générale (PROFESSOR / ADMIN) ────────────────────────────────
+public Page<Exam> listExams(String title, String major, Integer courseYear,
+                             String academicYear, ExamType examType,
+                             UUID uploaderId, Pageable pageable) {
+    Specification<Exam> spec = Specification
+        .where(ExamSpecification.visibleExams())
+        .and(ExamSpecification.withTitle(title))
+        .and(ExamSpecification.withMajor(major))
+        .and(ExamSpecification.withCourseYear(courseYear))
+        .and(ExamSpecification.withAcademicYear(academicYear))
+        .and(ExamSpecification.withExamType(examType))
+        .and(ExamSpecification.withUploaderId(uploaderId));
+
+    return examRepository.findAll(spec, pageable);
+}
+
+// ── Recherche par filière (STUDENT) ───────────────────────────────────────
+public Page<Exam> listExamsByMajor(String studentMajor, String title,
                                     Integer courseYear, String academicYear,
-                                ExamType examType, Pageable pageable) {
-    return examRepository.searchExamsByMajor(
-            studentMajor, title, courseYear, academicYear, examType, pageable
-    );
+                                    ExamType examType, Pageable pageable) {
+    Specification<Exam> spec = Specification
+        .where(ExamSpecification.visibleExams())
+        .and(ExamSpecification.withMajor(studentMajor))  // filière obligatoire
+        .and(ExamSpecification.withTitle(title))
+        .and(ExamSpecification.withCourseYear(courseYear))
+        .and(ExamSpecification.withAcademicYear(academicYear))
+        .and(ExamSpecification.withExamType(examType));
+
+    return examRepository.findAll(spec, pageable);
 }
 
 
