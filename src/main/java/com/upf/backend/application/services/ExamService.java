@@ -132,6 +132,16 @@ public class ExamService implements IExamService {
     }
 
     @Override
+    public Page<Exam> listExamsByMajor(String studentMajor, String title,
+                                    Integer courseYear, String academicYear,
+                                String examType, Pageable pageable) {
+    return examRepository.searchExamsByMajor(
+            studentMajor, title, courseYear, academicYear, examType, pageable
+    );
+}
+
+
+    @Override
     @Transactional(readOnly = true)
     public Exam getExam(UUID examId) {
         return examRepository.findByIdAndIsHiddenFalse(examId)
@@ -163,6 +173,18 @@ public class ExamService implements IExamService {
         if (fileHash == null || fileHash.isBlank()) {
             throw new BusinessException("Le hash du fichier est obligatoire.");
         }
+    }
+
+        public void hideExam(UUID examId) {
+        Exam exam = getExam(examId);
+        exam.setHidden(true);
+        examRepository.save(exam);
+    }
+
+    public void showExam(UUID examId) {
+        Exam exam = getExam(examId);
+        exam.setHidden(false);
+        examRepository.save(exam);
     }
 
     private String normalize(String value) {

@@ -37,7 +37,7 @@ public interface ExamRepository extends JpaRepository<Exam, UUID> {
    @Query(value = """
         SELECT e.id, e.academic_year, e.course_id, e.created_at, e.description,
                e.download_count, e.downvote_count, e.exam_date, e.exam_type,
-               e.file_hash, e.file_size_bytes, e.file_url, e.is_hidden, e.title,
+               e.file_hash, e.file_size_bytes, e.file_url, e.is_hidden, e.title,e.storage_path,
                e.updated_at, e.uploader_id, e.upvote_count
         FROM exams e
         JOIN courses c ON c.id = e.course_id
@@ -71,6 +71,26 @@ public interface ExamRepository extends JpaRepository<Exam, UUID> {
             @Param("uploaderId") UUID uploaderId,
             Pageable pageable
     );
+
+    @Query("""
+        SELECT e FROM Exam e
+        JOIN e.course c
+        WHERE e.isHidden = false
+          AND LOWER(c.major) = LOWER(:studentMajor)
+          AND (:title IS NULL OR LOWER(e.title) LIKE LOWER(CONCAT('%', :title, '%')))
+          AND (:courseYear IS NULL OR c.year = :courseYear)
+          AND (:academicYear IS NULL OR e.academicYear = :academicYear)
+          AND (:examType IS NULL OR e.examType = :examType)
+    """)
+    Page<Exam> searchExamsByMajor(
+            @Param("studentMajor") String studentMajor,
+            @Param("title") String title,
+            @Param("courseYear") Integer courseYear,
+            @Param("academicYear") String academicYear,
+            @Param("examType") String examType,
+            Pageable pageable
+    );
+
 
     // Méthodes de comptage
     long countByUploader_Id(UUID uploaderId);

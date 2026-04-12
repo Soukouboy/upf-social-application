@@ -5,16 +5,24 @@ import com.upf.backend.application.dto.exam.ExamResponse;
 import com.upf.backend.application.dto.exam.ExamSummary;
 import com.upf.backend.application.mapper.ExamMapper;
 import com.upf.backend.application.model.entity.Exam;
+import com.upf.backend.application.model.entity.StudentProfile;
 import com.upf.backend.application.model.enums.ExamType;
 import com.upf.backend.application.model.enums.FileType;
+import com.upf.backend.application.model.enums.UserRole;
 import com.upf.backend.application.security.SecurityUser;
+import com.upf.backend.application.services.EmailService;
 import com.upf.backend.application.services.ExamService;
 import com.upf.backend.application.services.SupabaseStorageService;
+import com.upf.backend.application.services.Exceptions.ResourceNotFoundException;
+import com.upf.backend.application.services.Interfaces.IUserService;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,13 +38,18 @@ import java.util.UUID;
 @RequestMapping("/exams")
 public class ExamController {
 
+      private static final Logger log = LoggerFactory.getLogger(ExamController.class);
+
     private final ExamService examService;
     private final SupabaseStorageService fileStorageService;
+    private final IUserService userService;
 
     public ExamController(ExamService examService,
-                          SupabaseStorageService fileStorageService) {
+                          SupabaseStorageService fileStorageService,
+                          IUserService userService) {
         this.examService = examService;
         this.fileStorageService = fileStorageService;
+        this.userService = userService;
     }
 
     // ─── Upload d'un examen ───────────────────────────────────────────────────
@@ -75,17 +88,36 @@ public class ExamController {
 
     @GetMapping(value = {"", "/listExams"})
     public ResponseEntity<Page<ExamSummary>> listExams(
-            @RequestParam(required = false) String subject,
+            @RequestParam(required = false) String title,
             @RequestParam(required = false) String major,
             @RequestParam(required = false) Integer courseYear,
             @RequestParam(required = false) String academicYear,
             @RequestParam(required = false) String examType,
             @RequestParam(required = false) UUID uploaderId,
+            Authentication auth,
             Pageable pageable
     ) {
-        Page<Exam> page = examService.listExams(
-                subject, major, courseYear, academicYear, examType, uploaderId, pageable
-        );
+
+        SecurityUser currentUser = (SecurityUser) auth.getPrincipal();
+         Page<Exam> page;
+
+        if (currentUser.getRole() == UserRole.STUDENT) {
+            StudentProfile profile = userService.getCurrentUserProfile(currentUser.getProfileId());
+ 
+            log.info("🎓 Listage examens étudiant — filière: {}", profile.getMajor());
+ 
+            page = examService.listExamsByMajor(
+                    profile.getMajor(), title, courseYear, academicYear, examType, pageable
+            );
+        } else {
+            log.info("👨‍💼 Listage examens — rôle: {}", currentUser.getRole());
+ 
+            page = examService.listExams(
+                    title, major, courseYear, academicYear, examType, uploaderId, pageable
+            );
+        }
+
+        
         return ResponseEntity.ok(page.map(ExamMapper::toSummary));
     }
 

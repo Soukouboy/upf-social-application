@@ -38,4 +38,7 @@ public interface IExamService {
 
     void registerDownload(UUID examId);
 
+    Page<Exam> listExamsByMajor(String studentMajor, String title, Integer courseYear, String academicYear,
+            String examType, Pageable pageable);
+
 }
