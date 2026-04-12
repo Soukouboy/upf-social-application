@@ -10,6 +10,10 @@ import com.upf.backend.application.repository.CourseRepository;
 import com.upf.backend.application.repository.ExamRepository;
 import com.upf.backend.application.repository.ExamSpecification;
 import com.upf.backend.application.repository.StudentRepository;
+
+import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -21,6 +25,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import java.io.File;
 import java.util.UUID;
+
+
 import com.upf.backend.application.services.Exceptions.ResourceNotFoundException;
 import com.upf.backend.application.services.Exceptions.BusinessException;
 import com.upf.backend.application.services.Interfaces.IExamService;
@@ -32,6 +38,7 @@ import com.upf.backend.application.services.Interfaces.StoredFileDescriptor;
 @Transactional
 public class ExamService implements IExamService {
 
+    private static final Logger log=LoggerFactory.getLogger(ExamService.class);
     private final ExamRepository examRepository;
     private final CourseRepository courseRepository;
     private final StudentRepository studentRepository;
@@ -80,6 +87,10 @@ public class ExamService implements IExamService {
         }
 
   
+        // ✅ Correct — upload d'abord, save une seule fois
+        UUID examId = UUID.randomUUID();
+
+        StoredFileDescriptor storedFile = fileStorageService.storeExamFile(file, examId.toString());
 
         Exam exam = new Exam();
         exam.setUploader(uploader);
@@ -88,18 +99,13 @@ public class ExamService implements IExamService {
         exam.setAcademicYear(academicYear);
         exam.setExamType(examType);
         exam.setDescription(description);
-        exam.setFileUrl("string"); // sera mis à jour après stockage
         exam.setFileHash(fileHash);
         exam.setHidden(false);
+        exam.setFileUrl(null);
+        exam.setStoragePath(storedFile.relativePath());
+        exam.setFileSizeBytes(size);
 
-     Exam exam1= examRepository.save(exam);
-    StoredFileDescriptor storedFile = fileStorageService.storeExamFile(file, exam1.getId().toString());
-    exam1.setFileUrl(null); // URL public non utilisé, on se base sur le chemin de stockage
-    exam1.setStoragePath(storedFile.relativePath());
-
-    Exam exam2 = examRepository.save(exam1);       
-        // Envoi de notifications aux étudiants inscrits au cours
-        return exam2;
+        return examRepository.save(exam);
     }
 
  
@@ -125,6 +131,8 @@ public Page<Exam> listExams(String title, String major, Integer courseYear,
 public Page<Exam> listExamsByMajor(String studentMajor, String title,
                                     Integer courseYear, String academicYear,
                                     ExamType examType, Pageable pageable) {
+
+    log.info("🔍 Recherche examens — filière: {}", studentMajor); 
     Specification<Exam> spec = Specification
         .where(ExamSpecification.visibleExams())
         .and(ExamSpecification.withMajor(studentMajor))  // filière obligatoire
@@ -133,7 +141,9 @@ public Page<Exam> listExamsByMajor(String studentMajor, String title,
         .and(ExamSpecification.withAcademicYear(academicYear))
         .and(ExamSpecification.withExamType(examType));
 
-    return examRepository.findAll(spec, pageable);
+   Page<Exam> result = examRepository.findAll(spec, pageable);
+    log.info("📊 Résultats trouvés: {}", result.getTotalElements());
+    return result;
 }
 
 
