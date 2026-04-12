@@ -38,6 +38,9 @@ public class StudentProfile {
     @Column(name = "profile_picture_url", length = 500)
     private String profilePictureUrl;
 
+            // ✅ Nouveau — chemin relatif dans le bucket Supabase (pour suppression/remplacement)
+        @Column(name = "avatar_storage_path", length = 500)
+        private String avatarStoragePath;
     
     @Size(max = 500)
     @Column(name = "bio", length = 500)
@@ -100,6 +103,11 @@ public class StudentProfile {
 
     public void setId(UUID id) {
         this.id = id;
+    }
+
+        public String getAvatarStoragePath() { return avatarStoragePath; }
+    public void setAvatarStoragePath(String avatarStoragePath) { 
+        this.avatarStoragePath = avatarStoragePath; 
     }
 
     

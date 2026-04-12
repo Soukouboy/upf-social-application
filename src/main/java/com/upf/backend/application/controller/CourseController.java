@@ -136,11 +136,16 @@ public class CourseController {
                     .build();
         }
 
+        // if (resource.isStoredInSupabase()) {
+        //     // URL signée 1h
+        //     String signedUrl = storageService.generateSignedUrl("documents", resource.getStoragePath(), 3600);
+        //     return ResponseEntity.status(302).location(URI.create(signedUrl)).build();
+        // }
         // ── Fichier Supabase privé → URL signée 1h ───────────────────────────
         // resource.getStoragePath() = "user-{uuid}/nom-fichier.pdf"
         String signedUrl = fileStorageService.generateSignedUrl(
                 "documents",
-                resource.getFileUrl(),
+                resource.getStoragePath(),
                 3600  // 1 heure
         );
 

@@ -117,11 +117,16 @@ public ResponseEntity<CourseResourceResponse> uploadResource(
 
     // ✅ Déléguer le stockage à IFileStorageService (même que pour les exams)
     StoredFileDescriptor storedFile = supabaseStorageService.storeDocument(file, fileName+courseId.toString());
+    String fileUrl = storedFile.publicUrl(); // Peut être null si le bucket est privé
+    String storagePath = storedFile.relativePath();
+
+
     CourseResource resource = professorService.uploadResource(
             currentUser.getProfileId(),
             courseId,
             title,
-            storedFile.relativePath(),
+            null,  // fileUrl est géré par Supabase, on ne le passe pas à la création
+            storagePath,
             fileTypeEnum,
             fileSize,
             isExternal

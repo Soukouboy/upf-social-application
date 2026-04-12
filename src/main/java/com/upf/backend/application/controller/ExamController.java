@@ -111,7 +111,7 @@ public class ExamController {
         // exam.getStoragePath() = "exam-{uuid}/nom-fichier.pdf" (chemin dans le bucket)
         String signedUrl = fileStorageService.generateSignedUrl(
                 "exams",
-                exam.getFileUrl(),
+                exam.getStoragePath(),
                 3600  // 1 heure
         );
 

@@ -92,9 +92,10 @@ public class ExamService implements IExamService {
 
      Exam exam1= examRepository.save(exam);
     StoredFileDescriptor storedFile = fileStorageService.storeExamFile(file, exam1.getId().toString());
-    exam1.setFileUrl(storedFile.publicUrl());
+    exam1.setFileUrl(null); // URL public non utilisé, on se base sur le chemin de stockage
+    exam1.setStoragePath(storedFile.relativePath());
 
-                Exam exam2 = examRepository.save(exam1);
+    Exam exam2 = examRepository.save(exam1);
      
                 
 // // ✅ Après — appelé après le commit

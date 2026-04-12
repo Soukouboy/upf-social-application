@@ -180,6 +180,7 @@ public class ProfessorServiceImpl implements IProfessorService {
                                           UUID courseId,
                                           String title,
                                           String fileUrl,
+                                          String storagePath,
                                           FileType fileType,
                                           Long fileSizeBytes,
                                           boolean isExternal) {

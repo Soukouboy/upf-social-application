@@ -97,6 +97,7 @@ public class UserController {
                 currentUser.getProfileId(),
                 bio,
                 profilePhotoUrl,
+                null,  // storagePath ne peut pas être mis à jour ici
                 major,
                 currentYear,
                 profilePublic
@@ -123,6 +124,7 @@ public class UserController {
 
         // Le bucket avatars doit être PUBLIC dans Supabase pour avoir une publicUrl
         String avatarUrl = descriptor.publicUrl();
+        String storagePath = descriptor.relativePath();
         if (avatarUrl == null) {
             throw new IllegalStateException(
                 "Le bucket 'avatars' est privé — passez-le en public dans Supabase " +
@@ -134,6 +136,7 @@ public class UserController {
                 currentUser.getProfileId(),
                 null,
                 avatarUrl,
+                storagePath,
                 null,
                 null,
                 null

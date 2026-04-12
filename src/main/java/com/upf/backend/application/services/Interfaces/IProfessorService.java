@@ -27,7 +27,7 @@ public interface IProfessorService {
 
     // Ressources
     CourseResource uploadResource(UUID professorId, UUID courseId, String title,
-                                   String fileUrl, FileType fileType,
+                                   String fileUrl,String storagePath, FileType fileType,
                                    Long fileSizeBytes, boolean isExternal);
     void deleteResource(UUID professorId, UUID resourceId);
     List<CourseResource> getResourcesByCourse(UUID professorId, UUID courseId);

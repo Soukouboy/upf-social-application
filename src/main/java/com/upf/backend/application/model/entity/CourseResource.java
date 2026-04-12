@@ -45,6 +45,19 @@ public class CourseResource {
     @Column(name = "file_url", nullable = false, length = 500)
     private String fileUrl;
 
+    /**
+     * Chemin relatif dans le bucket Supabase "documents".
+     * Exemple : "user-uuid/rapport-stage.pdf"
+     *
+     * Null pour les ressources externes (type LINK).
+     * Utilisé pour :
+     *  - générer une URL signée au téléchargement
+     *  - supprimer/remplacer le fichier dans Supabase
+     */
+    @Size(max = 500)
+    @Column(name = "storage_path", length = 500)
+    private String storagePath;
+
     @NotNull(message = "Le type de fichier est obligatoire")
     @Enumerated(EnumType.STRING)
     @Column(name = "file_type", nullable = false, length = 10)
@@ -73,6 +86,14 @@ public class CourseResource {
     // Lifecycle
     // -------------------------------------------------------------------------
 
+
+    /**
+     * Indique si cette ressource est stockée dans Supabase Storage.
+     */
+    public boolean isStoredInSupabase() {
+        return !isExternal && storagePath != null;
+    }
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
@@ -84,12 +105,33 @@ public class CourseResource {
 
     public CourseResource() {}
 
+
+    /**
+     * Constructeur pour une ressource EXTERNE (lien).
+     */
     public CourseResource(Course course, String title, String fileUrl, FileType fileType) {
-        this.course   = course;
-        this.title    = title;
-        this.fileUrl  = fileUrl;
-        this.fileType = fileType;
+        this.course     = course;
+        this.title      = title;
+        this.fileUrl    = fileUrl;
+        this.fileType   = fileType;
+        this.isExternal = true;
     }
+ 
+    /**
+     * Constructeur pour une ressource PRIVÉE Supabase (fichier uploadé).
+     */
+    public CourseResource(Course course, String title,
+                          String storagePath, FileType fileType,
+                          long fileSizeBytes) {
+        this.course        = course;
+        this.title         = title;
+        this.storagePath   = storagePath;
+        this.fileType      = fileType;
+        this.fileSizeBytes = fileSizeBytes;
+        this.isExternal    = false;
+        this.fileUrl       = null;
+    }
+
 
     // -------------------------------------------------------------------------
     // Getters / Setters
@@ -105,6 +147,9 @@ public class CourseResource {
 
     public String getFileUrl() { return fileUrl; }
     public void setFileUrl(String fileUrl) { this.fileUrl = fileUrl; }
+
+     public String getStoragePath() { return storagePath; }
+    public void setStoragePath(String storagePath) { this.storagePath = storagePath; }
 
     public FileType getFileType() { return fileType; }
     public void setFileType(FileType fileType) { this.fileType = fileType; }

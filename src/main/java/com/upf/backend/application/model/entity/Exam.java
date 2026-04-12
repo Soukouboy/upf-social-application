@@ -79,6 +79,11 @@ public class Exam {
     @Column(name = "file_url", length = 500)
     private String fileUrl;
 
+
+    // ✅ Nouveau — chemin relatif dans le bucket Supabase
+    @Column(name = "storage_path", length = 500)
+    private String storagePath;
+
     /**
      * Hash MD5/SHA du fichier — permet de détecter les doublons côté service.
      */
@@ -212,6 +217,11 @@ public class Exam {
 
     public String getFileUrl() { return fileUrl; }
     public void setFileUrl(String fileUrl) { this.fileUrl = fileUrl; }
+
+
+    public String getStoragePath() { return storagePath; }
+    public void setStoragePath(String storagePath) { this.storagePath = storagePath; }
+
 
     public String getFileHash() { return fileHash; }
     public void setFileHash(String fileHash) { this.fileHash = fileHash; }

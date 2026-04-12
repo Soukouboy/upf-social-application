@@ -19,6 +19,7 @@ StudentProfile getCurrentUserProfile(UUID studentId);
     StudentProfile updateProfile(UUID studentId,
                                  String bio,
                                  String profilePhotoUrl,
+                                 String storagePath,
                                  String major,
                                  Integer currentYear,
                                  Boolean profilePublic);

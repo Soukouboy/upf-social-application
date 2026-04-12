@@ -59,6 +59,7 @@ public class UserServiceImpl implements IUserService {
     public StudentProfile updateProfile(UUID studentId,
                                         String bio,
                                         String profilePhotoUrl,
+                                        String storagePath,
                                         String major,
                                         Integer currentYear,
                                         Boolean profilePublic) {
@@ -79,6 +80,9 @@ public class UserServiceImpl implements IUserService {
         }
         if (profilePublic != null) {
             profile.setProfilePublic(profilePublic);
+        }
+        if (storagePath != null) {
+            profile.setAvatarStoragePath(storagePath);
         }
 
         return studentRepository.save(profile);
