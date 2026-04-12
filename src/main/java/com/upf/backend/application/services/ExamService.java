@@ -134,7 +134,7 @@ public class ExamService implements IExamService {
     @Override
     public Page<Exam> listExamsByMajor(String studentMajor, String title,
                                     Integer courseYear, String academicYear,
-                                String examType, Pageable pageable) {
+                                ExamType examType, Pageable pageable) {
     return examRepository.searchExamsByMajor(
             studentMajor, title, courseYear, academicYear, examType, pageable
     );
