@@ -5,6 +5,7 @@ import com.upf.backend.application.dto.student.StudentPublicProfileResponse;
 import com.upf.backend.application.dto.student.StudentStatsResponse;
 import com.upf.backend.application.dto.student.StudentStatsResponse;
 import com.upf.backend.application.model.entity.StudentProfile;
+import com.upf.backend.application.model.enums.Major;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,7 +21,7 @@ StudentProfile getCurrentUserProfile(UUID studentId);
                                  String bio,
                                  String profilePhotoUrl,
                                  String storagePath,
-                                 String major,
+                                 Major major,
                                  Integer currentYear,
                                  Boolean profilePublic);
 

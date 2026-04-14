@@ -14,6 +14,7 @@ import com.upf.backend.application.mapper.StudentMapper;
 import com.upf.backend.application.model.entity.AdminProfile;
 import com.upf.backend.application.model.entity.ProfessorProfile;
 import com.upf.backend.application.model.entity.StudentProfile;
+import com.upf.backend.application.model.enums.Major;
 import com.upf.backend.application.model.enums.UserRole;
 import com.upf.backend.application.security.SecurityUser;
 import com.upf.backend.application.services.Interfaces.IAdminService;
@@ -88,7 +89,7 @@ public class UserController {
     public ResponseEntity<StudentProfileResponse> updateMyProfile(
             @AuthenticationPrincipal SecurityUser currentUser,
             @RequestParam(required = false) String bio,
-            @RequestParam(required = false) String major,
+            @RequestParam(required = false) Major major,
             @RequestParam(required = false) Integer currentYear,
             @RequestParam(required = false) Boolean profilePublic,
             @RequestParam(required = false) String profilePhotoUrl

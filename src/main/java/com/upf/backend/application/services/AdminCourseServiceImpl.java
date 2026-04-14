@@ -2,6 +2,7 @@ package com.upf.backend.application.services;
 import com.upf.backend.application.controller.request.CreateCourseRequest;
 import com.upf.backend.application.controller.request.UpdateCourseRequest;
 import com.upf.backend.application.model.entity.Course;
+import com.upf.backend.application.model.enums.Major;
 import com.upf.backend.application.repository.CourseRepository;
 import com.upf.backend.application.services.Exceptions.BusinessException;
 import com.upf.backend.application.services.Exceptions.ResourceNotFoundException;
@@ -36,13 +37,15 @@ public class AdminCourseServiceImpl implements IAdminCourseService {
 
   
 
+        Major major= Major.valueOf(request.major().trim().toUpperCase());
+
         Course course = new Course();
         course.setCode(normalizedCode);
         course.setTitle(request.title().trim());
         course.setDescription(request.description() != null ? request.description() : "desc");
         course.setObjectives("À définir");
         course.setPrerequisites("À définir");
-        course.setMajor(request.major().trim());
+        course.setMajor(major);
         course.setYear(4);
         course.setSemester(request.semester());
         course.setCredits(request.credits() == null ? 0 : request.credits());
@@ -85,7 +88,7 @@ public class AdminCourseServiceImpl implements IAdminCourseService {
         }
 
         if (request.major() != null && !request.major().isBlank()) {
-            course.setMajor(request.major().trim());
+            course.setMajor(Major.valueOf(request.major().trim().toUpperCase()));
         }
 
         if (request.year() != null) {

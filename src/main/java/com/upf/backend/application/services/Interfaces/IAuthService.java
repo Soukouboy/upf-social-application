@@ -1,6 +1,7 @@
 package com.upf.backend.application.services.Interfaces;
 
 import com.upf.backend.application.model.entity.StudentProfile;
+import com.upf.backend.application.model.enums.Major;
 
 public interface IAuthService {
 
@@ -9,7 +10,7 @@ public interface IAuthService {
                                    String lastName,
                                    String email,
                                    String rawPassword,
-                                   String major,
+                                   Major major,
                                    int currentYear);
 
     AuthTokens authenticate(String email, String rawPassword);

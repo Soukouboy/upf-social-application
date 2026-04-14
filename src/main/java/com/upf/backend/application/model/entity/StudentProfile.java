@@ -9,6 +9,8 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.upf.backend.application.model.enums.Major;
+
 /**
  * Profil étudiant — données spécifiques à un utilisateur de rôle STUDENT.
  *
@@ -49,8 +51,9 @@ public class StudentProfile {
     @NotBlank(message = "La filière est obligatoire")
     @Size(max = 100)
     @Column(name = "major", nullable = false, length = 100)
-    private String major;
-
+    // Après
+    @Enumerated(EnumType.STRING)
+    private Major major;
     @Min(value = 1, message = "L'année d'études doit être au moins 1")
     @Max(value = 7, message = "L'année d'études ne peut pas dépasser 7")
     @Column(name = "current_year", nullable = false)
@@ -68,7 +71,7 @@ public class StudentProfile {
 
     public StudentProfile() {}
 
-    public StudentProfile(User user, String major, int currentYear) {
+    public StudentProfile(User user, Major major, int currentYear) {
         this.user        = user;
         this.major       = major;
         this.currentYear = currentYear;
@@ -89,8 +92,8 @@ public class StudentProfile {
     public String getBio() { return bio; }
     public void setBio(String bio) { this.bio = bio; }
 
-    public String getMajor() { return major; }
-    public void setMajor(String major) { this.major = major; }
+    public Major getMajor() { return major; }
+    public void setMajor(Major major) { this.major = major; }
 
     public int getCurrentYear() { return currentYear; }
     public void setCurrentYear(int currentYear) { this.currentYear = currentYear; }

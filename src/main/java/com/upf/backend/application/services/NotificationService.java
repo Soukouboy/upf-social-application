@@ -443,7 +443,7 @@ public class NotificationService {
                 user.getFirstName(),
                 badgeRow("📘 Cours :", course.getTitle()),
                 badgeRow("🏷️ Code :", course.getCode()),
-                badgeRow("🎓 Filière :", course.getMajor()),
+                badgeRow("🎓 Filière :", course.getMajor().toString()),
                 badgeRow("📅 Semestre :", String.valueOf(course.getSemester())),
                 btn(APP_URL + "/courses", "Voir mes cours →", COLOR_SUCCESS)
         );

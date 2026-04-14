@@ -3,6 +3,8 @@ package com.upf.backend.application.dto.course;
 import com.upf.backend.application.dto.announcement.AnnouncementResponse;
 import com.upf.backend.application.dto.courseresource.CourseResourceResponse;
 import com.upf.backend.application.dto.professor.ProfessorProfileSummary;
+import com.upf.backend.application.model.enums.Major;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -16,7 +18,7 @@ public record CourseDetails(
     String code,
     String title,
     String description,
-    String major,
+    Major major,
     int year,
     int semester,
     int credits,

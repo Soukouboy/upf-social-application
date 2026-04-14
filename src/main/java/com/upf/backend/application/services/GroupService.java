@@ -5,6 +5,7 @@ import com.upf.backend.application.model.entity.AcademicGroup;
 import com.upf.backend.application.model.entity.GroupMembership;
 import com.upf.backend.application.model.entity.StudentProfile;
 import com.upf.backend.application.model.enums.GroupType;
+import com.upf.backend.application.model.enums.Major;
 import com.upf.backend.application.model.enums.RoleMember;
 import com.upf.backend.application.repository.GroupMembershipRepository;
 import com.upf.backend.application.repository.GroupRepository;
@@ -42,7 +43,7 @@ public class GroupService implements IGroupService {
                                      String name,
                                      String description,
                                      GroupType type,
-                                     String major
+                                     Major major
                                      ) {
 
         if (name == null || name.isBlank()) {
@@ -84,12 +85,12 @@ public class GroupService implements IGroupService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<AcademicGroup> listPublicGroups(String major,
+    public Page<AcademicGroup> listPublicGroups(Major major,
                                                 String search,
                                                 Pageable pageable) {
         return groupRepository.searchActiveGroups(
                 "PUBLIC",
-                normalize(major),
+                major,
                 normalize(search),
                 pageable
         );

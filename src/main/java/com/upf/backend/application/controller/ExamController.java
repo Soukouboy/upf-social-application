@@ -8,6 +8,7 @@ import com.upf.backend.application.model.entity.Exam;
 import com.upf.backend.application.model.entity.StudentProfile;
 import com.upf.backend.application.model.enums.ExamType;
 import com.upf.backend.application.model.enums.FileType;
+import com.upf.backend.application.model.enums.Major;
 import com.upf.backend.application.model.enums.UserRole;
 import com.upf.backend.application.security.SecurityUser;
 import com.upf.backend.application.services.EmailService;
@@ -89,7 +90,7 @@ public class ExamController {
     @GetMapping(value = {"", "/listExams"})
     public ResponseEntity<Page<ExamSummary>> listExams(
             @RequestParam(required = false) String title,
-            @RequestParam(required = false) String major,
+            @RequestParam(required = false) Major major,
             @RequestParam(required = false) Integer courseYear,
             @RequestParam(required = false) String academicYear,
             @RequestParam(required = false) ExamType examType,

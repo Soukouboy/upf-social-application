@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com.upf.backend.application.model.enums.Major;
+
 /**
  * Cours disponible sur la plateforme.
  *
@@ -52,7 +54,9 @@ public class Course {
     @NotBlank(message = "La filière est obligatoire")
     @Size(max = 100)
     @Column(name = "major", nullable = false, length = 100)
-    private String major;
+    // Après
+    @Enumerated(EnumType.STRING)
+    private Major major;
 
     @Min(1) @Max(7)
     @Column(name = "year", nullable = false)
@@ -137,7 +141,7 @@ public class Course {
 
     public Course() {}
 
-    public Course(String code, String title, String major,
+    public Course(String code, String title, Major major,
                   int year, int semester, String instructorName) {
         this.code           = code;
         this.title          = title;
@@ -182,8 +186,8 @@ public class Course {
     public String getPrerequisites() { return prerequisites; }
     public void setPrerequisites(String prerequisites) { this.prerequisites = prerequisites; }
 
-    public String getMajor() { return major; }
-    public void setMajor(String major) { this.major = major; }
+    public Major getMajor() { return major; }
+    public void setMajor(Major major) { this.major = major; }
 
     public int getYear() { return year; }
     public void setYear(int year) { this.year = year; }

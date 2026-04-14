@@ -7,6 +7,7 @@ import com.upf.backend.application.dto.group.GroupMembershipResponse;
 import com.upf.backend.application.mapper.GroupMapper;
 import com.upf.backend.application.model.entity.AcademicGroup;
 import com.upf.backend.application.model.entity.GroupMembership;
+import com.upf.backend.application.model.enums.Major;
 import com.upf.backend.application.security.SecurityUser;
 import com.upf.backend.application.services.GroupService;
 import org.springframework.data.domain.Page;
@@ -37,14 +38,14 @@ public class GroupController {
                 request.name(),
                 request.description(),
                 request.type(),
-                request.major()
+                Major.valueOf(request.major())
         );
         return ResponseEntity.status(201).body(GroupMapper.toResponse(created));
     }
 
     @GetMapping("/public")
     public ResponseEntity<Page<AcademicGroupResponse>> listPublicGroups(
-            @RequestParam(required = false) String major,
+            @RequestParam(required = false) Major major,
             @RequestParam(required = false) String search,
             Pageable pageable
     ) {

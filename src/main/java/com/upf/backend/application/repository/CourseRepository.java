@@ -3,34 +3,37 @@ package com.upf.backend.application.repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.upf.backend.application.model.entity.Course;
+import com.upf.backend.application.model.enums.Major;
 
 import java.util.List;
 import java.util.UUID;
 
-public interface CourseRepository extends JpaRepository<Course, UUID> {
+public interface CourseRepository extends JpaRepository<Course, UUID>,
+        JpaSpecificationExecutor<Course> {
 
     boolean existsByCode(String code);
 
-    List<Course> findByMajorAndYearAndSemester(String major, int year, int semester);
+    List<Course> findByMajorAndYearAndSemester(Major major, int year, int semester);
 
     Page<Course> findByMajorAndYearAndSemesterAndIsActiveTrue(
-            String major,
+            Major major,
             int year,
             int semester,
             Pageable pageable
     );
 
     Page<Course> findByMajorAndYearAndIsActiveTrue(
-            String major,
+            Major major,
             int year,
             Pageable pageable
     );
 
-    Page<Course> findByMajor(String major, Pageable pageable);
+    Page<Course> findByMajor(Major major, Pageable pageable);
 
     Page<Course> findByYear(int year, Pageable pageable);
 
@@ -44,7 +47,7 @@ public interface CourseRepository extends JpaRepository<Course, UUID> {
                   c.semester, c.title, c.updated_at, c.year
            FROM courses c
            WHERE c.is_active = true
-             AND (:major IS NULL OR LOWER(c.major) = LOWER(:major))
+             AND (:major IS NULL OR c.major = :major)
              AND (:year IS NULL OR c.year = :year)
              AND (:semester IS NULL OR c.semester = :semester)
              AND (
@@ -58,7 +61,7 @@ public interface CourseRepository extends JpaRepository<Course, UUID> {
            SELECT COUNT(*)
            FROM courses c
            WHERE c.is_active = true
-             AND (:major IS NULL OR LOWER(c.major) = LOWER(:major))
+             AND (:major IS NULL OR c.major = :major)
              AND (:year IS NULL OR c.year = :year)
              AND (:semester IS NULL OR c.semester = :semester)
              AND (
@@ -70,7 +73,7 @@ public interface CourseRepository extends JpaRepository<Course, UUID> {
            """,
            nativeQuery = true)
     Page<Course> searchActiveCourses(
-            @Param("major") String major,
+            @Param("major") Major major,
             @Param("year") Integer year,
             @Param("semester") Integer semester,
             @Param("search") String search,

@@ -8,6 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.upf.backend.application.model.entity.Exam;
 import com.upf.backend.application.model.enums.ExamType;
 import com.upf.backend.application.model.enums.FileType;
+import com.upf.backend.application.model.enums.Major;
 
 import java.io.File;
 import java.util.UUID;
@@ -27,7 +28,7 @@ public interface IExamService {
                     String fileHash);
 
     Page<Exam> listExams(String subject,
-                         String major,
+                         Major major,
                          Integer courseYear,
                          String academicYear,
                          ExamType examType,
@@ -38,7 +39,7 @@ public interface IExamService {
 
     void registerDownload(UUID examId);
 
-    Page<Exam> listExamsByMajor(String studentMajor, String title, Integer courseYear, String academicYear,
+    Page<Exam> listExamsByMajor( Major studentMajor, String title, Integer courseYear, String academicYear,
             ExamType examType, Pageable pageable);
 
 }

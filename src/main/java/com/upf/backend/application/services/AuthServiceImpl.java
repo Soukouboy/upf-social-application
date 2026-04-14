@@ -2,6 +2,7 @@ package com.upf.backend.application.services;
 
 import com.upf.backend.application.model.entity.StudentProfile;
 import com.upf.backend.application.model.entity.User;
+import com.upf.backend.application.model.enums.Major;
 import com.upf.backend.application.model.enums.UserRole;
 import com.upf.backend.application.repository.ProfessorRepository;
 import com.upf.backend.application.repository.StudentRepository;
@@ -62,7 +63,7 @@ public class AuthServiceImpl implements IAuthService {
                                           String lastName,
                                           String email,
                                           String rawPassword,
-                                          String major,
+                                          Major major,
                                           int currentYear) {
         validateInstitutionalEmail(email);
         validatePassword(rawPassword);

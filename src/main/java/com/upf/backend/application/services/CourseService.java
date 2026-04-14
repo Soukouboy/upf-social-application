@@ -4,6 +4,7 @@ import com.upf.backend.application.model.entity.Course;
 import com.upf.backend.application.model.entity.Enrollment;
 import com.upf.backend.application.model.entity.StudentProfile;
 import com.upf.backend.application.model.enums.EnrollmentStatus;
+import com.upf.backend.application.model.enums.Major;
 import com.upf.backend.application.repository.CourseRepository;
 import com.upf.backend.application.repository.EnrollmentRepository;
 import com.upf.backend.application.repository.StudentRepository;
@@ -42,7 +43,7 @@ public class CourseService implements ICourseService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<Course> listCourses(String major,
+    public Page<Course> listCourses(Major major,
                                     Integer year,
                                     Integer semester,
                                     String search,
@@ -75,7 +76,7 @@ public class CourseService implements ICourseService {
 
      @Override
     @Transactional(readOnly = true)
-    public List<Course> getCoursesByMajor(String major) {
+    public List<Course> getCoursesByMajor(Major major) {
         return courseRepository.findByMajor(major, Pageable.unpaged()).getContent();
     }
 

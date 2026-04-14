@@ -9,6 +9,7 @@ import com.upf.backend.application.mapper.CourseMapper;
 import com.upf.backend.application.mapper.CourseResourceMapper;
 import com.upf.backend.application.model.entity.Course;
 import com.upf.backend.application.model.entity.CourseResource;
+import com.upf.backend.application.model.enums.Major;
 import com.upf.backend.application.model.enums.UserRole;
 import com.upf.backend.application.security.SecurityUser;
 import com.upf.backend.application.services.SupabaseStorageService;
@@ -52,7 +53,8 @@ public class CourseController {
             @RequestParam(required = false) String search,
             Pageable pageable
     ) {
-        Page<Course> page = courseService.listCourses(major, year, semester, search, pageable);
+        Major majorEnum = major != null ? Major.valueOf(major) : null;
+        Page<Course> page = courseService.listCourses(majorEnum, year, semester, search, pageable);
         return ResponseEntity.ok(page.map(CourseMapper::toSummary));
     }
 
@@ -65,7 +67,8 @@ public class CourseController {
     @PreAuthorize("hasAnyRole('STUDENT', 'PROFESSOR', 'ADMIN')")
     @GetMapping("/major/{major}")
     public ResponseEntity<List<CourseSummary>> getByMajor(@PathVariable String major) {
-        return ResponseEntity.ok(courseService.getCoursesByMajor(major)
+        Major majorEnum= Major.valueOf(major);
+        return ResponseEntity.ok(courseService.getCoursesByMajor(majorEnum)
                 .stream().map(CourseMapper::toSummary).toList());
     }
 

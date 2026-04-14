@@ -1,6 +1,6 @@
 package com.upf.backend.application.dto.group;
 
-
+import com.upf.backend.application.model.enums.Major;
 
 import com.upf.backend.application.model.enums.GroupType;
 
@@ -13,7 +13,7 @@ public record GroupDetailResponse(
         String description,
         String coverImageUrl,
         GroupType type,
-        String major,
+        Major major,
         UUID createdBy,
         int memberCount,
         int messageCount,

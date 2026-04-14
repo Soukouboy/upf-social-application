@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import com.upf.backend.application.model.entity.AcademicGroup;
 import com.upf.backend.application.model.entity.GroupMembership;
 import com.upf.backend.application.model.enums.GroupType;
+import com.upf.backend.application.model.enums.Major;
 
 import java.util.UUID;
 
@@ -16,10 +17,10 @@ public interface IGroupService {
                               String name,
                               String description,
                               GroupType type,
-                              String major
+                              Major major
                            );
 
-    Page<AcademicGroup> listPublicGroups(String major,
+    Page<AcademicGroup> listPublicGroups(Major major,
                                          String search,
                                          Pageable pageable);
 

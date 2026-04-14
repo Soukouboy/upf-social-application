@@ -6,6 +6,7 @@ import com.upf.backend.application.model.entity.Exam;
 import com.upf.backend.application.model.entity.StudentProfile;
 import com.upf.backend.application.model.enums.ExamType;
 import com.upf.backend.application.model.enums.FileType;
+import com.upf.backend.application.model.enums.Major;
 import com.upf.backend.application.repository.CourseRepository;
 import com.upf.backend.application.repository.ExamRepository;
 import com.upf.backend.application.repository.ExamSpecification;
@@ -112,7 +113,7 @@ public class ExamService implements IExamService {
 
 
     // ── Recherche générale (PROFESSOR / ADMIN) ────────────────────────────────
-public Page<Exam> listExams(String title, String major, Integer courseYear,
+public Page<Exam> listExams(String title, Major major, Integer courseYear,
                              String academicYear, ExamType examType,
                              UUID uploaderId, Pageable pageable) {
     Specification<Exam> spec = Specification
@@ -128,7 +129,7 @@ public Page<Exam> listExams(String title, String major, Integer courseYear,
 }
 
 // ── Recherche par filière (STUDENT) ───────────────────────────────────────
-public Page<Exam> listExamsByMajor(String studentMajor, String title,
+public Page<Exam> listExamsByMajor( Major studentMajor, String title,
                                     Integer courseYear, String academicYear,
                                     ExamType examType, Pageable pageable) {
 

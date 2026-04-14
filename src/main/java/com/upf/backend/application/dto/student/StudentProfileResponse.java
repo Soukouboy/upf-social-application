@@ -3,6 +3,7 @@ package com.upf.backend.application.dto.student;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.upf.backend.application.model.enums.Major;
 import com.upf.backend.application.model.enums.UserRole;
 
 /**
@@ -16,7 +17,7 @@ public record StudentProfileResponse(
     String email,
     String firstName,
     String lastName,
-    String major,
+    Major major,
     int currentYear,
     String profilePictureUrl,
     String bio,

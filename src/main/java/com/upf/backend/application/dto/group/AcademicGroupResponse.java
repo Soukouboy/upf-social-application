@@ -3,6 +3,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import com.upf.backend.application.model.enums.GroupType;
+import com.upf.backend.application.model.enums.Major;
 
 public record AcademicGroupResponse(
         UUID id,
@@ -10,7 +11,7 @@ public record AcademicGroupResponse(
         String description,
         String coverImageUrl,
         GroupType type,
-        String major,
+        Major major,
         UUID createdBy,
         int memberCount,
         int messageCount,

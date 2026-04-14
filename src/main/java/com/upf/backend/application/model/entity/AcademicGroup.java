@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.upf.backend.application.model.enums.GroupType;
+import com.upf.backend.application.model.enums.Major;
 
 /**
  * Groupe de discussion académique.
@@ -51,7 +52,7 @@ public class AcademicGroup {
 
     @Size(max = 100)
     @Column(name = "major", length = 100)
-    private String major;
+    private Major major;
 
     /**
      * UUID du StudentProfile créateur — référence légère, pas de FK JPA.
@@ -160,8 +161,8 @@ public class AcademicGroup {
     public GroupType getType() { return type; }
     public void setType(GroupType type) { this.type = type; }
 
-    public String getMajor() { return major; }
-    public void setMajor(String major) { this.major = major; }
+    public Major getMajor() { return major; }
+    public void setMajor(Major major) { this.major = major; }
 
     public UUID getCreatedBy() { return createdBy; }
     public void setCreatedBy(UUID createdBy) { this.createdBy = createdBy; }

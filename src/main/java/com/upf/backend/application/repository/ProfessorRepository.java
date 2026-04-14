@@ -3,8 +3,8 @@ package com.upf.backend.application.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-
 import com.upf.backend.application.model.entity.ProfessorProfile;
+import com.upf.backend.application.model.enums.Major;
 
 import java.util.*;
 
@@ -21,7 +21,7 @@ public interface ProfessorRepository extends JpaRepository<ProfessorProfile, UUI
     Optional<ProfessorProfile> findByUser_Email(String email);
 
     // ✅ Correct — retourne des ProfessorProfile qui ont des cours dans cette filière
-    List<ProfessorProfile> findByCourses_major(String filiere);
+    List<ProfessorProfile> findByCourses_major(Major major);
 
     // ✅ Correct — retourne des ProfessorProfile qui ont ce cours
     Optional<ProfessorProfile> findByCourses_Code(String code);
@@ -32,4 +32,3 @@ public interface ProfessorRepository extends JpaRepository<ProfessorProfile, UUI
     // ✅ Correct
     boolean existsByUser_Id(UUID userId);
 } 
- 

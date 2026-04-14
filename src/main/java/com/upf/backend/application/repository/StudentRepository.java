@@ -3,14 +3,17 @@ package com.upf.backend.application.repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import com.upf.backend.application.model.entity.StudentProfile;
+import com.upf.backend.application.model.enums.Major;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface StudentRepository extends JpaRepository<StudentProfile, UUID> {
+public interface StudentRepository extends JpaRepository<StudentProfile, UUID>,
+        JpaSpecificationExecutor<StudentProfile> {
 
 Optional<StudentProfile> findByUser_Id(UUID userId);
 
@@ -22,23 +25,23 @@ boolean existsByUser_Id(UUID userId);
     boolean existsByUser_Email(String email);
 
     // Profil / recherche par filière et année
-    List<StudentProfile> findByMajorAndCurrentYear(String major, int currentYear);
+    List<StudentProfile> findByMajorAndCurrentYear(Major major, int currentYear);
 
-    Page<StudentProfile> findByMajorAndCurrentYear(String major, int currentYear, Pageable pageable);
+    Page<StudentProfile> findByMajorAndCurrentYear(Major major, int currentYear, Pageable pageable);
 
     // Profils publics
     List<StudentProfile> findByIsProfilePublicTrue();
 
     Page<StudentProfile> findByIsProfilePublicTrue(Pageable pageable);
 
-    Page<StudentProfile> findByMajor(String major, Pageable pageable);
+    Page<StudentProfile> findByMajor(Major major, Pageable pageable);
 
     Page<StudentProfile> findByCurrentYear(int currentYear, Pageable pageable);
 
      // Added methods for public profiles with major and/or currentYear
-    Page<StudentProfile> findByMajorAndCurrentYearAndIsProfilePublicTrue(String major, int currentYear, Pageable pageable);
+    Page<StudentProfile> findByMajorAndCurrentYearAndIsProfilePublicTrue(Major major, int currentYear, Pageable pageable);
 
-    Page<StudentProfile> findByMajorAndIsProfilePublicTrue(String major, Pageable pageable);
+    Page<StudentProfile> findByMajorAndIsProfilePublicTrue(Major major, Pageable pageable);
 
     Page<StudentProfile> findByCurrentYearAndIsProfilePublicTrue(int currentYear, Pageable pageable);
 }

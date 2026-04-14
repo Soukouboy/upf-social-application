@@ -6,8 +6,7 @@ import org.springframework.data.domain.Pageable;
 
 import com.upf.backend.application.model.entity.Course;
 import com.upf.backend.application.model.entity.Enrollment;
-
-
+import com.upf.backend.application.model.enums.Major;
 import com.upf.backend.application.model.entity.Course;
 import com.upf.backend.application.model.entity.Enrollment;
 
@@ -19,7 +18,7 @@ import java.util.UUID;
 
 public interface ICourseService {
 
-    Page<Course> listCourses(String major,
+    Page<Course> listCourses(   Major major,
                              Integer year,
                              Integer semester,
                              String search,
@@ -29,7 +28,7 @@ public interface ICourseService {
 
 
     
-    List<Course> getCoursesByMajor(String major);
+    List<Course> getCoursesByMajor(Major major);
     List<Course> getCoursesByProfessor(UUID professorId);
    
 

@@ -11,6 +11,7 @@ import com.upf.backend.application.model.entity.Exam;
 import com.upf.backend.application.model.entity.GroupMembership;
 import com.upf.backend.application.model.entity.StudentProfile;
 import com.upf.backend.application.model.enums.EnrollmentStatus;
+import com.upf.backend.application.model.enums.Major;
 import com.upf.backend.application.model.enums.MembershipStatus;
 import com.upf.backend.application.repository.AcademicGroupRepository;
 import com.upf.backend.application.repository.EnrollmentRepository;
@@ -60,7 +61,7 @@ public class UserServiceImpl implements IUserService {
                                         String bio,
                                         String profilePhotoUrl,
                                         String storagePath,
-                                        String major,
+                                        Major major,
                                         Integer currentYear,
                                         Boolean profilePublic) {
         StudentProfile profile = studentRepository.findById(studentId)
@@ -72,7 +73,7 @@ public class UserServiceImpl implements IUserService {
         if (profilePhotoUrl != null) {
             profile.setProfilePictureUrl(profilePhotoUrl);
         }
-        if (major != null && !major.isBlank()) {
+        if (major != null && !major.toString().isBlank()) {
             profile.setMajor(major);
         }
         if (currentYear != null) {
@@ -107,12 +108,14 @@ public class UserServiceImpl implements IUserService {
     public Page<StudentProfile> searchPublicProfiles(String major,
                                                      Integer currentYear,
                                                      Pageable pageable) {
-        if (major != null && currentYear != null) {
-            return studentRepository.findByMajorAndCurrentYearAndIsProfilePublicTrue(major, currentYear, pageable);
+        Major majorEnum = parseMajor(major);
+        
+        if (majorEnum != null && currentYear != null) {
+            return studentRepository.findByMajorAndCurrentYearAndIsProfilePublicTrue(majorEnum, currentYear, pageable);
         }
 
-        if (major != null) {
-            return studentRepository.findByMajorAndIsProfilePublicTrue(major, pageable);
+        if (majorEnum != null) {
+            return studentRepository.findByMajorAndIsProfilePublicTrue(majorEnum, pageable);
         }
 
         if (currentYear != null) {
@@ -161,5 +164,21 @@ public class UserServiceImpl implements IUserService {
                 myGroupsCount,
                 totalDownloadsReceived
         );
+    }
+
+    /**
+     * Convertit une chaîne de caractères en enum Major.
+     * Retourne null si la chaîne est null, vide ou invalide.
+     */
+    private Major parseMajor(String majorString) {
+        if (majorString == null || majorString.isBlank()) {
+            return null;
+        }
+        try {
+            return Major.valueOf(majorString.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            // Si la valeur n'existe pas dans l'enum, retourner null
+            return null;
+        }
     }
 }

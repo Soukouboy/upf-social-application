@@ -5,6 +5,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import com.upf.backend.application.model.entity.Exam;
 import com.upf.backend.application.model.enums.ExamType;
+import com.upf.backend.application.model.enums.Major;
+
 import java.util.UUID;
 @Component
 public class ExamSpecification {
@@ -13,9 +15,9 @@ public class ExamSpecification {
         return (root, query, cb) -> cb.isFalse(root.get("isHidden"));
     }
 
-    public static Specification<Exam> withMajor(String major) {
+    public static Specification<Exam> withMajor(Major major) {
         return (root, query, cb) -> major == null ? null :
-            cb.equal(cb.lower(root.join("course").get("major")), major.toLowerCase());
+            cb.equal(cb.lower(root.join("course").get("major")), major.toString());
     }
 
     public static Specification<Exam> withTitle(String title) {

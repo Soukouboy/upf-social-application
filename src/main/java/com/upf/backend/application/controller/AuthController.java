@@ -6,6 +6,7 @@ import com.upf.backend.application.controller.request.RegisterStudentRequest;
 import com.upf.backend.application.dto.student.StudentProfileResponse;
 import com.upf.backend.application.mapper.StudentMapper;
 import com.upf.backend.application.model.entity.StudentProfile;
+import com.upf.backend.application.model.enums.Major;
 import com.upf.backend.application.services.Interfaces.IAuthService;
 import com.upf.backend.application.services.Interfaces.AuthTokens;
 import com.upf.backend.application.security.SecurityUser;
@@ -31,7 +32,7 @@ public class AuthController {
                 request.lastName(),
                 request.email(),
                 request.password(),
-                request.major(),
+                Major.valueOf(request.major()),
                 request.currentYear()
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(StudentMapper.toResponse(created));
