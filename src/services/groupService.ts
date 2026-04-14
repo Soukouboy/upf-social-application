@@ -56,6 +56,11 @@ export const requestJoinGroup = async (id: string): Promise<void> => {
   await api.post(`/groups/${id}/request-join`);
 };
 
+/** Quitter un groupe dont on est membre */
+export const leaveGroup = async (groupId: string): Promise<void> => {
+  await api.delete(`/groups/${groupId}/leave`);
+};
+
 /** Liste des membres d'un groupe */
 export const getGroupMembers = async (groupId: string): Promise<GroupMembership[]> => {
   const { data } = await api.get<any>(`/groups/${groupId}/members`);

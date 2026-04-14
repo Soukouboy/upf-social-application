@@ -13,12 +13,13 @@ import {
 import ChatRoundedIcon from '@mui/icons-material/ChatRounded';
 import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
 import OpenInFullRoundedIcon from '@mui/icons-material/OpenInFullRounded';
-import EditSquareRoundedIcon from '@mui/icons-material/EditRounded'; // Using EditRounded
+import EditSquareRoundedIcon from '@mui/icons-material/EditRounded';
 import UPFSearchBar from '../../components/ui/UPFSearchBar';
 import UPFAvatar from '../../components/ui/UPFAvatar';
 import EmptyState from '../../components/common/EmptyState';
 import type { PrivateConversationSummaryResponse } from '../../types';
 import { getPrivateConversations } from '../../services/messageService';
+import { getUserProfile } from '../../services/userService';
 
 const DirectMessagesPage: React.FC = () => {
   const theme = useTheme();
@@ -34,7 +35,31 @@ const DirectMessagesPage: React.FC = () => {
       setError(null);
       try {
         const page = await getPrivateConversations(0, 50);
-        setConversations(page.content);
+        const rawConversations = page.content;
+
+        // Enrichir chaque conversation avec le profil de l'interlocuteur
+        // pour afficher son nom/prénom au lieu de l'ID
+        const enriched = await Promise.all(
+          rawConversations.map(async (conv) => {
+            // Si le backend a déjà fourni le nom, pas besoin de fetch
+            if (conv.firstName && conv.lastName) return conv;
+
+            try {
+              const profile = await getUserProfile(conv.otherUserId);
+              return {
+                ...conv,
+                firstName: profile.firstName || conv.firstName,
+                lastName: profile.lastName || conv.lastName,
+                avatarUrl: profile.profilePictureUrl || conv.avatarUrl,
+              };
+            } catch {
+              // En cas d'erreur on garde ce qu'on a
+              return conv;
+            }
+          })
+        );
+
+        setConversations(enriched);
       } catch (err) {
         setError('Impossible de charger les conversations. Vérifiez votre connexion.');
         setConversations([]);
@@ -46,7 +71,7 @@ const DirectMessagesPage: React.FC = () => {
   }, []);
 
   const filtered = conversations.filter((c) => {
-    const name = `${c.firstName ?? ''} ${c.lastName ?? ''} ${c.otherUserId}`.toLowerCase();
+    const name = `${c.firstName ?? ''} ${c.lastName ?? ''}`.toLowerCase();
     return name.includes(search.toLowerCase());
   });
 
@@ -55,7 +80,7 @@ const DirectMessagesPage: React.FC = () => {
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffHours = diffMs / (1000 * 60 * 60);
-    if (diffHours < 1) return `Il y a ${Math.round(diffMs / 60000)} min`;
+    if (diffHours < 1) return `Il y a ${Math.max(1, Math.round(diffMs / 60000))} min`;
     if (diffHours < 24) return `Il y a ${Math.round(diffHours)}h`;
     return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
   };
@@ -64,15 +89,12 @@ const DirectMessagesPage: React.FC = () => {
     if (conv.firstName || conv.lastName) {
       return `${conv.firstName ?? ''} ${conv.lastName ?? ''}`.trim();
     }
-    // Fallback si le backend ne renvoie pas encore le nom
+    // Fallback ultime si aucun nom n'est disponible
     return `Utilisateur ${conv.otherUserId.substring(0, 8)}…`;
   };
 
-  // Mock check for online status (just for visual representation based on Image 2)
+  // Mock check for online status (visual representation)
   const isOnline = (id: string) => {
-    // Random visual mockup, assuming ID endings or something, 
-    // but we can just use Math.random or hardcode some logic. 
-    // In actual implementation, this should come from WS/Backend.
     return parseInt(id.replace(/\D/g, '') || '0') % 2 === 0;
   };
 
@@ -99,14 +121,14 @@ const DirectMessagesPage: React.FC = () => {
         />
       </Box>
 
-      {/* Filters (Mock functionality for UI fidelity) */}
+      {/* Filters */}
       <Box sx={{ display: 'flex', gap: 1, mb: 2, overflowX: 'auto', '&::-webkit-scrollbar': { display: 'none' } }}>
         <Button variant="contained" size="small" sx={{ borderRadius: '20px', textTransform: 'none', px: 2, boxShadow: 'none' }}>Tout</Button>
         <Button variant="text" size="small" sx={{ borderRadius: '20px', textTransform: 'none', color: 'text.primary', fontWeight: 600, '&:hover': { bgcolor: alpha(theme.palette.text.primary, 0.05) } }}>Non lu</Button>
         <Button variant="text" size="small" sx={{ borderRadius: '20px', textTransform: 'none', color: 'text.primary', fontWeight: 600, '&:hover': { bgcolor: alpha(theme.palette.text.primary, 0.05) } }}>Groupes</Button>
       </Box>
 
-      {/* Optional Help Box (as seen in Image 2) */}
+      {/* Optional Help Box */}
       <Box sx={{ p: 1.5, mb: 2, borderRadius: 2, bgcolor: alpha(theme.palette.text.primary, 0.04), color: 'text.secondary', fontSize: '0.85rem' }}>
         Historique des discussions manquant. <Typography component="span" variant="body2" sx={{ color: 'primary.main', cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}>Restaurer maintenant</Typography>
       </Box>
@@ -157,7 +179,7 @@ const DirectMessagesPage: React.FC = () => {
                   variant="dot"
                   sx={{
                     '& .MuiBadge-badge': {
-                      backgroundColor: '#31a24c', // Online green
+                      backgroundColor: '#31a24c',
                       color: '#31a24c',
                       boxShadow: `0 0 0 2px ${theme.palette.background.paper}`,
                       '&::after': {
