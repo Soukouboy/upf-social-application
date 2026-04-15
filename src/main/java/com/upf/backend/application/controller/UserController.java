@@ -125,7 +125,7 @@ public class UserController {
 
         // Le bucket avatars doit être PUBLIC dans Supabase pour avoir une publicUrl
         String avatarUrl = descriptor.publicUrl();
-        String storagePath = descriptor.relativePath();
+        String storagePath = descriptor.publicUrl();
         if (avatarUrl == null) {
             throw new IllegalStateException(
                 "Le bucket 'avatars' est privé — passez-le en public dans Supabase " +

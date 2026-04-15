@@ -105,7 +105,6 @@ public class ExamService implements IExamService {
         exam.setFileUrl(null);
         exam.setStoragePath(storedFile.relativePath());
         exam.setFileSizeBytes(size);
-
         return examRepository.save(exam);
     }
 

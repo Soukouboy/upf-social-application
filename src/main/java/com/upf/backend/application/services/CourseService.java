@@ -6,11 +6,13 @@ import com.upf.backend.application.model.entity.StudentProfile;
 import com.upf.backend.application.model.enums.EnrollmentStatus;
 import com.upf.backend.application.model.enums.Major;
 import com.upf.backend.application.repository.CourseRepository;
+import com.upf.backend.application.repository.CourseSpecification;
 import com.upf.backend.application.repository.EnrollmentRepository;
 import com.upf.backend.application.repository.StudentRepository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -77,7 +79,9 @@ public class CourseService implements ICourseService {
      @Override
     @Transactional(readOnly = true)
     public List<Course> getCoursesByMajor(Major major) {
-        return courseRepository.findByMajor(major, Pageable.unpaged()).getContent();
+        Specification<Course> spec = Specification.where(CourseSpecification.withMajor(major))
+                .and(CourseSpecification.isActive(true));
+        return courseRepository.findAll(spec, Pageable.unpaged()).getContent();
     }
 
     @Override

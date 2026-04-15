@@ -96,7 +96,7 @@ public class SupabaseStorageService {
                 "Format de document non autorisé (PDF, DOCX uniquement).");
 
         String folder = "user-" + userId;
-        return upload(file, BUCKET_DOCUMENTS, folder, false);
+        return upload(file, BUCKET_DOCUMENTS, folder, true); // Peut être public ou privé selon les besoins (ici public pour simplifier l'accès)
     }
 
     /**
