@@ -51,7 +51,6 @@ public class StudentProfile {
     @NotNull(message = "La filière est obligatoire")
     @Size(max = 100)
     @Column(name = "major", nullable = false, length = 100)
-    @Enumerated(EnumType.STRING)
     private Major major;
     @Min(value = 1, message = "L'année d'études doit être au moins 1")
     @Max(value = 7, message = "L'année d'études ne peut pas dépasser 7")

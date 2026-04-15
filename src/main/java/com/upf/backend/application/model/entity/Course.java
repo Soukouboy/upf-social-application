@@ -54,8 +54,6 @@ public class Course {
     @NotNull(message = "La filière est obligatoire")
     @Size(max = 100)
     @Column(name = "major", nullable = false, length = 100)
-    // Après
-    @Enumerated(EnumType.STRING)
     private Major major;
 
     @Min(1) @Max(7)

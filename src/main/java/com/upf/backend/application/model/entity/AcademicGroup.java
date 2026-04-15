@@ -51,7 +51,6 @@ public class AcademicGroup {
     private GroupType type;
 
     @Size(max = 100)
-    @Enumerated(EnumType.STRING)
     @Column(name = "major", length = 100)
     private Major major;
 
