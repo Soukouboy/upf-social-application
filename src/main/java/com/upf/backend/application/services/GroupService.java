@@ -88,9 +88,10 @@ public class GroupService implements IGroupService {
     public Page<AcademicGroup> listPublicGroups(Major major,
                                                 String search,
                                                 Pageable pageable) {
+        // Convert Major enum to String (its label) for native query
+        String majorLabel = major != null ? major.getLabel() : null;
         return groupRepository.searchActiveGroups(
-                "PUBLIC",
-                major,
+                majorLabel,
                 normalize(search),
                 pageable
         );

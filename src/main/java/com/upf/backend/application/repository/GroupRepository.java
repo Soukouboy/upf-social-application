@@ -30,7 +30,7 @@ public interface GroupRepository extends JpaRepository<AcademicGroup, UUID>,
                   g.type, g.updated_at
            FROM groups g
            WHERE g.is_active = true
-             AND (:type IS NULL OR g.type = :type)
+             AND (g.type = 'PUBLIC' OR g.type = 'PRIVATE')
              AND (:major IS NULL OR g.major = :major)
              AND (
                    :search IS NULL
@@ -42,7 +42,7 @@ public interface GroupRepository extends JpaRepository<AcademicGroup, UUID>,
            SELECT COUNT(*)
            FROM groups g
            WHERE g.is_active = true
-             AND (:type IS NULL OR g.type = :type)
+             AND (g.type = 'PUBLIC' OR g.type = 'PRIVATE')
              AND (:major IS NULL OR g.major = :major)
              AND (
                    :search IS NULL
@@ -52,8 +52,7 @@ public interface GroupRepository extends JpaRepository<AcademicGroup, UUID>,
            """,
            nativeQuery = true)
     Page<AcademicGroup> searchActiveGroups(
-            @Param("type") String type,
-            @Param("major") Major major,
+            @Param("major") String major,
             @Param("search") String search,
             Pageable pageable
     );

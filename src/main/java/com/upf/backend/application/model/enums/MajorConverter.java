@@ -35,12 +35,9 @@ public class MajorConverter implements AttributeConverter<Major, String> {
         try {
             return Major.fromString(dbData);
         } catch (IllegalArgumentException e) {
-            // Fallback: essayer de traiter comme constant name
-            try {
-                return Major.valueOf(dbData.toUpperCase().replace(" ", "_"));
-            } catch (IllegalArgumentException ex) {
-                throw new IllegalArgumentException("Impossible de convertir '" + dbData + "' en enum Major", e);
-            }
+            // Log le problème mais retourner null plutôt que d'échouer
+            System.err.println("Could not convert '" + dbData + "' to Major enum: " + e.getMessage());
+            return null;
         }
     }
 }
