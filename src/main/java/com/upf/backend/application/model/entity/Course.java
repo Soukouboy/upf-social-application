@@ -51,7 +51,7 @@ public class Course {
     @Column(name = "prerequisites", length = 1000)
     private String prerequisites="À définir";
 
-    @NotBlank(message = "La filière est obligatoire")
+    @NotNull(message = "La filière est obligatoire")
     @Size(max = 100)
     @Column(name = "major", nullable = false, length = 100)
     // Après
