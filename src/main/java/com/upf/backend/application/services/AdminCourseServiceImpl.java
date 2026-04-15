@@ -37,7 +37,7 @@ public class AdminCourseServiceImpl implements IAdminCourseService {
 
   
 
-        Major major= Major.valueOf(request.major().trim().toUpperCase());
+        Major major= Major.fromString(request.major());
 
         Course course = new Course();
         course.setCode(normalizedCode);
@@ -88,7 +88,7 @@ public class AdminCourseServiceImpl implements IAdminCourseService {
         }
 
         if (request.major() != null && !request.major().isBlank()) {
-            course.setMajor(Major.valueOf(request.major().trim().toUpperCase()));
+            course.setMajor(Major.fromString(request.major()));
         }
 
         if (request.year() != null) {

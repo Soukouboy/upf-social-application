@@ -175,7 +175,7 @@ public class UserServiceImpl implements IUserService {
             return null;
         }
         try {
-            return Major.valueOf(majorString.trim().toUpperCase());
+            return Major.fromString(majorString.trim());
         } catch (IllegalArgumentException e) {
             // Si la valeur n'existe pas dans l'enum, retourner null
             return null;

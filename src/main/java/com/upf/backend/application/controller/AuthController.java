@@ -32,7 +32,7 @@ public class AuthController {
                 request.lastName(),
                 request.email(),
                 request.password(),
-                Major.valueOf(request.major()),
+                Major.fromString(request.major()),
                 request.currentYear()
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(StudentMapper.toResponse(created));

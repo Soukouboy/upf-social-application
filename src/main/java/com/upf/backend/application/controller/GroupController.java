@@ -38,7 +38,7 @@ public class GroupController {
                 request.name(),
                 request.description(),
                 request.type(),
-                Major.valueOf(request.major())
+                Major.fromString(request.major())
         );
         return ResponseEntity.status(201).body(GroupMapper.toResponse(created));
     }

@@ -53,7 +53,7 @@ public class CourseController {
             @RequestParam(required = false) String search,
             Pageable pageable
     ) {
-        Major majorEnum = major != null ? Major.valueOf(major) : null;
+        Major majorEnum = major != null ? Major.fromString(major) : null;
         Page<Course> page = courseService.listCourses(majorEnum, year, semester, search, pageable);
         return ResponseEntity.ok(page.map(CourseMapper::toSummary));
     }
@@ -67,7 +67,7 @@ public class CourseController {
     @PreAuthorize("hasAnyRole('STUDENT', 'PROFESSOR', 'ADMIN')")
     @GetMapping("/major/{major}")
     public ResponseEntity<List<CourseSummary>> getByMajor(@PathVariable String major) {
-        Major majorEnum= Major.valueOf(major);
+        Major majorEnum= Major.fromString(major);
         return ResponseEntity.ok(courseService.getCoursesByMajor(majorEnum)
                 .stream().map(CourseMapper::toSummary).toList());
     }

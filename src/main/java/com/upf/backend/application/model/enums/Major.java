@@ -16,4 +16,32 @@ public enum Major {
 
     Major(String label) { this.label = label; }
     public String getLabel() { return label; }
+
+    /**
+     * Convertit une chaîne (label ou code) en enum Major.
+     * Gère les espaces et underscores automatiquement.
+     */
+    public static Major fromString(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalArgumentException("Major cannot be null or empty");
+        }
+
+        // Essayer d'abord comme enum constant (SCIENCES_PO)
+        try {
+            return Major.valueOf(value.toUpperCase().trim());
+        } catch (IllegalArgumentException e) {
+            // Si ça échoue, essayer de trouver par label (SCIENCES PO)
+            for (Major major : Major.values()) {
+                if (major.label.equalsIgnoreCase(value.trim())) {
+                    return major;
+                }
+            }
+            // Si rien ne marche, essayer en remplaçant les espaces par des underscores
+            try {
+                return Major.valueOf(value.toUpperCase().trim().replace(" ", "_"));
+            } catch (IllegalArgumentException ex) {
+                throw new IllegalArgumentException("Unknown major: " + value);
+            }
+        }
+    }
 }
