@@ -27,8 +27,16 @@ const ProfileEditPage: React.FC = () => {
   const studentData = user?.profileData?.studentProfile;
   const profData = user?.profileData?.professorProfile;
 
+  // Champs communs
+  const [commonForm, setCommonForm] = useState({
+    firstName: user?.firstName || '',
+    lastName: user?.lastName || '',
+  });
+
   // Formulaire étudiant
   const [studentForm, setStudentForm] = useState({
+    major: studentData?.major || (user as any)?.major || '',
+    currentYear: studentData?.currentYear || (user as any)?.currentYear || '',
     bio: studentData?.bio || (user as any)?.bio || '',
     isProfilePublic: studentData?.isProfilePublic ?? true,
   });
@@ -81,11 +89,17 @@ const ProfileEditPage: React.FC = () => {
 
       if (role === 'STUDENT') {
         await api.put('/users/me', {
+          firstName: commonForm.firstName,
+          lastName: commonForm.lastName,
+          major: studentForm.major,
+          currentYear: Number(studentForm.currentYear),
           bio: studentForm.bio,
           isProfilePublic: studentForm.isProfilePublic,
         });
       } else if (role === 'PROFESSOR') {
         await api.put('/users/me', {
+          firstName: commonForm.firstName,
+          lastName: commonForm.lastName,
           bio: profForm.bio,
           department: profForm.department,
           title: profForm.title,
@@ -143,23 +157,38 @@ const ProfileEditPage: React.FC = () => {
         )}
 
         <Box component="form" onSubmit={handleSubmit} noValidate>
-          {/* Champs communs non modifiables */}
-          <TextField label="Nom complet" value={user ? `${user.firstName} ${user.lastName}` : ''} disabled fullWidth sx={{ mb: 2 }} />
-          <TextField label="Email" value={user?.email || ''} disabled fullWidth sx={{ mb: 2.5 }} />
+          {/* Champs communs */}
+          <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+            <TextField 
+              label="Prénom" 
+              value={commonForm.firstName} 
+              onChange={(e) => setCommonForm(prev => ({ ...prev, firstName: e.target.value }))}
+              fullWidth 
+            />
+            <TextField 
+              label="Nom" 
+              value={commonForm.lastName} 
+              onChange={(e) => setCommonForm(prev => ({ ...prev, lastName: e.target.value }))}
+              fullWidth 
+            />
+          </Box>
+          <TextField label="Email" value={user?.email || ''} disabled fullWidth sx={{ mb: 2.5 }} helperText="L'adresse email ne peut pas être modifiée." />
 
           {/* ─── Champs spécifiques STUDENT ─── */}
           {(role === 'STUDENT') && (
             <>
               <TextField
                 label="Filière"
-                value={studentData?.major || (user as any)?.major || ''}
-                disabled fullWidth sx={{ mb: 2 }}
-                helperText="La filière est définie par l'administration"
+                value={studentForm.major}
+                onChange={(e) => setStudentForm(prev => ({ ...prev, major: e.target.value }))}
+                fullWidth sx={{ mb: 2 }}
               />
               <TextField
                 label="Année d'études"
-                value={studentData?.currentYear || (user as any)?.currentYear || ''}
-                disabled fullWidth sx={{ mb: 2.5 }}
+                type="number"
+                value={studentForm.currentYear}
+                onChange={(e) => setStudentForm(prev => ({ ...prev, currentYear: e.target.value }))}
+                fullWidth sx={{ mb: 2.5 }}
               />
               <TextField
                 label="Biographie"
