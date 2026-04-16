@@ -13,7 +13,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Box, Typography, Grid, Tabs, Tab, useTheme, alpha, Chip, Skeleton,
+  Box, Typography, Grid, Tabs, Tab, useTheme, alpha, Chip, Skeleton, IconButton,
 } from '@mui/material';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
@@ -34,8 +34,10 @@ import UPFButton from '../../components/ui/UPFButton';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { useAuth } from '../../hooks/useAuth';
 import { getUserProfile } from '../../services/userService';
+import { getMyExams, deleteExam } from '../../services/examService';
 import { followUser, unfollowUser, checkFollowStatus } from '../../services/followService';
-import type { StudentProfileFrontend } from '../../types';
+import type { StudentProfileFrontend, ExamResponseDto } from '../../types';
+import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
 
 const ProfilePage: React.FC = () => {
   const theme = useTheme();
@@ -49,6 +51,10 @@ const ProfilePage: React.FC = () => {
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
+
+  // Exams pour le profil propre
+  const [myExams, setMyExams] = useState<ExamResponseDto[]>([]);
+  const [loadingExams, setLoadingExams] = useState(false);
 
   const isOwnProfile = !id || String(id) === String(user?.id);
 
@@ -64,8 +70,14 @@ const ProfilePage: React.FC = () => {
       checkFollowStatus(id)
         .then((status) => setIsFollowing(status))
         .catch(() => setIsFollowing(false));
+    } else if (isOwnProfile && user?.role === 'STUDENT') {
+      setLoadingExams(true);
+      getMyExams()
+        .then(res => setMyExams(res.content || []))
+        .catch(() => setMyExams([]))
+        .finally(() => setLoadingExams(false));
     }
-  }, [id, isOwnProfile]);
+  }, [id, isOwnProfile, user?.role]);
 
   const handleFollow = async () => {
     if (!id) return;
@@ -272,12 +284,49 @@ const ProfilePage: React.FC = () => {
                 <Tab label="Groupes" icon={<GroupsRoundedIcon />} iconPosition="start" sx={{ textTransform: 'none' }} />
               </Tabs>
               {tab === 0 && (
-                <Box sx={{ py: 2, textAlign: 'center' }}>
-                  <DescriptionRoundedIcon sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
-                  <Typography variant="body2" color="text.secondary" mb={2}>Vos épreuves partagées apparaîtront ici.</Typography>
-                  <UPFButton variant="outlined" size="small" onClick={() => navigate('/student/exams/upload')}>
-                    Déposer une épreuve
-                  </UPFButton>
+                <Box sx={{ py: 2 }}>
+                  {loadingExams ? (
+                    <LoadingSpinner />
+                  ) : myExams.length > 0 ? (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      {myExams.map(exam => (
+                        <UPFCard key={exam.id} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2 }}>
+                          <Box>
+                            <Typography variant="subtitle1" fontWeight={600}>{exam.title}</Typography>
+                            <Typography variant="body2" color="text.secondary">{exam.examType} - {exam.academicYear}</Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', gap: 1 }}>
+                            <UPFButton size="small" variant="outlined" onClick={() => navigate(`/student/exams/${exam.id}`)}>Voir</UPFButton>
+                            <IconButton size="small" color="error" onClick={async () => {
+                              if (window.confirm('Voulez-vous vraiment supprimer cette épreuve ?')) {
+                                try {
+                                  await deleteExam(exam.id);
+                                  setMyExams(prev => prev.filter(e => e.id !== exam.id));
+                                } catch (e) {
+                                  alert('Erreur lors de la suppression.');
+                                }
+                              }
+                            }}>
+                              <DeleteRoundedIcon />
+                            </IconButton>
+                          </Box>
+                        </UPFCard>
+                      ))}
+                      <Box sx={{ mt: 2, textAlign: 'center' }}>
+                        <UPFButton variant="outlined" size="small" onClick={() => navigate('/student/exams/upload')}>
+                          Déposer une autre épreuve
+                        </UPFButton>
+                      </Box>
+                    </Box>
+                  ) : (
+                    <Box sx={{ textAlign: 'center' }}>
+                      <DescriptionRoundedIcon sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
+                      <Typography variant="body2" color="text.secondary" mb={2}>Vos épreuves partagées apparaîtront ici.</Typography>
+                      <UPFButton variant="outlined" size="small" onClick={() => navigate('/student/exams/upload')}>
+                        Déposer une épreuve
+                      </UPFButton>
+                    </Box>
+                  )}
                 </Box>
               )}
               {tab === 1 && (

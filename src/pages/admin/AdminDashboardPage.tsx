@@ -43,7 +43,7 @@ const AdminDashboardPage: React.FC = () => {
     { label: 'Utilisateurs', value: stats.totalUsers, sub: `${stats.activeUsers} actifs`, icon: <PeopleRoundedIcon />, color: '#3B82F6', path: '/admin/users' },
     { label: 'Cours', value: stats.totalCourses, icon: <MenuBookRoundedIcon />, color: '#10B981', path: '/admin/courses' },
     { label: 'Épreuves', value: stats.totalExams, icon: <DescriptionRoundedIcon />, color: '#8B5CF6', path: '/admin/courses' },
-    { label: 'Groupes', value: stats.totalGroups, icon: <GroupsRoundedIcon />, color: '#F59E0B', path: '/admin/users' },
+    { label: 'Groupes', value: stats.totalGroups, icon: <GroupsRoundedIcon />, color: '#F59E0B', path: '/admin/groups' },
     { label: 'Signalements', value: stats.pendingReports, sub: 'en attente', icon: <FlagRoundedIcon />, color: '#EF4444', path: '/admin/reports' },
   ] : [];
 
@@ -51,6 +51,7 @@ const AdminDashboardPage: React.FC = () => {
     { label: 'Gérer les utilisateurs', icon: <PeopleRoundedIcon />, path: '/admin/users', color: '#3B82F6' },
     { label: 'Gérer les admins', icon: <AdminPanelSettingsRoundedIcon />, path: '/admin/admins', color: '#8B5CF6' },
     { label: 'Gérer les cours', icon: <MenuBookRoundedIcon />, path: '/admin/courses', color: '#10B981' },
+    { label: 'Gérer les groupes', icon: <GroupsRoundedIcon />, path: '/admin/groups', color: '#F59E0B' },
     { label: 'Traiter les signalements', icon: <FlagRoundedIcon />, path: '/admin/reports', color: '#EF4444' },
   ];
 

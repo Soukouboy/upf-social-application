@@ -61,6 +61,7 @@ import AdminCoursesPage from './pages/admin/AdminCoursesPage';
 import AdminCourseResourcesPage from './pages/admin/AdminCourseResourcesPage';
 import AdminReportsPage from './pages/admin/AdminReportsPage';
 import AdminProfessorsPage from './pages/admin/AdminProfessorsPage';
+import AdminGroupsPage from './pages/admin/AdminGroupsPage';
 
 // ────────── Helper : redirection intelligente vers le bon dashboard ──────────
 import { useAuth } from './hooks/useAuth';
@@ -145,6 +146,7 @@ const App: React.FC = () => {
                     <Route path="/admin/courses" element={<AdminCoursesPage />} />
                     <Route path="/admin/professors" element={<AdminProfessorsPage />} />
                     <Route path="/admin/courses/:id/resources" element={<AdminCourseResourcesPage />} />
+                    <Route path="/admin/groups" element={<AdminGroupsPage />} />
                     <Route path="/admin/reports" element={<AdminReportsPage />} />
                   </Route>
 

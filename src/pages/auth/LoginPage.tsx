@@ -231,7 +231,7 @@ const LoginPage: React.FC = () => {
           </Box>
 
           <Typography variant="h4" fontWeight={700} mb={0.5}>
-            Bon retour ! 👋
+            Bon retour !
           </Typography>
           <Typography variant="body1" color="text.secondary" mb={4}>
             Connectez-vous à votre compte UPF

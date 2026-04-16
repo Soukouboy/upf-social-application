@@ -71,6 +71,11 @@ export const downloadExam = async (id: number | string): Promise<Blob> => {
   return data;
 };
 
+/** Supprimer une épreuve */
+export const deleteExam = async (id: number | string): Promise<void> => {
+  await api.delete(`/exams/${id}`);
+};
+
 /** Voter pour une épreuve */
 export const voteExam = async (id: number | string, type: VoteType): Promise<void> => {
   await api.post(`/exams/${id}/vote`, null, { params: { voteType: type } });
