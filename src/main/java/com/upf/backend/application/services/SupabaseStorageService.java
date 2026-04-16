@@ -101,7 +101,7 @@ public class SupabaseStorageService {
 
     /**
      * Upload d'un sujet d'examen (PDF, DOCX, ZIP).
-     * Bucket : exams (privé)
+     * Bucket : exams (public)
      */
     public StoredFileDescriptor storeExamFile(MultipartFile file, String examId) {
         validateFile(file, MAX_EXAM_SIZE, EXAM_TYPES,
@@ -109,7 +109,7 @@ public class SupabaseStorageService {
                 "Format d'examen non autorisé (PDF, DOCX, ZIP uniquement).");
 
         String folder = "exam-" + examId;
-        return upload(file, BUCKET_EXAMS, folder, false);
+        return upload(file, BUCKET_EXAMS, folder, true);
     }
 
     /**
@@ -176,9 +176,7 @@ public class SupabaseStorageService {
             HttpEntity<byte[]> entity = new HttpEntity<>(file.getBytes(), headers);
             restTemplate.exchange(uploadUrl, HttpMethod.POST, entity, String.class);
 
-            String publicUrl = isPublic
-                    ? buildPublicUrl(bucket, storagePath)
-                    : null; // Pour les fichiers privés, utiliser generateSignedUrl()
+            String publicUrl = buildPublicUrl(bucket, storagePath); // Pour les fichiers privés, utiliser generateSignedUrl()
 
             return new StoredFileDescriptor(
                     storagePath,

@@ -104,7 +104,7 @@ public class CourseController {
     /**
      * Deux cas :
      *  - Fichier EXTERNE (lien YouTube, Drive…) → redirection directe vers l'URL
-     *  - Fichier PRIVÉ dans Supabase (bucket "documents") → URL signée 1h puis redirection
+     *  - Fichier PUBLIC dans Supabase (bucket "documents") → redirection vers l'URL publique stockée
      */
     @PreAuthorize("hasAnyRole('STUDENT', 'PROFESSOR', 'ADMIN')")
     @GetMapping("/{courseId}/resources/{resourceId}/download")
@@ -132,28 +132,14 @@ public class CourseController {
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Ressource introuvable."));
 
-        // ── Fichier externe → redirection directe ────────────────────────────
-        if (resource.isExternal()) {
-            return ResponseEntity.status(302)
-                    .location(URI.create(resource.getFileUrl()))
-                    .build();
+        // ── L'URL est stockée dans resource.getFileUrl() (public ou externe)
+        if (resource.getFileUrl() == null || resource.getFileUrl().isBlank()) {
+            throw new RuntimeException("Fichier de ressource non disponible.");
         }
 
-        // if (resource.isStoredInSupabase()) {
-        //     // URL signée 1h
-        //     String signedUrl = storageService.generateSignedUrl("documents", resource.getStoragePath(), 3600);
-        //     return ResponseEntity.status(302).location(URI.create(signedUrl)).build();
-        // }
-        // ── Fichier Supabase privé → URL signée 1h ───────────────────────────
-        // resource.getStoragePath() = "user-{uuid}/nom-fichier.pdf"
-        String signedUrl = fileStorageService.generateSignedUrl(
-                "documents",
-                resource.getStoragePath(),
-                3600  // 1 heure
-        );
-
+        // Redirection 302 → le client télécharge directement
         return ResponseEntity.status(302)
-                .location(URI.create(signedUrl))
+                .location(URI.create(resource.getFileUrl()))
                 .build();
     }
 }

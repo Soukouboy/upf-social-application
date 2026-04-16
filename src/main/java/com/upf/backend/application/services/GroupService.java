@@ -14,6 +14,7 @@ import com.upf.backend.application.services.Exceptions.AccessDeniedBusinessExcep
 import com.upf.backend.application.services.Exceptions.BusinessException;
 import com.upf.backend.application.services.Exceptions.ResourceNotFoundException;
 import com.upf.backend.application.services.Interfaces.IGroupService;
+import com.upf.backend.application.model.enums.MembershipStatus;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -126,13 +127,27 @@ public class GroupService implements IGroupService {
             throw new BusinessException("Cette opération est réservée aux groupes privés.");
         }
 
-        // MVP :
-        // Si ton entité GroupMembership possède un champ status (PENDING/APPROVED),
-        // c'est ici qu'il faut créer l'adhésion en PENDING au lieu d'ajouter le membre directement.
-        throw new BusinessException(
-                "Le flux 'demande d’adhésion à un groupe privé' nécessite un statut PENDING dans GroupMembership. " +
-                "Ajoute ce champ puis implémente ici la création d'une demande."
-        );
+        // Check if membership already exists
+        if (membershipRepository.existsByGroup_IdAndStudentProfile_Id(groupId, studentId)) {
+            throw new BusinessException("Vous avez déjà une demande ou êtes déjà membre de ce groupe.");
+        }
+
+        // Get the student
+        StudentProfile student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Étudiant introuvable."));
+
+        // Create membership with PENDING status for private group join request
+        GroupMembership membership = new GroupMembership();
+        membership.setStudentProfile(student);
+        membership.setRole(RoleMember.MEMBER);
+        membership.setStatus(MembershipStatus.PENDING);
+
+        group.addMembership(membership);
+
+        // Save the group with cascade to persist the membership
+        groupRepository.save(group);
+
+        return membership;
     }
 
     @Override

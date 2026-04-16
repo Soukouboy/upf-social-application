@@ -132,25 +132,22 @@ public class ExamController {
 
     // ─── Téléchargement d'un examen ──────────────────────────────────────────
     /**
-     * Le bucket "exams" est PRIVÉ → on génère une URL signée valable 1 heure,
-     * puis on redirige le navigateur vers cette URL.
-     * Supabase envoie directement le fichier au client, sans passer par Spring Boot.
+     * Le bucket "exams" est PUBLIC → on retourne directement le fichier.
+     * L'URL est stockée dans la base de données, on la récupère et on redirige.
      */
     @GetMapping("/{examId}/download")
     public ResponseEntity<Void> downloadExam(@PathVariable UUID examId) {
         Exam exam = examService.getExam(examId);
         examService.registerDownload(examId);
 
-        // exam.getStoragePath() = "exam-{uuid}/nom-fichier.pdf" (chemin dans le bucket)
-        String signedUrl = fileStorageService.generateSignedUrl(
-                "exams",
-                exam.getStoragePath(),
-                3600  // 1 heure
-        );
+        // exam.getFileUrl() contient l'URL publique complète (https://...)
+        if (exam.getFileUrl() == null || exam.getFileUrl().isBlank()) {
+            throw new RuntimeException("Fichier d'examen non disponible.");
+        }
 
         // Redirection 302 → le client télécharge directement depuis Supabase
         return ResponseEntity.status(302)
-                .location(URI.create(signedUrl))
+                .location(URI.create(exam.getFileUrl()))
                 .build();
     }
 

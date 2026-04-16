@@ -79,6 +79,7 @@ public class GroupMapper {
                 firstName,
                 lastName,
                 membership.getRole(),
+                membership.getStatus(),
                 membership.getJoinedAt(),
                 membership.getLastReadAt()
         );
