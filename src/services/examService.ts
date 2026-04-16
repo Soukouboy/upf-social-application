@@ -73,7 +73,7 @@ export const downloadExam = async (id: number | string): Promise<Blob> => {
 
 /** Voter pour une épreuve */
 export const voteExam = async (id: number | string, type: VoteType): Promise<void> => {
-  await api.post(`/exams/${id}/vote`, { type });
+  await api.post(`/exams/${id}/vote`, null, { params: { voteType: type } });
 };
 
 /** Signaler une épreuve */
@@ -82,7 +82,17 @@ export const reportExam = async (
   reason: ReportReason,
   description?: string
 ): Promise<ExamReport> => {
-  const { data } = await api.post<ExamReport>(`/exams/${id}/report`, { reason, description });
+  const { data } = await api.post<ExamReport>(`/exams/${id}/report`, null, { 
+    params: { reason, details: description || '' } 
+  });
+  return data;
+};
+
+/** Ajouter un commentaire à une épreuve */
+export const addExamComment = async (id: number | string, comment: string): Promise<any> => {
+  const { data } = await api.post(`/exams/${id}/comments`, comment, {
+    headers: { 'Content-Type': 'text/plain' }
+  });
   return data;
 };
 

@@ -19,8 +19,8 @@ import UPFAvatar from '../../components/ui/UPFAvatar';
 import UPFModal from '../../components/ui/UPFModal';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import type { ExamResponseDto, ReportReason } from '../../types';
-import { getExamById, downloadExam, voteExam, reportExam } from '../../services/examService';
-
+import TextField from '@mui/material/TextField';
+import { getExamById, downloadExam, voteExam, reportExam, addExamComment } from '../../services/examService';
 const REPORT_REASONS: { value: ReportReason; label: string }[] = [
   { value: 'INAPPROPRIATE', label: 'Contenu inapproprié' },
   { value: 'ERROR', label: 'Erreur dans le document' },
@@ -36,6 +36,8 @@ const ExamDetailPage: React.FC = () => {
   const [exam, setExam] = useState<ExamResponseDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [reportOpen, setReportOpen] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
   useEffect(() => {
     const fetchExam = async () => {
@@ -55,6 +57,19 @@ const ExamDetailPage: React.FC = () => {
     };
     fetchExam();
   }, [id]);
+
+  const handleCommentSubmit = async () => {
+    if (!exam || !commentText.trim()) return;
+    setIsSubmittingComment(true);
+    try {
+      await addExamComment(exam.id, commentText);
+      setCommentText('');
+      // On rafraîchit l'examen pour potentiellement récupérer les nouveaux commentaires
+      // fetchExam(); (commenté car la maquette peut ne pas les supporter)
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
 
   const handleDownload = async () => {
     if (!exam) return;
@@ -145,6 +160,62 @@ const ExamDetailPage: React.FC = () => {
                 <Typography variant="caption" color="text.secondary">
                   {new Date(exam.examDate).toLocaleDateString('fr-FR')}
                 </Typography>
+              </Box>
+            </Box>
+          </UPFCard>
+        </Grid>
+
+        {/* Section Commentaires */}
+        <Grid size={{ xs: 12 }}>
+          <UPFCard noHover>
+            <Typography variant="h6" fontWeight={600} mb={2}>Commentaires</Typography>
+            
+            {/* Liste des commentaires existants (si supporté par la réponse API) */}
+            <Box sx={{ mb: 3 }}>
+              {((exam as any).comments || []).map((c: any, index: number) => (
+                 <Box key={c.id || index} sx={{ mb: 2, pb: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
+                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                     <UPFAvatar firstName={c.author?.firstName || c.authorName || 'User'} lastName={c.author?.lastName || ''} size="small" />
+                     <Typography variant="subtitle2" fontWeight={600}>
+                       {c.author?.firstName ? `${c.author.firstName} ${c.author.lastName}` : (c.authorName || 'Anonyme')}
+                     </Typography>
+                     {c.createdAt && (
+                       <Typography variant="caption" color="text.secondary">
+                         • {new Date(c.createdAt).toLocaleDateString()}
+                       </Typography>
+                     )}
+                   </Box>
+                   <Typography variant="body2" sx={{ pl: 4 }}>{c.content}</Typography>
+                 </Box>
+              ))}
+              {((exam as any).comments || []).length === 0 && (
+                <Typography variant="body2" color="text.secondary">Aucun commentaire pour le moment. Soyez le premier à commenter !</Typography>
+              )}
+            </Box>
+
+            {/* Formulaire d'ajout de commentaire */}
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+              <UPFAvatar firstName="Moi" lastName="" size="medium" />
+              <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <TextField 
+                  fullWidth 
+                  variant="outlined" 
+                  placeholder="Écrivez votre commentaire ici..." 
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  multiline
+                  minRows={2}
+                  disabled={isSubmittingComment}
+                />
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <UPFButton 
+                    variant="contained" 
+                    onClick={handleCommentSubmit} 
+                    disabled={!commentText.trim() || isSubmittingComment}
+                  >
+                    Publier
+                  </UPFButton>
+                </Box>
               </Box>
             </Box>
           </UPFCard>
