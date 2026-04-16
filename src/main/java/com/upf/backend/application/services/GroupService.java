@@ -138,16 +138,13 @@ public class GroupService implements IGroupService {
 
         // Create membership with PENDING status for private group join request
         GroupMembership membership = new GroupMembership();
+        membership.setGroup(group);
         membership.setStudentProfile(student);
         membership.setRole(RoleMember.MEMBER);
         membership.setStatus(MembershipStatus.PENDING);
 
-        group.addMembership(membership);
-
-        // Save the group with cascade to persist the membership
-        groupRepository.save(group);
-
-        return membership;
+        // Save the membership directly (don't increment memberCount for PENDING requests)
+        return membershipRepository.save(membership);
     }
 
     @Override
