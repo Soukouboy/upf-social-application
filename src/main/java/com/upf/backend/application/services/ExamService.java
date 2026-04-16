@@ -1,16 +1,9 @@
 package com.upf.backend.application.services;
 
 
-import com.upf.backend.application.model.entity.Course;
-import com.upf.backend.application.model.entity.Exam;
-import com.upf.backend.application.model.entity.StudentProfile;
-import com.upf.backend.application.model.enums.ExamType;
-import com.upf.backend.application.model.enums.FileType;
-import com.upf.backend.application.model.enums.Major;
-import com.upf.backend.application.repository.CourseRepository;
-import com.upf.backend.application.repository.ExamRepository;
-import com.upf.backend.application.repository.ExamSpecification;
-import com.upf.backend.application.repository.StudentRepository;
+import com.upf.backend.application.model.entity.*;
+import com.upf.backend.application.model.enums.*;
+import com.upf.backend.application.repository.*;
 
 import org.apache.commons.logging.Log;
 import org.slf4j.Logger;
@@ -43,17 +36,26 @@ public class ExamService implements IExamService {
     private final ExamRepository examRepository;
     private final CourseRepository courseRepository;
     private final StudentRepository studentRepository;
+    private final ExamVoteRepository examVoteRepository;
+    private final ExamReportRepository examReportRepository;
+    private final ExamCommentRepository examCommentRepository;
     private final SupabaseStorageService fileStorageService;
     private final NotificationService notificationService;
 
     public ExamService(ExamRepository examRepository,
                         CourseRepository courseRepository,
                         StudentRepository studentRepository,
+                        ExamVoteRepository examVoteRepository,
+                        ExamReportRepository examReportRepository,
+                        ExamCommentRepository examCommentRepository,
                         SupabaseStorageService fileStorageService,
                         NotificationService notificationService) {
         this.examRepository = examRepository;
         this.courseRepository = courseRepository;
         this.studentRepository = studentRepository;
+        this.examVoteRepository = examVoteRepository;
+        this.examReportRepository = examReportRepository;
+        this.examCommentRepository = examCommentRepository;
         this.fileStorageService = fileStorageService;
         this.notificationService = notificationService;
     }
@@ -191,6 +193,104 @@ public Page<Exam> listExamsByMajor( Major studentMajor, String title,
         Exam exam = getExam(examId);
         exam.setHidden(false);
         examRepository.save(exam);
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Votes, Rapports et Commentaires
+    // ────────────────────────────────────────────────────────────────────────
+
+    public void voteExam(UUID examId, UUID studentId, VoteType voteType) {
+        Exam exam = getExam(examId);
+        StudentProfile student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Étudiant introuvable."));
+
+        // Vérifier si l'étudiant a déjà voté
+        var existingVote = examVoteRepository.findByExam_IdAndStudent_Id(examId, studentId);
+
+        if (existingVote.isPresent()) {
+            ExamVote vote = existingVote.get();
+            VoteType oldType = vote.getVoteType();
+            
+            // Si le même vote, le supprimer (toggle)
+            if (oldType == voteType) {
+                examVoteRepository.delete(vote);
+                // Mettre à jour les compteurs
+                if (voteType == VoteType.UPVOTE) {
+                    exam.setUpvoteCount(Math.max(0, exam.getUpvoteCount() - 1));
+                } else {
+                    exam.setDownvoteCount(Math.max(0, exam.getDownvoteCount() - 1));
+                }
+            } else {
+                // Sinon, le changer
+                vote.setVoteType(voteType);
+                examVoteRepository.save(vote);
+                
+                // Mettre à jour les compteurs
+                if (oldType == VoteType.UPVOTE) {
+                    exam.setUpvoteCount(Math.max(0, exam.getUpvoteCount() - 1));
+                } else {
+                    exam.setDownvoteCount(Math.max(0, exam.getDownvoteCount() - 1));
+                }
+                
+                if (voteType == VoteType.UPVOTE) {
+                    exam.setUpvoteCount(exam.getUpvoteCount() + 1);
+                } else {
+                    exam.setDownvoteCount(exam.getDownvoteCount() + 1);
+                }
+            }
+        } else {
+            // Créer un nouveau vote
+            ExamVote vote = new ExamVote();
+            vote.setExam(exam);
+            vote.setStudent(student);
+            vote.setVoteType(voteType);
+            examVoteRepository.save(vote);
+            
+            // Mettre à jour les compteurs
+            if (voteType == VoteType.UPVOTE) {
+                exam.setUpvoteCount(exam.getUpvoteCount() + 1);
+            } else {
+                exam.setDownvoteCount(exam.getDownvoteCount() + 1);
+            }
+        }
+
+        examRepository.save(exam);
+    }
+
+    public void reportExam(UUID examId, UUID studentId, ReportReason reason, String details) {
+        Exam exam = getExam(examId);
+        StudentProfile student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Étudiant introuvable."));
+
+        if (reason == null) {
+            throw new BusinessException("La raison du signalement est obligatoire.");
+        }
+
+        ExamReport report = new ExamReport();
+        report.setExam(exam);
+        report.setReportedBy(student);
+        report.setReason(reason);
+        report.setDetails(details);
+        report.setStatus(ReportStatus.PENDING);
+
+        examReportRepository.save(report);
+    }
+
+    public void addComment(UUID examId, UUID studentId, String content) {
+        if (content == null || content.isBlank()) {
+            throw new BusinessException("Le contenu du commentaire ne peut pas être vide.");
+        }
+
+        Exam exam = getExam(examId);
+        StudentProfile student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Étudiant introuvable."));
+
+        ExamComment comment = new ExamComment();
+        comment.setExam(exam);
+        comment.setAuthor(student);
+        comment.setContent(content.trim());
+
+        examCommentRepository.save(comment);
     }
 
     private String normalize(String value) {

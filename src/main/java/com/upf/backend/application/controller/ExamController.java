@@ -23,6 +23,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -124,26 +125,70 @@ public class ExamController {
 
     // ─── Téléchargement d'un examen ──────────────────────────────────────────
     /**
-     * Le bucket "exams" est PRIVÉ → on génère une URL signée valable 1 heure,
-     * puis on redirige le navigateur vers cette URL.
-     * Supabase envoie directement le fichier au client, sans passer par Spring Boot.
+     * Le bucket "exams" est PUBLIC → on retourne directement le fichier.
+     * L'URL est stockée dans la base de données, on la récupère et on redirige.
      */
     @GetMapping("/{examId}/download")
     public ResponseEntity<Void> downloadExam(@PathVariable UUID examId) {
         Exam exam = examService.getExam(examId);
         examService.registerDownload(examId);
 
-        // exam.getStoragePath() = "exam-{uuid}/nom-fichier.pdf" (chemin dans le bucket)
-        String signedUrl = fileStorageService.generateSignedUrl(
-                "exams",
-                exam.getStoragePath(),
-                3600  // 1 heure
-        );
+        // exam.getFileUrl() contient l'URL publique complète (https://...)
+        if (exam.getFileUrl() == null || exam.getFileUrl().isBlank()) {
+            throw new RuntimeException("Fichier d'examen non disponible.");
+        }
 
         // Redirection 302 → le client télécharge directement depuis Supabase
         return ResponseEntity.status(302)
-                .location(URI.create(signedUrl))
+                .location(URI.create(exam.getFileUrl()))
                 .build();
+    }
+
+    // ─── Votes ────────────────────────────────────────────────────────────────
+
+    @PostMapping("/{examId}/vote")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<ExamDetails> voteExam(
+            @AuthenticationPrincipal SecurityUser currentUser,
+            @PathVariable UUID examId,
+            @RequestParam String voteType) {
+        
+        com.upf.backend.application.model.enums.VoteType vote = 
+            com.upf.backend.application.model.enums.VoteType.valueOf(voteType.toUpperCase());
+        
+        examService.voteExam(examId, currentUser.getProfileId(), vote);
+        Exam exam = examService.getExam(examId);
+        return ResponseEntity.ok(ExamMapper.toDetails(exam));
+    }
+
+    // ─── Signalements ─────────────────────────────────────────────────────────
+
+    @PostMapping("/{examId}/report")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<Void> reportExam(
+            @AuthenticationPrincipal SecurityUser currentUser,
+            @PathVariable UUID examId,
+            @RequestParam String reason,
+            @RequestParam(required = false) String details) {
+        
+        com.upf.backend.application.model.enums.ReportReason reportReason = 
+            com.upf.backend.application.model.enums.ReportReason.valueOf(reason.toUpperCase());
+        
+        examService.reportExam(examId, currentUser.getProfileId(), reportReason, details);
+        return ResponseEntity.status(201).build();
+    }
+
+    // ─── Commentaires ─────────────────────────────────────────────────────────
+
+    @PostMapping("/{examId}/comments")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<Void> addComment(
+            @AuthenticationPrincipal SecurityUser currentUser,
+            @PathVariable UUID examId,
+            @RequestBody String content) {
+        
+        examService.addComment(examId, currentUser.getProfileId(), content);
+        return ResponseEntity.status(201).build();
     }
 
     // ─── Utilitaires ─────────────────────────────────────────────────────────

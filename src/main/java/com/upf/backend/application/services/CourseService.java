@@ -71,8 +71,9 @@ public class CourseService implements ICourseService {
             throw new ResourceNotFoundException("Cours introuvable ou inactif.");
         }
 
-        // Les ressources seront accessibles via course.getResources()
-        // si la relation est correctement mappée.
+        // Force eager-loading des ressources et annonces (LAZY par défaut)
+        course.getResources().size();
+
         return course;
     }
 
