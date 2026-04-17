@@ -45,7 +45,7 @@ public class MailTestController {
         }
     }
 
-             @GetMapping("/mail-welcome")
+             @GetMapping("/mail")
     public ResponseEntity<String> testWelcome() {
         // Charger un vrai user existant en BDD
         User realUser = userRepository.findByEmail("soukouna-dia@upf.ac.ma")
