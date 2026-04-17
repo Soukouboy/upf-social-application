@@ -163,6 +163,20 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    /**
+     * Récupère un étudiant par son ID sans exposer email et password.
+     * Retourne une réponse publique avec les informations visibles.
+     * 
+     * @param studentId UUID de l'étudiant
+     * @return StudentPublicProfileResponse contenant les infos publiques
+     */
+    @GetMapping("/student/{studentId}")
+    public ResponseEntity<StudentPublicProfileResponse> getStudentById(@PathVariable UUID studentId) {
+        return userService.getStudentPublicInfo(studentId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @GetMapping("/test-supabase")
 public ResponseEntity<String> testSupabase() {
     try {

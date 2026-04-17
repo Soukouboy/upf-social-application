@@ -29,6 +29,16 @@ StudentProfile getCurrentUserProfile(UUID studentId);
 
     Optional<StudentPublicProfileResponse> getPublicProfileResponse(UUID studentId);
 
+    /**
+     * Récupère les informations publiques d'un étudiant par son ID.
+     * N'expose pas email et password.
+     * Contrairement à getPublicProfile, cela ne filtre pas sur isProfilePublic.
+     * 
+     * @param studentId UUID de l'étudiant
+     * @return StudentPublicProfileResponse ou Optional.empty() si non trouvé
+     */
+    Optional<StudentPublicProfileResponse> getStudentPublicInfo(UUID studentId);
+
     Page<StudentProfile> searchPublicProfiles(String major,
                                               Integer currentYear,
                                               Pageable pageable);

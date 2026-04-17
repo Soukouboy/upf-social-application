@@ -105,6 +105,13 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     @Transactional(readOnly = true)
+    public Optional<StudentPublicProfileResponse> getStudentPublicInfo(UUID studentId) {
+        return studentRepository.findById(studentId)
+                .map(StudentMapper::toPublicResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<StudentProfile> searchPublicProfiles(String major,
                                                      Integer currentYear,
                                                      Pageable pageable) {
