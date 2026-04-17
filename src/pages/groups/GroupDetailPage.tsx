@@ -80,9 +80,11 @@ const GroupDetailPage: React.FC = () => {
 
   // Déterminer le statut de l'utilisateur dans le groupe
   const myMembership = members.find((m: any) =>
-    m.student?.id === user?.id ||
-    m.student?.userId === user?.userId ||
-    m.user?.id === user?.id
+    String(m.student?.id) === String(user?.id) ||
+    String(m.student?.userId) === String(user?.userId) ||
+    String(m.user?.id) === String(user?.id) ||
+    String(m.student?.userId) === String(user?.id) ||
+    String(m.student?.id) === String(user?.userId)
   );
   const isMember = myMembership?.status === 'ACTIVE';
   const isPending = myMembership?.status === 'PENDING';

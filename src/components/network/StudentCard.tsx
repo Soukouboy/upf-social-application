@@ -56,15 +56,23 @@ const StudentCard: React.FC<StudentCardProps> = ({ student }) => {
       <Avatar
         src={student.avatarUrl}
         alt={`${student.firstName} ${student.lastName}`}
+        onClick={() => navigate(`/student/profile/${student.id}`)}
         sx={{
           width: 80,
           height: 80,
           mx: 'auto',
           mb: 2,
           border: `3px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+          cursor: 'pointer',
         }}
       />
-      <Typography variant="h6" fontWeight={600} noWrap>
+      <Typography 
+        variant="h6" 
+        fontWeight={600} 
+        noWrap
+        onClick={() => navigate(`/student/profile/${student.id}`)}
+        sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+      >
         {student.firstName} {student.lastName}
       </Typography>
       <Typography variant="body2" color="text.secondary" mb={2} noWrap>

@@ -18,7 +18,11 @@ const NetworkPage: React.FC = () => {
       setLoading(true);
       try {
         const data = await getUsers(search);
-        setStudents(Array.isArray(data) ? data : (data?.content || []));
+        let results = Array.isArray(data) ? data : (data?.content || []);
+        if (!search) {
+          results = results.sort(() => 0.5 - Math.random()).slice(0, 15);
+        }
+        setStudents(results);
       } catch (error) {
         console.error('Erreur lors de la récupération du réseau', error);
       } finally {
