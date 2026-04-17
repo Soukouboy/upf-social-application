@@ -36,6 +36,18 @@ public interface GroupMembershipRepository extends JpaRepository<GroupMembership
            "ORDER BY gm.joinedAt ASC")
     Page<GroupMembership> findByGroup_IdWithUserFetch(@Param("groupId") UUID groupId, Pageable pageable);
 
+    /**
+     * Récupère les demandes d'adhésion en attente (PENDING) pour un groupe donné.
+     * Inclut les données de l'étudiant et de l'utilisateur.
+     */
+    @Query("SELECT gm FROM GroupMembership gm " +
+           "JOIN FETCH gm.studentProfile sp " +
+           "JOIN FETCH sp.user " +
+           "WHERE gm.group.id = :groupId " +
+           "AND gm.status = com.upf.backend.application.model.enums.MembershipStatus.PENDING " +
+           "ORDER BY gm.joinedAt ASC")
+    Page<GroupMembership> findPendingMembershipsForGroup(@Param("groupId") UUID groupId, Pageable pageable);
+
     // Méthodes de comptage
     // ✅ Correct — naviguer via studentProfile puis user
         long countByStudentProfile_User_IdAndStatus(UUID userId, MembershipStatus status);

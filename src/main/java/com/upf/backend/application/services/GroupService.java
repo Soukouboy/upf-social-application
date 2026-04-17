@@ -224,4 +224,81 @@ public class GroupService implements IGroupService {
     private String normalize(String value) {
         return (value == null || value.isBlank()) ? null : value.trim();
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<GroupMembership> getPendingMembershipRequests(UUID groupId, UUID actorId, Pageable pageable) {
+        AcademicGroup group = loadActiveGroup(groupId);
+
+        // Vérifier que l'acteur est admin du groupe
+        boolean isGroupAdmin = group.getCreatedBy().equals(actorId);
+        if (!isGroupAdmin) {
+            throw new AccessDeniedBusinessException("Seul l'administrateur du groupe peut voir les demandes en attente.");
+        }
+
+        // Retourner les demandes PENDING
+        return membershipRepository.findPendingMembershipsForGroup(groupId, pageable);
+    }
+
+    @Override
+    @Transactional
+    public GroupMembership approveMembershipRequest(UUID groupId, UUID membershipId, UUID actorId) {
+        AcademicGroup group = loadActiveGroup(groupId);
+
+        // Vérifier que l'acteur est admin du groupe
+        if (!group.getCreatedBy().equals(actorId)) {
+            throw new AccessDeniedBusinessException("Seul l'administrateur du groupe peut approuver les demandes.");
+        }
+
+        // Récupérer la membership
+        GroupMembership membership = membershipRepository.findById(membershipId)
+                .orElseThrow(() -> new ResourceNotFoundException("Demande d'adhésion introuvable."));
+
+        // Vérifier que la membership appartient au groupe
+        if (!membership.getGroup().getId().equals(groupId)) {
+            throw new BusinessException("Cette demande n'appartient pas à ce groupe.");
+        }
+
+        // Vérifier que le statut est PENDING
+        if (membership.getStatus() != MembershipStatus.PENDING) {
+            throw new BusinessException("Cette demande a déjà été traitée (statut: " + membership.getStatus() + ").");
+        }
+
+        // Mettre à jour le statut et incrémenter memberCount
+        membership.setStatus(MembershipStatus.ACTIVE);
+        group.setMemberCount(group.getMemberCount() + 1);
+
+        groupRepository.save(group);
+        return membershipRepository.save(membership);
+    }
+
+    @Override
+    @Transactional
+    public GroupMembership rejectMembershipRequest(UUID groupId, UUID membershipId, UUID actorId) {
+        AcademicGroup group = loadActiveGroup(groupId);
+
+        // Vérifier que l'acteur est admin du groupe
+        if (!group.getCreatedBy().equals(actorId)) {
+            throw new AccessDeniedBusinessException("Seul l'administrateur du groupe peut refuser les demandes.");
+        }
+
+        // Récupérer la membership
+        GroupMembership membership = membershipRepository.findById(membershipId)
+                .orElseThrow(() -> new ResourceNotFoundException("Demande d'adhésion introuvable."));
+
+        // Vérifier que la membership appartient au groupe
+        if (!membership.getGroup().getId().equals(groupId)) {
+            throw new BusinessException("Cette demande n'appartient pas à ce groupe.");
+        }
+
+        // Vérifier que le statut est PENDING
+        if (membership.getStatus() != MembershipStatus.PENDING) {
+            throw new BusinessException("Cette demande a déjà été traitée (statut: " + membership.getStatus() + ").");
+        }
+
+        // Mettre à jour le statut à REJECTED
+        membership.setStatus(MembershipStatus.REJECTED);
+        
+        return membershipRepository.save(membership);
+    }
 }

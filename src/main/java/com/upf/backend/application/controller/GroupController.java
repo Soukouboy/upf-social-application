@@ -13,6 +13,7 @@ import com.upf.backend.application.services.GroupService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -112,4 +113,51 @@ public class GroupController {
                 .map(GroupMapper::toResponse);
         return ResponseEntity.ok(page);
     }
+
+    /**
+     * Récupère les demandes d'adhésion en attente (PENDING) pour un groupe privé.
+     * Seul l'administrateur du groupe peut accéder à cette liste.
+     */
+    @PreAuthorize("hasRole('STUDENT')")
+    @GetMapping("/{groupId}/pending-requests")
+    public ResponseEntity<Page<GroupMembershipResponse>> getPendingMembershipRequests(
+            @AuthenticationPrincipal SecurityUser currentUser,
+            @PathVariable UUID groupId,
+            Pageable pageable
+    ) {
+        Page<GroupMembershipResponse> page = groupService.getPendingMembershipRequests(groupId, currentUser.getProfileId(), pageable)
+                .map(GroupMapper::toResponse);
+        return ResponseEntity.ok(page);
+    }
+
+    /**
+     * Approuve une demande d'adhésion (change le statut de PENDING à ACTIVE).
+     * Seul l'administrateur du groupe peut approuver.
+     */
+    @PreAuthorize("hasRole('STUDENT')")
+    @PutMapping("/{groupId}/requests/{membershipId}/approve")
+    public ResponseEntity<GroupMembershipResponse> approveMembershipRequest(
+            @AuthenticationPrincipal SecurityUser currentUser,
+            @PathVariable UUID groupId,
+            @PathVariable UUID membershipId
+    ) {
+        GroupMembership approved = groupService.approveMembershipRequest(groupId, membershipId, currentUser.getProfileId());
+        return ResponseEntity.ok(GroupMapper.toResponse(approved));
+    }
+
+    /**
+     * Refuse une demande d'adhésion (change le statut de PENDING à REJECTED).
+     * Seul l'administrateur du groupe peut refuser.
+     */
+    @PreAuthorize("hasRole('STUDENT')")
+    @PutMapping("/{groupId}/requests/{membershipId}/reject")
+    public ResponseEntity<GroupMembershipResponse> rejectMembershipRequest(
+            @AuthenticationPrincipal SecurityUser currentUser,
+            @PathVariable UUID groupId,
+            @PathVariable UUID membershipId
+    ) {
+        GroupMembership rejected = groupService.rejectMembershipRequest(groupId, membershipId, currentUser.getProfileId());
+        return ResponseEntity.ok(GroupMapper.toResponse(rejected));
+    }
+
 }
