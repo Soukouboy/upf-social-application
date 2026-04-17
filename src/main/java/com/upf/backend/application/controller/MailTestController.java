@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.upf.backend.application.model.entity.User;
+import com.upf.backend.application.repository.UserRepository;
 import com.upf.backend.application.services.EmailService;
 import com.upf.backend.application.services.NotificationService;
  
@@ -17,13 +18,15 @@ public class MailTestController {
 
     private final EmailService emailService;
     private final NotificationService notificationService;
+    private final UserRepository userRepository;
 
     @Value("${app.mail.from}")
     private String senderEmail;
 
-    public MailTestController(EmailService emailService, NotificationService notificationService) {
+    public MailTestController(EmailService emailService, NotificationService notificationService, UserRepository userRepository ) {
         this.emailService = emailService;
         this.notificationService = notificationService;
+        this.userRepository = userRepository;
     }
 
     @GetMapping("/mail-send")
@@ -42,15 +45,15 @@ public class MailTestController {
         }
     }
 
-            @GetMapping("/mail")
-        public ResponseEntity<String> testWelcome() {
-            // Crée un User factice pour tester
-            User fakeUser = new User();
-            fakeUser.setFirstName("Test");
-            fakeUser.setEmail("soukouna-dia@upf.ac.ma");
-            notificationService.notifyWelcome(fakeUser);
-            return ResponseEntity.ok("✅ Welcome email envoyé !");
-        }
+             @GetMapping("/mail-welcome")
+    public ResponseEntity<String> testWelcome() {
+        // Charger un vrai user existant en BDD
+        User realUser = userRepository.findByEmail("soukouna-dia@upf.ac.ma")
+            .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        notificationService.notifyWelcome(realUser);
+        return ResponseEntity.ok("✅ Welcome email envoyé !");
+    }
 
 
 }
