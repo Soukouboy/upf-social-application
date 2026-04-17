@@ -84,7 +84,11 @@ const GroupDetailPage: React.FC = () => {
     String(m.student?.userId) === String(user?.userId) ||
     String(m.user?.id) === String(user?.id) ||
     String(m.student?.userId) === String(user?.id) ||
-    String(m.student?.id) === String(user?.userId)
+    String(m.student?.id) === String(user?.userId) ||
+    String(m.studentId) === String(user?.id) ||
+    String(m.userId) === String(user?.userId) ||
+    String(m.userId) === String(user?.id) ||
+    String(m.id) === String(user?.id)
   );
   const isMember = myMembership?.status === 'ACTIVE';
   const isPending = myMembership?.status === 'PENDING';
@@ -118,7 +122,7 @@ const GroupDetailPage: React.FC = () => {
 
   const handleApproveAction = async () => {
     if (!approveModal.member || !id) return;
-    const memberId = (approveModal.member as any).student?.id || (approveModal.member as any).user?.id;
+    const memberId = (approveModal.member as any).student?.id || (approveModal.member as any).user?.id || (approveModal.member as any).studentId || (approveModal.member as any).userId || (approveModal.member as any).id;
     try {
       if (approveModal.action === 'approve') {
         await updateMemberRole(id as any, memberId, 'MEMBER');
@@ -209,8 +213,8 @@ const GroupDetailPage: React.FC = () => {
           </Box>
           <List disablePadding>
             {pendingMembers.map((member) => {
-              const firstName = (member as any).student?.firstName || (member as any).user?.firstName || 'Utilisateur';
-              const lastName = (member as any).student?.lastName || (member as any).user?.lastName || '';
+              const firstName = (member as any).student?.firstName || (member as any).user?.firstName || (member as any).firstName || 'Utilisateur';
+              const lastName = (member as any).student?.lastName || (member as any).user?.lastName || (member as any).lastName || '';
               return (
                 <ListItem key={member.id} disablePadding sx={{ py: 1 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%' }}>
@@ -272,8 +276,8 @@ const GroupDetailPage: React.FC = () => {
             </Box>
             <List disablePadding>
               {activeMembers.map((member) => {
-                const firstName = (member as any).student?.firstName || (member as any).user?.firstName || 'Utilisateur';
-                const lastName = (member as any).student?.lastName || (member as any).user?.lastName || '';
+                const firstName = (member as any).student?.firstName || (member as any).user?.firstName || (member as any).firstName || 'Utilisateur';
+                const lastName = (member as any).student?.lastName || (member as any).user?.lastName || (member as any).lastName || '';
                 return (
                   <ListItem key={member.id} disablePadding sx={{ py: 1 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%' }}>
