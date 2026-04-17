@@ -18,7 +18,20 @@ import java.util.UUID;
 public interface MessageRepository extends JpaRepository<Messages, UUID> {
 
     // ✅ group est une relation → group_Id
-    Page<Messages> findByGroup_IdAndIsDeletedFalseOrderByCreatedAtAsc(UUID groupId, Pageable pageable);
+    // ❌ Cette méthode générée automatiquement ne charge pas le groupe
+    // Page<Messages> findByGroup_IdAndIsDeletedFalseOrderByCreatedAtAsc(UUID groupId, Pageable pageable);
+
+    // ✅ Requête personnalisée avec JOIN FETCH pour charger le groupe eagerly
+    @Query("""
+        SELECT m FROM Messages m
+        LEFT JOIN FETCH m.group g
+        WHERE m.group.id = :groupId
+        AND m.isDeleted = false
+        ORDER BY m.createdAt ASC
+    """)
+    Page<Messages> findByGroup_IdAndIsDeletedFalseOrderByCreatedAtAsc(
+            @Param("groupId") UUID groupId,
+            Pageable pageable);
 
     // ✅ senderId et recipientId sont des UUID bruts → pas de underscore
     Page<Messages> findBySenderIdAndRecipientIdAndIsDeletedFalseOrderByCreatedAtAsc(

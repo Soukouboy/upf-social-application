@@ -6,6 +6,7 @@ import com.upf.backend.application.dto.PrivateConversationSummaryResponse;
 import com.upf.backend.application.model.entity.AcademicGroup;
 import com.upf.backend.application.model.entity.Messages;
 import com.upf.backend.application.model.enums.ContextMessage;
+import com.upf.backend.application.model.enums.MessageType;
 import com.upf.backend.application.repository.GroupMembershipRepository;
 import com.upf.backend.application.repository.GroupRepository;
 import com.upf.backend.application.repository.MessageRepository;
@@ -69,6 +70,7 @@ public class ChatService implements IChatService {
         message.setSenderId(senderId);
         message.setContent(content.trim());
         message.setContext(ContextMessage.GROUP);
+        message.setMessageType(MessageType.TEXT);
 
         // Sauvegarder le message directement (pas via cascade du groupe)
         Messages savedMessage = messageRepository.save(message);
