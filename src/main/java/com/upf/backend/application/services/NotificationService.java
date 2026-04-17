@@ -231,71 +231,75 @@ public class NotificationService {
     // ── Wrapper commun ────────────────────────────────────────────────────────
 
     private String wrap(String accentColor, String icon, String title, String bodyContent) {
-        return """
-            <!DOCTYPE html>
-            <html lang="fr">
-            <head>
-              <meta charset="UTF-8"/>
-              <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-              <title>%s</title>
-            </head>
-            <body style="margin:0;padding:0;background-color:%s;font-family:'Segoe UI',Arial,sans-serif;">
-              <table width="100%%" cellpadding="0" cellspacing="0" style="background-color:%s;padding:40px 0;">
-                <tr><td align="center">
-                  <table width="600" cellpadding="0" cellspacing="0"
-                         style="background:#ffffff;border-radius:12px;overflow:hidden;
-                                box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+    return """
+        <!DOCTYPE html>
+        <html lang="fr">
+        <head>
+          <meta charset="UTF-8"/>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+          <title>%s</title>
+        </head>
+        <body style="margin:0;padding:0;background-color:%s;
+                     font-family:'Segoe UI',Arial,sans-serif;">
+          <table width="100%%" cellpadding="0" cellspacing="0"
+                 style="background-color:%s;padding:40px 0;">
+            <tr><td align="center">
+              <table width="600" cellpadding="0" cellspacing="0"
+                     style="background:#ffffff;border-radius:12px;
+                            box-shadow:0 4px 24px rgba(0,0,0,0.08);">
 
-                    <!-- Header -->
-                    <tr>
-                      <td style="background:linear-gradient(135deg,%s,%s);
-                                 padding:32px 40px;text-align:center;">
-                        <div style="font-size:36px;margin-bottom:8px;">%s</div>
-                        <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;
-                                   letter-spacing:-0.5px;">%s</h1>
-                        <p style="margin:6px 0 0;color:rgba(255,255,255,0.75);font-size:13px;">
-                          %s
-                        </p>
-                      </td>
-                    </tr>
+                <!-- Header : couleur pleine au lieu de gradient -->
+                <tr>
+                  <td bgcolor="%s"
+                      style="background-color:%s;padding:32px 40px;text-align:center;
+                             border-radius:12px 12px 0 0;">
+                    <p style="margin:0 0 8px;font-size:36px;line-height:1;">%s</p>
+                    <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;">
+                      %s
+                    </h1>
+                    <p style="margin:6px 0 0;color:#ffffffbf;font-size:13px;">%s</p>
+                  </td>
+                </tr>
 
-                    <!-- Body -->
-                    <tr>
-                      <td style="padding:36px 40px;color:%s;font-size:15px;line-height:1.7;">
-                        %s
-                      </td>
-                    </tr>
+                <!-- Body -->
+                <tr>
+                  <td style="padding:36px 40px;color:%s;font-size:15px;line-height:1.7;">
+                    %s
+                  </td>
+                </tr>
 
-                    <!-- Footer -->
-                    <tr>
-                      <td style="background:#F3F4F6;padding:24px 40px;text-align:center;
-                                 border-top:1px solid #E5E7EB;">
-                        <p style="margin:0 0 8px;color:%s;font-size:12px;">
-                          Vous recevez cet email car vous êtes inscrit sur
-                          <strong>%s</strong>.
-                        </p>
-                        <p style="margin:0;color:%s;font-size:11px;">
-                          © 2025 %s · Université Polytechnique de France
-                        </p>
-                      </td>
-                    </tr>
+                <!-- Footer -->
+                <tr>
+                  <td bgcolor="#F3F4F6"
+                      style="background-color:#F3F4F6;padding:24px 40px;
+                             text-align:center;border-top:1px solid #E5E7EB;
+                             border-radius:0 0 12px 12px;">
+                    <p style="margin:0 0 8px;color:%s;font-size:12px;">
+                      Vous recevez cet email car vous êtes inscrit sur
+                      <strong>%s</strong>.
+                    </p>
+                    <p style="margin:0;color:%s;font-size:11px;">
+                      © 2025 %s · Université Privée de Fès
+                    </p>
+                  </td>
+                </tr>
 
-                  </table>
-                </td></tr>
               </table>
-            </body>
-            </html>
-            """.formatted(
-                title,
-                COLOR_BG, COLOR_BG,
-                accentColor, COLOR_SECONDARY,
-                icon, title, APP_NAME,
-                COLOR_TEXT,
-                bodyContent,
-                COLOR_MUTED, APP_NAME,
-                COLOR_MUTED, APP_NAME
-        );
-    }
+            </td></tr>
+          </table>
+        </body>
+        </html>
+        """.formatted(
+            title,
+            COLOR_BG, COLOR_BG,
+            accentColor, accentColor,   // bgcolor + style (fallback Outlook)
+            icon, title, APP_NAME,
+            COLOR_TEXT,
+            bodyContent,
+            COLOR_MUTED, APP_NAME,
+            COLOR_MUTED, APP_NAME
+    );
+}
 
     private String btn(String url, String label, String color) {
         return """
