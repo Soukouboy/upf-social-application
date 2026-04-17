@@ -65,12 +65,8 @@ public class ChatService implements IChatService {
             throw new AccessDeniedBusinessException("L'étudiant n'est pas membre du groupe.");
         }
 
-        Messages message = new Messages();
-        message.setGroup(group);
-        message.setSenderId(senderId);
-        message.setContent(content.trim());
-        message.setContext(ContextMessage.GROUP);
-        message.setMessageType(MessageType.TEXT);
+        // Utiliser le constructeur dédié pour éviter les problèmes de validation @PrePersist
+        Messages message = new Messages(group, senderId, content.trim(), MessageType.TEXT);
 
         // Sauvegarder le message directement (pas via cascade du groupe)
         Messages savedMessage = messageRepository.save(message);
@@ -122,13 +118,9 @@ public class ChatService implements IChatService {
         studentRepository.findById(recipientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Destinataire introuvable."));
 
-        Messages message = new Messages();
-        message.setSenderId(senderId);
-        message.setRecipientId(recipientId);
-        message.setContent(content.trim());
-        message.setContext(ContextMessage.PRIVATE);
+        // Utiliser le constructeur dédié pour les messages PRIVATE
+        Messages message = new Messages(senderId, recipientId, content.trim(), MessageType.TEXT);
 
-       
         return messageRepository.save(message);
     }
 
