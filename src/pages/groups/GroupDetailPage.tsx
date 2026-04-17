@@ -30,7 +30,7 @@ import UPFModal from '../../components/ui/UPFModal';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { useAuth } from '../../hooks/useAuth';
 import type { Group, GroupMembership, MembershipStatus } from '../../types';
-import { getGroupById, getGroupMembers, joinGroup, requestJoinGroup, updateMemberRole, removeMember } from '../../services/groupService';
+import { getGroupById, getGroupMembers, joinGroup, requestJoinGroup, updateMemberRole, removeMember, getPendingRequests, approveRequest, rejectRequest } from '../../services/groupService';
 
 const GroupDetailPage: React.FC = () => {
   const theme = useTheme();
@@ -40,6 +40,7 @@ const GroupDetailPage: React.FC = () => {
 
   const [group, setGroup] = useState<Group | null>(null);
   const [members, setMembers] = useState<GroupMembership[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<GroupMembership[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [joinSuccess, setJoinSuccess] = useState<string | null>(null);
@@ -59,6 +60,22 @@ const GroupDetailPage: React.FC = () => {
         ]);
         setGroup(groupData);
         setMembers(membersData);
+
+        const myMemb = membersData.find((m: any) =>
+          String(m.student?.id) === String(user?.id) ||
+          String(m.student?.userId) === String(user?.userId) ||
+          String(m.user?.id) === String(user?.id) ||
+          String(m.student?.userId) === String(user?.id) ||
+          String(m.student?.id) === String(user?.userId) ||
+          String(m.studentId) === String(user?.id) ||
+          String(m.userId) === String(user?.userId) ||
+          String(m.userId) === String(user?.id) ||
+          String(m.id) === String(user?.id)
+        );
+        if (myMemb?.role === 'ADMIN') {
+          const pendingData = await getPendingRequests(id);
+          setPendingRequests(pendingData);
+        }
       } catch {
         setGroup(null);
       } finally {
@@ -96,7 +113,8 @@ const GroupDetailPage: React.FC = () => {
 
   // Membres actifs et en attente
   const activeMembers = members.filter((m) => m.status === 'ACTIVE');
-  const pendingMembers = members.filter((m) => m.status === 'PENDING');
+  // Les requêtes en attente sont désormais fetchées avec le nouvel endpoint
+  const pendingMembers = pendingRequests.length > 0 ? pendingRequests : members.filter((m) => m.status === 'PENDING');
 
   const handleJoin = async () => {
     if (!id) return;
@@ -125,12 +143,15 @@ const GroupDetailPage: React.FC = () => {
     const memberId = (approveModal.member as any).student?.id || (approveModal.member as any).user?.id || (approveModal.member as any).studentId || (approveModal.member as any).userId || (approveModal.member as any).id;
     try {
       if (approveModal.action === 'approve') {
-        await updateMemberRole(id as any, memberId, 'MEMBER');
+        await approveRequest(id as any, String(approveModal.member.id));
       } else {
-        await removeMember(id, memberId);
+        await rejectRequest(id as any, String(approveModal.member.id));
       }
       const updatedMembers = await getGroupMembers(id);
       setMembers(updatedMembers);
+      
+      const updatedPending = await getPendingRequests(id);
+      setPendingRequests(updatedPending);
     } catch {
       /* ignore */
     } finally {
@@ -318,8 +339,8 @@ const GroupDetailPage: React.FC = () => {
       >
         <Typography>
           {approveModal.action === 'approve'
-            ? `Voulez-vous accepter la demande de ${(approveModal.member as any)?.student?.firstName || (approveModal.member as any)?.user?.firstName || 'cet utilisateur'} ?`
-            : `Voulez-vous refuser la demande de ${(approveModal.member as any)?.student?.firstName || (approveModal.member as any)?.user?.firstName || 'cet utilisateur'} ?`}
+            ? `Voulez-vous accepter la demande de ${(approveModal.member as any)?.student?.firstName || (approveModal.member as any)?.user?.firstName || (approveModal.member as any)?.firstName || 'cet utilisateur'} ?`
+            : `Voulez-vous refuser la demande de ${(approveModal.member as any)?.student?.firstName || (approveModal.member as any)?.user?.firstName || (approveModal.member as any)?.firstName || 'cet utilisateur'} ?`}
         </Typography>
       </UPFModal>
     </Box>

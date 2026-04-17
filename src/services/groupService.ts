@@ -80,3 +80,19 @@ export const updateMemberRole = async (
 export const removeMember = async (groupId: string, userId: string): Promise<void> => {
   await api.delete(`/groups/${groupId}/members/${userId}`);
 };
+
+/** Liste des demandes d'adhésion en attente */
+export const getPendingRequests = async (groupId: string): Promise<GroupMembership[]> => {
+  const { data } = await api.get<any>(`/groups/${groupId}/pending-requests`);
+  return Array.isArray(data) ? data : (data?.content || []);
+};
+
+/** Approuver une demande d'adhésion */
+export const approveRequest = async (groupId: string, membershipId: string): Promise<void> => {
+  await api.put(`/groups/${groupId}/requests/${membershipId}/approve`);
+};
+
+/** Refuser une demande d'adhésion */
+export const rejectRequest = async (groupId: string, membershipId: string): Promise<void> => {
+  await api.put(`/groups/${groupId}/requests/${membershipId}/reject`);
+};
