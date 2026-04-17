@@ -26,7 +26,7 @@ public class MailTestController {
     public ResponseEntity<String> testMail() {
         try {
             emailService.sendEmail(
-                senderEmail,
+                "soukouna-dia@upf.ac.ma",
                 "🧪 Test email UPF Connect",
                 "<h1>Test OK !</h1><p>Le service mail fonctionne via API Brevo.</p>"
             );
