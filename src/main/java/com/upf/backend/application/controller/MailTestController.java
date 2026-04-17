@@ -26,7 +26,7 @@ public class MailTestController {
         this.notificationService = notificationService;
     }
 
-    @GetMapping("/mail")
+    @GetMapping("/mail-send")
     public ResponseEntity<String> testMail() {
         try {
             emailService.sendEmail(
@@ -42,7 +42,7 @@ public class MailTestController {
         }
     }
 
-            @GetMapping("/mail-welcome")
+            @GetMapping("/mail")
         public ResponseEntity<String> testWelcome() {
             // Crée un User factice pour tester
             User fakeUser = new User();
