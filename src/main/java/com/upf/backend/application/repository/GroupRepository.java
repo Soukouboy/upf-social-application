@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -61,6 +62,7 @@ public interface GroupRepository extends JpaRepository<AcademicGroup, UUID>,
      * Incrémente le compteur de messages du groupe de manière native.
      * Évite les problèmes de cascade et de synchronisation Hibernate.
      */
+    @Modifying
     @Query(value = "UPDATE groups SET message_count = message_count + 1 WHERE id = :groupId",
            nativeQuery = true)
     void incrementMessageCount(@Param("groupId") java.util.UUID groupId);
@@ -69,6 +71,7 @@ public interface GroupRepository extends JpaRepository<AcademicGroup, UUID>,
      * Incrémente le compteur de membres du groupe de manière native.
      * Évite les problèmes de cascade et de synchronisation Hibernate.
      */
+    @Modifying
     @Query(value = "UPDATE groups SET member_count = member_count + 1 WHERE id = :groupId",
            nativeQuery = true)
     void incrementMemberCount(@Param("groupId") java.util.UUID groupId);
@@ -77,6 +80,7 @@ public interface GroupRepository extends JpaRepository<AcademicGroup, UUID>,
      * Décrémente le compteur de membres du groupe de manière native.
      * Évite les problèmes de cascade et de synchronisation Hibernate.
      */
+    @Modifying
     @Query(value = "UPDATE groups SET member_count = CASE WHEN member_count > 0 THEN member_count - 1 ELSE 0 END WHERE id = :groupId",
            nativeQuery = true)
     void decrementMemberCount(@Param("groupId") java.util.UUID groupId);
