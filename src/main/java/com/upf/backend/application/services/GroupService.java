@@ -77,11 +77,14 @@ public class GroupService implements IGroupService {
         ownerMembership.setStudentProfile(creator);
         ownerMembership.setGroup(savedGroup);
         ownerMembership.setRole(RoleMember.ADMIN);
+        ownerMembership.setStatus(MembershipStatus.ACTIVE);
 
         membershipRepository.save(ownerMembership);
-        savedGroup.setMemberCount(1);
-
-        return groupRepository.save(savedGroup);
+        
+        // Mettre à jour memberCount via requête native
+        groupRepository.incrementMemberCount(savedGroup.getId());
+        
+        return savedGroup;
     }
 
     @Override
@@ -162,8 +165,11 @@ public class GroupService implements IGroupService {
             throw new AccessDeniedBusinessException("Seul le créateur du groupe peut retirer un autre membre.");
         }
 
-        group.removeMembership(membership);
-        groupRepository.save(group);
+        // Supprimer la membership
+        membershipRepository.delete(membership);
+        
+        // Décrémenter memberCount via une requête native
+        groupRepository.decrementMemberCount(groupId);
     }
 
     @Override
@@ -199,16 +205,20 @@ public class GroupService implements IGroupService {
         StudentProfile student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Étudiant introuvable."));
 
+        // Créer la membership
         GroupMembership membership = new GroupMembership();
+        membership.setGroup(group);
         membership.setStudentProfile(student);
         membership.setRole(RoleMember.MEMBER);
+        membership.setStatus(MembershipStatus.ACTIVE);
 
-        group.addMembership(membership);
+        // Sauvegarder la membership directement
+        GroupMembership savedMembership = membershipRepository.save(membership);
+        
+        // Incrémenter memberCount du groupe via une requête native
+        groupRepository.incrementMemberCount(group.getId());
 
-        // Sauvegarder le groupe avec cascade pour persister le membership
-        groupRepository.save(group);
-
-        return membership;
+        return savedMembership;
     }
 
     private void deleteGroup(AcademicGroup group) {
@@ -264,24 +274,19 @@ public class GroupService implements IGroupService {
             throw new BusinessException("Cette demande a déjà été traitée (statut: " + membership.getStatus() + ").");
         }
 
-        // Mettre à jour le statut et incrémenter memberCount
+        // Mettre à jour le statut
         membership.setStatus(MembershipStatus.ACTIVE);
-        group.setMemberCount(group.getMemberCount() + 1);
-
-        groupRepository.save(group);
-        return membershipRepository.save(membership);
+        GroupMembership updated = membershipRepository.save(membership);
+        
+        // Incrémenter memberCount via requête native
+        groupRepository.incrementMemberCount(groupId);
+        
+        return updated;
     }
 
     @Override
     @Transactional
     public GroupMembership rejectMembershipRequest(UUID groupId, UUID membershipId, UUID actorId) {
-        AcademicGroup group = loadActiveGroup(groupId);
-
-        // Vérifier que l'acteur est admin du groupe
-        if (!group.getCreatedBy().equals(actorId)) {
-            throw new AccessDeniedBusinessException("Seul l'administrateur du groupe peut refuser les demandes.");
-        }
-
         // Récupérer la membership
         GroupMembership membership = membershipRepository.findById(membershipId)
                 .orElseThrow(() -> new ResourceNotFoundException("Demande d'adhésion introuvable."));
@@ -289,6 +294,12 @@ public class GroupService implements IGroupService {
         // Vérifier que la membership appartient au groupe
         if (!membership.getGroup().getId().equals(groupId)) {
             throw new BusinessException("Cette demande n'appartient pas à ce groupe.");
+        }
+
+        // Vérifier que l'acteur est admin du groupe
+        AcademicGroup group = loadActiveGroup(groupId);
+        if (!group.getCreatedBy().equals(actorId)) {
+            throw new AccessDeniedBusinessException("Seul l'administrateur du groupe peut refuser les demandes.");
         }
 
         // Vérifier que le statut est PENDING

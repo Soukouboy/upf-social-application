@@ -71,9 +71,8 @@ public class ChatService implements IChatService {
         // Sauvegarder le message directement (pas via cascade du groupe)
         Messages savedMessage = messageRepository.save(message);
         
-        // Incrémenter le compteur de messages du groupe
-        group.setMessageCount(group.getMessageCount() + 1);
-        groupRepository.save(group);
+        // Incrémenter le compteur de messages du groupe via une requête native
+        groupRepository.incrementMessageCount(groupId);
 
         return savedMessage;
     }
