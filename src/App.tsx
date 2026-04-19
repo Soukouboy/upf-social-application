@@ -66,6 +66,7 @@ import AdminReportsPage from './pages/admin/AdminReportsPage';
 import AdminProfessorsPage from './pages/admin/AdminProfessorsPage';
 import AdminGroupsPage from './pages/admin/AdminGroupsPage';
 import AdminAttendancePage from './pages/admin/AdminAttendancePage';
+import AdminAttendanceSessionPage from './pages/admin/AdminAttendanceSessionPage';
 
 // ────────── Helper : redirection intelligente vers le bon dashboard ──────────
 import { useAuth } from './hooks/useAuth';
@@ -156,6 +157,7 @@ const App: React.FC = () => {
                     <Route path="/admin/groups" element={<AdminGroupsPage />} />
                     <Route path="/admin/reports" element={<AdminReportsPage />} />
                     <Route path="/admin/attendance" element={<AdminAttendancePage />} />
+                    <Route path="/admin/attendance/:sessionId" element={<AdminAttendanceSessionPage />} />
                   </Route>
 
                   {/* ──── Redirections ──── */}
