@@ -28,6 +28,7 @@ import UPFModal from '../../components/ui/UPFModal';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import type { AttendanceStatus, BulkAttendanceItem, SessionResponse, AttendanceReportEntry } from '../../types';
 import { getCourseAttendanceReport, bulkMarkAttendance, lockSession } from '../../services/attendanceService';
+import { getStudents } from '../../services/adminService';
 
 // ─── Configuration des statuts ────────────────────────────────────────────────
 
@@ -100,10 +101,24 @@ const AdminAttendanceSessionPage: React.FC = () => {
     const fetch = async () => {
       setLoading(true);
       try {
-        const data = await getCourseAttendanceReport(courseId);
-        setStudents(data);
+        const [reportData, allStudents] = await Promise.all([
+          getCourseAttendanceReport(courseId),
+          getStudents()
+        ]);
+        
+        const enrichedData = reportData.map((entry) => {
+          const studentProfile = allStudents.find((s) => s.id === entry.studentId);
+          return {
+            ...entry,
+            firstName: studentProfile?.firstName || entry.firstName || 'Inconnu',
+            lastName: studentProfile?.lastName || entry.lastName || '',
+            major: studentProfile?.major || entry.major || 'N/A',
+          };
+        });
+
+        setStudents(enrichedData);
         const init: Record<string, AttendanceStatus> = {};
-        data.forEach((s) => { init[s.studentId] = 'PRESENT'; });
+        enrichedData.forEach((s) => { init[s.studentId] = 'PRESENT'; });
         setStatusMap(init);
       } catch {
         setStudents([]);

@@ -33,7 +33,7 @@ import UPFModal from '../../components/ui/UPFModal';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import type { CourseSummary, AttendanceReportEntry, AttendanceEligibility, SessionResponse } from '../../types';
 import { getCourseAttendanceReport, getCourseSessions, createSession } from '../../services/attendanceService';
-import { getAdminCourses } from '../../services/adminService';
+import { getAdminCourses, getStudents } from '../../services/adminService';
 import { useNavigate } from 'react-router-dom';
 
 // ─── Config éligibilité ───────────────────────────────────────────────────────
@@ -159,8 +159,21 @@ const AdminAttendancePage: React.FC = () => {
       setLoadingReport(true);
       setErrorMsg(null);
       try {
-        const data = await getCourseAttendanceReport(selectedCourseId);
-        setReport(data);
+        const [reportData, students] = await Promise.all([
+          getCourseAttendanceReport(selectedCourseId),
+          getStudents()
+        ]);
+        // Le rapport backend ne contient parfois pas firstName/lastName (API stricte). On map avec getStudents() :
+        const enrichedReport = reportData.map((entry) => {
+          const studentProfile = students.find((s) => s.id === entry.studentId);
+          return {
+            ...entry,
+            firstName: studentProfile?.firstName || entry.firstName || 'Inconnu',
+            lastName: studentProfile?.lastName || entry.lastName || '',
+            major: studentProfile?.major || entry.major || 'N/A',
+          };
+        });
+        setReport(enrichedReport);
       } catch {
         setReport(MOCK_REPORT);
       } finally {

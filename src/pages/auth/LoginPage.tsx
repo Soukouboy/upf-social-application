@@ -34,6 +34,7 @@ import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 import UPFButton from '../../components/ui/UPFButton';
 import { useAuth } from '../../hooks/useAuth';
+import logoUrl from '../../assets/logo_upf.jpg';
 
 const LoginPage: React.FC = () => {
   const theme = useTheme();
@@ -125,19 +126,25 @@ const LoginPage: React.FC = () => {
           {/* Logo */}
           <Box
             sx={{
-              width: 72,
-              height: 72,
+              width: 100,
+              height: 100,
               borderRadius: '20px',
-              background: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.light} 100%)`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               mx: 'auto',
               mb: 3,
               boxShadow: `0 8px 32px ${alpha(theme.palette.secondary.main, 0.3)}`,
+              overflow: 'hidden',
+              bgcolor: '#fff',
             }}
           >
-            <SchoolRoundedIcon sx={{ fontSize: 40, color: theme.palette.primary.main }} />
+            <Box
+              component="img"
+              src={logoUrl}
+              alt="UPF Logo"
+              sx={{ width: '100%', height: '100%', objectFit: 'contain', p: 1 }}
+            />
           </Box>
 
           <Typography variant="h3" fontWeight={700} mb={1}>
@@ -217,13 +224,19 @@ const LoginPage: React.FC = () => {
                 width: 44,
                 height: 44,
                 borderRadius: '12px',
-                background: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.light} 100%)`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                overflow: 'hidden',
+                bgcolor: '#fff',
               }}
             >
-              <SchoolRoundedIcon sx={{ color: theme.palette.primary.main, fontSize: 24 }} />
+              <Box
+                component="img"
+                src={logoUrl}
+                alt="UPF Logo Mobile"
+                sx={{ width: '100%', height: '100%', objectFit: 'contain', p: 0.5 }}
+              />
             </Box>
             <Typography variant="h5" fontWeight={700} color="primary">
               UPF Social
