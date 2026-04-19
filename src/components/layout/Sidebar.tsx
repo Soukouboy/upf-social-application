@@ -34,6 +34,8 @@ import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded';
 import FlagRoundedIcon from '@mui/icons-material/FlagRounded';
 import FolderRoundedIcon from '@mui/icons-material/FolderRounded';
 import CampaignRoundedIcon from '@mui/icons-material/CampaignRounded';
+import ChecklistRoundedIcon from '@mui/icons-material/ChecklistRounded';
+import AssignmentTurnedInRoundedIcon from '@mui/icons-material/AssignmentTurnedInRounded';
 import { useAuth } from '../../hooks/useAuth';
 import type { UserRole } from '../../types';
 
@@ -49,6 +51,7 @@ const studentNav: NavItem[] = [
   { label: 'Dashboard', path: '/student/dashboard', icon: <DashboardRoundedIcon /> },
   { label: 'Cours', path: '/student/courses', icon: <MenuBookRoundedIcon /> },
   { label: 'Épreuves', path: '/student/exams', icon: <DescriptionRoundedIcon /> },
+  { label: 'Mes présences', path: '/student/attendance', icon: <AssignmentTurnedInRoundedIcon /> },
   { label: 'Groupes', path: '/student/groups', icon: <GroupsRoundedIcon /> },
   { label: 'Messages', path: '/student/messages', icon: <ChatRoundedIcon /> },
   { label: 'Réseau', path: '/student/network', icon: <PersonSearchRoundedIcon /> },
@@ -59,6 +62,7 @@ const professorNav: NavItem[] = [
   { label: 'Dashboard', path: '/professor/dashboard', icon: <DashboardRoundedIcon /> },
   { label: 'Mes cours', path: '/professor/courses', icon: <MenuBookRoundedIcon /> },
   { label: 'Mes étudiants', path: '/professor/students', icon: <PeopleRoundedIcon /> },
+  { label: 'Présences', path: '/professor/attendance', icon: <ChecklistRoundedIcon /> },
   { label: 'Annonces', path: '/professor/announcements', icon: <CampaignRoundedIcon /> },
   { label: 'Profil', path: '/professor/profile', icon: <PersonRoundedIcon /> },
 ];
@@ -69,6 +73,7 @@ const adminNav: NavItem[] = [
   { label: 'Professeurs', path: '/admin/professors', icon: <SchoolRoundedIcon /> },
   { label: 'Admins', path: '/admin/admins', icon: <AdminPanelSettingsRoundedIcon /> },
   { label: 'Cours', path: '/admin/courses', icon: <FolderRoundedIcon /> },
+  { label: 'Présences', path: '/admin/attendance', icon: <AssignmentTurnedInRoundedIcon /> },
   { label: 'Signalements', path: '/admin/reports', icon: <FlagRoundedIcon /> },
 ];
 

@@ -44,6 +44,7 @@ import GroupCreatePage from './pages/groups/GroupCreatePage';
 import DirectMessagesPage from './pages/messages/DirectMessagesPage';
 import DirectChatPage from './pages/messages/DirectChatPage';
 import NetworkPage from './pages/network/NetworkPage';
+import StudentAttendancePage from './pages/student/StudentAttendancePage';
 
 // Pages — Professor
 import ProfessorDashboardPage from './pages/professor/ProfessorDashboardPage';
@@ -52,6 +53,8 @@ import ProfessorCourseDetailPage from './pages/professor/ProfessorCourseDetailPa
 import ProfessorDocumentsPage from './pages/professor/ProfessorDocumentsPage';
 import ProfessorAnnouncementsPage from './pages/professor/ProfessorAnnouncementsPage';
 import ProfessorStudentsPage from './pages/professor/ProfessorStudentsPage';
+import ProfessorAttendancePage from './pages/professor/ProfessorAttendancePage';
+import ProfessorAttendanceSessionPage from './pages/professor/ProfessorAttendanceSessionPage';
 
 // Pages — Admin
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
@@ -62,6 +65,7 @@ import AdminCourseResourcesPage from './pages/admin/AdminCourseResourcesPage';
 import AdminReportsPage from './pages/admin/AdminReportsPage';
 import AdminProfessorsPage from './pages/admin/AdminProfessorsPage';
 import AdminGroupsPage from './pages/admin/AdminGroupsPage';
+import AdminAttendancePage from './pages/admin/AdminAttendancePage';
 
 // ────────── Helper : redirection intelligente vers le bon dashboard ──────────
 import { useAuth } from './hooks/useAuth';
@@ -113,6 +117,7 @@ const App: React.FC = () => {
                     <Route path="/student/messages" element={<DirectMessagesPage />} />
                     <Route path="/student/messages/:userId" element={<DirectChatPage />} />
                     <Route path="/student/network" element={<NetworkPage />} />
+                    <Route path="/student/attendance" element={<StudentAttendancePage />} />
                   </Route>
 
                   {/* ──── PROFESSOR routes ──── */}
@@ -130,6 +135,8 @@ const App: React.FC = () => {
                     <Route path="/professor/students" element={<ProfessorStudentsPage />} />
                     <Route path="/professor/announcements" element={<ProfessorAnnouncementsPage />} />
                     <Route path="/professor/profile" element={<ProfilePage />} />
+                    <Route path="/professor/attendance" element={<ProfessorAttendancePage />} />
+                    <Route path="/professor/attendance/:sessionId" element={<ProfessorAttendanceSessionPage />} />
                   </Route>
 
                   {/* ──── ADMIN routes ──── */}
@@ -148,6 +155,7 @@ const App: React.FC = () => {
                     <Route path="/admin/courses/:id/resources" element={<AdminCourseResourcesPage />} />
                     <Route path="/admin/groups" element={<AdminGroupsPage />} />
                     <Route path="/admin/reports" element={<AdminReportsPage />} />
+                    <Route path="/admin/attendance" element={<AdminAttendancePage />} />
                   </Route>
 
                   {/* ──── Redirections ──── */}

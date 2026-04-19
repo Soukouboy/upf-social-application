@@ -849,3 +849,95 @@ export interface Notification {
   createdAt?: string;
 }
 
+// =============================================================================
+// ATTENDANCE — Gestion des présences académiques
+// Alignés sur les DTOs backend (QUICK_START_TESTS.md)
+// =============================================================================
+
+/** Statuts de présence acceptés */
+export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED';
+
+/** Éligibilité calculée automatiquement selon le taux d'absence */
+export type AttendanceEligibility = 'ELIGIBLE' | 'RATTRAPAGE_ONLY' | 'EXCLUDED';
+
+// ─── Séances ──────────────────────────────────────────────────────────────────
+
+/** Réponse création / liste d'une séance de cours */
+export interface SessionResponse {
+  id: string;              // UUID
+  courseId: string;        // UUID
+  sessionDate: string;     // YYYY-MM-DD
+  sessionNumber: number;   // >= 1
+  description?: string;    // max 300 caractères
+  isLocked: boolean;
+  lockedAt?: string | null;
+  createdAt: string;
+}
+
+/** Requête pour créer une séance */
+export interface CreateSessionRequest {
+  sessionDate: string;     // YYYY-MM-DD
+  sessionNumber: number;
+  description?: string;
+}
+
+// ─── Présences unitaires ───────────────────────────────────────────────────────
+
+/** Réponse d'une présence marquée */
+export interface AttendanceResponse {
+  id: string;              // UUID
+  sessionId: string;       // UUID
+  enrollmentId: string;    // UUID
+  studentId: string;       // UUID du StudentProfile
+  firstName: string;
+  lastName: string;
+  major: string;
+  currentYear: number;
+  status: AttendanceStatus;
+  justification?: string | null;
+  markedAt: string;
+}
+
+/** Requête pour marquer une présence unitaire */
+export interface MarkAttendanceRequest {
+  enrollmentId: string;    // UUID
+  status: AttendanceStatus;
+  justification?: string | null;
+}
+
+/** Item dans un bulk mark */
+export interface BulkAttendanceItem {
+  enrollmentId: string;
+  status: AttendanceStatus;
+  justification?: string;
+}
+
+/** Requête bulk pour marquer plusieurs présences d'un coup */
+export interface BulkAttendanceRequest {
+  attendances: BulkAttendanceItem[];
+}
+
+// ─── Rapports ────────────────────────────────────────────────────────────────
+
+/**
+ * Ligne du rapport de présences pour un étudiant dans un cours.
+ * Utilisé à la fois par :
+ *   GET /attendance/courses/{courseId}/report  (admin/prof)
+ *   GET /attendance/my/report                  (étudiant)
+ */
+export interface AttendanceReportEntry {
+  studentId: string;       // UUID
+  firstName: string;
+  lastName: string;
+  major: string;
+  courseId: string;        // UUID
+  courseTitle: string;
+  totalSessions: number;
+  presentCount: number;
+  absentCount: number;
+  lateCount: number;
+  excusedCount: number;
+  absenceRate: number;     // 0.0 → 1.0  (ex: 0.35 = 35%)
+  eligibility: AttendanceEligibility;
+}
+
