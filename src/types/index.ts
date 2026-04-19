@@ -887,7 +887,7 @@ export interface CreateSessionRequest {
 export interface AttendanceResponse {
   id: string;              // UUID
   sessionId: string;       // UUID
-  enrollmentId: string;    // UUID
+  // enrollmentId: string;    // UUID
   studentId: string;       // UUID du StudentProfile
   firstName: string;
   lastName: string;
@@ -900,14 +900,14 @@ export interface AttendanceResponse {
 
 /** Requête pour marquer une présence unitaire */
 export interface MarkAttendanceRequest {
-  enrollmentId: string;    // UUID
+  studentId: string;    // UUID
   status: AttendanceStatus;
   justification?: string | null;
 }
 
 /** Item dans un bulk mark */
 export interface BulkAttendanceItem {
-  enrollmentId: string;
+  studentId: string;
   status: AttendanceStatus;
   justification?: string;
 }

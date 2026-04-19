@@ -112,6 +112,6 @@ export const getCourseAttendanceReport = async (
  * Rôle : STUDENT uniquement
  */
 export const getMyAttendanceReport = async (): Promise<AttendanceReportEntry[]> => {
-  const { data } = await api.get<AttendanceReportEntry[]>('/attendance/my/report');
+  const { data } = await api.get<AttendanceReportEntry[]>('/attendance/me/report');
   return Array.isArray(data) ? data : [];
 };

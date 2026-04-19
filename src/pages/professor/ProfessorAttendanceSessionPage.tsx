@@ -103,8 +103,7 @@ const ProfessorAttendanceSessionPage: React.FC = () => {
   const session = locationState?.session;
 
   const [students, setStudents] = useState<StudentProfileSummary[]>([]);
-  // Map: studentId → enrollmentId (dans un vrai scénario vient de l'enrollment)
-  // Pour simplifier on utilise l'id étudiant comme enrollmentId
+  // Map: studentId
   const [statusMap, setStatusMap] = useState<Record<string, AttendanceStatus>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -160,7 +159,7 @@ const ProfessorAttendanceSessionPage: React.FC = () => {
     setSaving(true);
     try {
       const attendances: BulkAttendanceItem[] = students.map((s) => ({
-        enrollmentId: s.id, // En production, utiliser le vrai enrollmentId
+        studentId: s.id,
         status: statusMap[s.id] ?? 'ABSENT',
       }));
       await bulkMarkAttendance(sessionId, { attendances });
