@@ -18,6 +18,7 @@ import { ChatProvider } from './context/ChatContext';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import RoleRoute from './components/common/RoleRoute';
+import GlobalErrorListener from './components/common/GlobalErrorListener';
 
 // Layouts
 import StudentLayout from './components/layout/StudentLayout';
@@ -85,6 +86,7 @@ const App: React.FC = () => {
     <BrowserRouter>
       <ThemeProvider theme={theme}>
         <CssBaseline />
+        <GlobalErrorListener />
         <ErrorBoundary>
           <AuthProvider>
             <NotificationProvider>

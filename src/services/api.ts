@@ -120,6 +120,17 @@ api.interceptors.response.use(
       }
     }
 
+    // Dispatch des erreurs globales (hors 401 gérées ci-dessus)
+    if (error.response && error.response.status >= 400 && error.response.status !== 401) {
+      const errData = error.response.data as any;
+      const message = errData?.detail || errData?.message || errData?.error || error.message || "Une erreur inattendue s'est produite";
+      const event = new CustomEvent('global-api-error', { detail: message });
+      window.dispatchEvent(event);
+    } else if (!error.response && error.message !== 'canceled' && error.code !== 'ECONNABORTED') {
+      const event = new CustomEvent('global-api-error', { detail: "Erreur réseau : Impossible de contacter le serveur." });
+      window.dispatchEvent(event);
+    }
+
     return Promise.reject(error);
   }
 );

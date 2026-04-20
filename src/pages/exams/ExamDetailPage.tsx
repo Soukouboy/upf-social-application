@@ -47,7 +47,7 @@ const ExamDetailPage: React.FC = () => {
         const data = await getExamById(id);
         setExam(data);
       } catch {
-         setExam({
+        setExam({
           id: id || "mock-id", title: 'Examen Final Algorithmique', courseName: 'Algorithmique',
           academicYear: '2024-2025', examType: 'FINAL' as any,
           downloadCount: 87, upvoteCount: 24, downvoteCount: 2,
@@ -82,7 +82,7 @@ const ExamDetailPage: React.FC = () => {
     } catch { /* fallback */ }
   };
 
-  const handleVote = async (type: 'UP' | 'DOWN') => {
+  const handleVote = async (type: 'UPVOTE' | 'DOWNVOTE') => {
     if (!exam) return;
     try { await voteExam(exam.id, type); } catch { /* fallback */ }
   };
@@ -122,10 +122,10 @@ const ExamDetailPage: React.FC = () => {
               <UPFButton variant="contained" startIcon={<DownloadRoundedIcon />} onClick={handleDownload}>
                 Télécharger
               </UPFButton>
-              <UPFButton variant="outlined" startIcon={<ThumbUpAltRoundedIcon />} onClick={() => handleVote('UP')} color="success">
+              <UPFButton variant="outlined" startIcon={<ThumbUpAltRoundedIcon />} onClick={() => handleVote('UPVOTE')} color="success">
                 {exam.upvoteCount}
               </UPFButton>
-              <UPFButton variant="outlined" startIcon={<ThumbDownAltRoundedIcon />} onClick={() => handleVote('DOWN')} color="error">
+              <UPFButton variant="outlined" startIcon={<ThumbDownAltRoundedIcon />} onClick={() => handleVote('DOWNVOTE')} color="error">
                 {exam.downvoteCount}
               </UPFButton>
               <UPFButton variant="text" startIcon={<FlagRoundedIcon />} onClick={() => setReportOpen(true)} color="warning">
@@ -169,24 +169,24 @@ const ExamDetailPage: React.FC = () => {
         <Grid size={{ xs: 12 }}>
           <UPFCard noHover>
             <Typography variant="h6" fontWeight={600} mb={2}>Commentaires</Typography>
-            
+
             {/* Liste des commentaires existants (si supporté par la réponse API) */}
             <Box sx={{ mb: 3 }}>
               {((exam as any).comments || []).map((c: any, index: number) => (
-                 <Box key={c.id || index} sx={{ mb: 2, pb: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
-                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                     <UPFAvatar firstName={c.author?.firstName || c.authorName || 'User'} lastName={c.author?.lastName || ''} size="small" />
-                     <Typography variant="subtitle2" fontWeight={600}>
-                       {c.author?.firstName ? `${c.author.firstName} ${c.author.lastName}` : (c.authorName || 'Anonyme')}
-                     </Typography>
-                     {c.createdAt && (
-                       <Typography variant="caption" color="text.secondary">
-                         • {new Date(c.createdAt).toLocaleDateString()}
-                       </Typography>
-                     )}
-                   </Box>
-                   <Typography variant="body2" sx={{ pl: 4 }}>{c.content}</Typography>
-                 </Box>
+                <Box key={c.id || index} sx={{ mb: 2, pb: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                    <UPFAvatar firstName={c.author?.firstName || c.authorName || 'User'} lastName={c.author?.lastName || ''} size="small" />
+                    <Typography variant="subtitle2" fontWeight={600}>
+                      {c.author?.firstName ? `${c.author.firstName} ${c.author.lastName}` : (c.authorName || 'Anonyme')}
+                    </Typography>
+                    {c.createdAt && (
+                      <Typography variant="caption" color="text.secondary">
+                        • {new Date(c.createdAt).toLocaleDateString()}
+                      </Typography>
+                    )}
+                  </Box>
+                  <Typography variant="body2" sx={{ pl: 4 }}>{c.content}</Typography>
+                </Box>
               ))}
               {((exam as any).comments || []).length === 0 && (
                 <Typography variant="body2" color="text.secondary">Aucun commentaire pour le moment. Soyez le premier à commenter !</Typography>
@@ -197,10 +197,10 @@ const ExamDetailPage: React.FC = () => {
             <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
               <UPFAvatar firstName="Moi" lastName="" size="medium" />
               <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <TextField 
-                  fullWidth 
-                  variant="outlined" 
-                  placeholder="Écrivez votre commentaire ici..." 
+                <TextField
+                  fullWidth
+                  variant="outlined"
+                  placeholder="Écrivez votre commentaire ici..."
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
                   multiline
@@ -208,9 +208,9 @@ const ExamDetailPage: React.FC = () => {
                   disabled={isSubmittingComment}
                 />
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <UPFButton 
-                    variant="contained" 
-                    onClick={handleCommentSubmit} 
+                  <UPFButton
+                    variant="contained"
+                    onClick={handleCommentSubmit}
                     disabled={!commentText.trim() || isSubmittingComment}
                   >
                     Publier

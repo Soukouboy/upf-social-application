@@ -173,8 +173,9 @@ export const bootstrapAdmin = async (
 
 /** Lister tous les étudiants */
 export const getStudents = async (): Promise<StudentProfileSummary[]> => {
-  const { data } = await api.get<StudentProfileSummary[]>('/admin/students');
-  return Array.isArray(data) ? data : [];
+  const { data } = await api.get<any[]>('/admin/students');
+  const arr = Array.isArray(data) ? data : [];
+  return arr.map(item => ({ ...item, isActive: item.isActive ?? item.is_active ?? item.active ?? true }));
 };
 
 /** Inscrire un étudiant à un cours */
@@ -222,9 +223,12 @@ export const getAdminCourses = async (
   page: number = 0,
   size: number = 20
 ): Promise<PaginatedResponse<CourseSummary>> => {
-  const { data } = await api.get<PaginatedResponse<CourseSummary>>('/admin/courses', {
+  const { data } = await api.get<any>('/admin/courses', {
     params: { page, size }
   });
+  if (data && Array.isArray(data.content)) {
+    data.content = data.content.map((item: any) => ({ ...item, isActive: item.isActive ?? item.is_active ?? item.active ?? true }));
+  }
   return data;
 };
 
@@ -344,8 +348,9 @@ export const updateUserStatus = async (userId: string, isActive: boolean): Promi
 export const getProfessors = async () => {
   // Note : pas d'endpoint direct GET /admin/professors dans ENDPIN.md
   // Cet endpoint est à ajouter côté backend
-  const { data } = await api.get('/admin/professors');
-  return Array.isArray(data) ? data : [];
+  const { data } = await api.get<any[]>('/admin/professors');
+  const arr = Array.isArray(data) ? data : [];
+  return arr.map(item => ({ ...item, isActive: item.isActive ?? item.is_active ?? item.active ?? true }));
 };
 
 // ────────── Groupes ──────────

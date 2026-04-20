@@ -54,7 +54,7 @@ export type ReportReason = 'INAPPROPRIATE' | 'ERROR' | 'DUPLICATE' | 'PLAGIARISM
 
 export type ReportStatus = 'PENDING' | 'REVIEWED' | 'ACTIONED' | 'DISMISSED';
 
-export type VoteType = 'UP' | 'DOWN';
+export type VoteType = 'UPVOTE' | 'DOWNVOTE';
 
 // =============================================================================
 // AUTH

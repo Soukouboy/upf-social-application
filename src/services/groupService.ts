@@ -17,7 +17,8 @@ import type { Group, GroupMembership, MemberRole } from '../types';
 /** Liste de tous les groupes publics */
 export const getGroups = async (): Promise<Group[]> => {
   const { data } = await api.get<any>('/groups/public');
-  return Array.isArray(data) ? data : (data?.content || []);
+  const arr = Array.isArray(data) ? data : (data?.content || []);
+  return arr.map((item: any) => ({ ...item, isActive: item.isActive ?? item.is_active ?? item.active ?? true }));
 };
 
 /** Liste des groupes de l'utilisateur */
