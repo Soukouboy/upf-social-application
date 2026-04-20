@@ -11,6 +11,7 @@ import {
   Box, Typography, MenuItem, TextField, useTheme, alpha,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   LinearProgress, Grid, Alert, Tooltip, Tabs, Tab, IconButton,
+  Dialog, DialogTitle, DialogContent, DialogActions,
 } from '@mui/material';
 import AssignmentTurnedInRoundedIcon from '@mui/icons-material/AssignmentTurnedInRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
@@ -24,6 +25,8 @@ import LockRoundedIcon from '@mui/icons-material/LockRounded';
 import LockOpenRoundedIcon from '@mui/icons-material/LockOpenRounded';
 import ChecklistRoundedIcon from '@mui/icons-material/ChecklistRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import BarChartRoundedIcon from '@mui/icons-material/BarChartRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import UPFCard from '../../components/ui/UPFCard';
 import UPFButton from '../../components/ui/UPFButton';
 import UPFChip from '../../components/ui/UPFChip';
@@ -123,6 +126,7 @@ const AdminAttendancePage: React.FC = () => {
   const [tabIndex, setTabIndex] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [statsStudent, setStatsStudent] = useState<AttendanceReportEntry | null>(null);
 
   // Modal create session
   const [createOpen, setCreateOpen] = useState(false);
@@ -159,18 +163,26 @@ const AdminAttendancePage: React.FC = () => {
       setLoadingReport(true);
       setErrorMsg(null);
       try {
-        const [reportData, students] = await Promise.all([
-          getCourseAttendanceReport(selectedCourseId),
-          getStudents()
-        ]);
-        // Le rapport backend ne contient parfois pas firstName/lastName (API stricte). On map avec getStudents() :
+        // Le backend retourne firstName/lastName/major directement dans le rapport
+        // (cf. QUICK_START_TESTS.md Scénario 6). On se fie aux données du rapport.
+        // On n'appelle getStudents() qu'en fallback si les noms sont vraiment manquants.
+        const reportData = await getCourseAttendanceReport(selectedCourseId);
+        const hasMissingNames = reportData.some(e => !e.firstName || e.firstName === '');
+        let studentMap: Record<string, { firstName: string; lastName: string; major: string }> = {};
+        if (hasMissingNames) {
+          const students = await getStudents();
+          students.forEach(s => {
+            // On tente les deux clés possibles (id = profileId, userId)
+            studentMap[s.id] = { firstName: s.firstName, lastName: s.lastName, major: s.major };
+          });
+        }
         const enrichedReport = reportData.map((entry) => {
-          const studentProfile = students.find((s) => s.id === entry.studentId);
+          const fallback = studentMap[entry.studentId];
           return {
             ...entry,
-            firstName: studentProfile?.firstName || entry.firstName || 'Inconnu',
-            lastName: studentProfile?.lastName || entry.lastName || '',
-            major: studentProfile?.major || entry.major || 'N/A',
+            firstName: entry.firstName || fallback?.firstName || 'Inconnu',
+            lastName: entry.lastName || fallback?.lastName || '',
+            major: entry.major || fallback?.major || 'N/A',
           };
         });
         setReport(enrichedReport);
@@ -391,6 +403,7 @@ const AdminAttendancePage: React.FC = () => {
                   <TableCell sx={{ fontWeight: 600 }} align="center">Retard</TableCell>
                   <TableCell sx={{ fontWeight: 600 }} align="center">Taux absence</TableCell>
                   <TableCell sx={{ fontWeight: 600 }} align="center">Éligibilité</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }} align="center">Stats</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -440,6 +453,17 @@ const AdminAttendancePage: React.FC = () => {
                       </TableCell>
                       <TableCell align="center">
                         <EligibilityBadge eligibility={entry.eligibility} />
+                      </TableCell>
+                      <TableCell align="center">
+                        <Tooltip title="Voir les statistiques détaillées">
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => setStatsStudent(entry)}
+                          >
+                            <BarChartRoundedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                       </TableCell>
                     </TableRow>
                   );
@@ -639,6 +663,85 @@ const AdminAttendancePage: React.FC = () => {
           />
         </Box>
       </UPFModal>
+
+      {/* ── Dialog Statistiques Étudiant ── */}
+      <Dialog
+        open={!!statsStudent}
+        onClose={() => setStatsStudent(null)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3 } }}
+      >
+        {statsStudent && (() => {
+          const cfg = ELIGIBILITY_CONFIG[statsStudent.eligibility];
+          const absRate = statsStudent.absenceRate;
+          const absColor = absRate >= 0.5 ? '#EF4444' : absRate >= 0.3 ? '#F59E0B' : '#10B981';
+          return (
+            <>
+              <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <UPFAvatar firstName={statsStudent.firstName} lastName={statsStudent.lastName} size="medium" />
+                  <Box>
+                    <Typography variant="h6" fontWeight={700}>{statsStudent.firstName} {statsStudent.lastName}</Typography>
+                    <Typography variant="caption" color="text.secondary">{statsStudent.major}</Typography>
+                  </Box>
+                </Box>
+                <IconButton size="small" onClick={() => setStatsStudent(null)}>
+                  <CloseRoundedIcon />
+                </IconButton>
+              </DialogTitle>
+              <DialogContent dividers>
+                {/* Badge éligibilité */}
+                <Box sx={{ mb: 3, p: 2, borderRadius: 2, bgcolor: cfg.bgColor, border: `1px solid ${cfg.color}30`, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Box sx={{ color: cfg.color, display: 'flex' }}>{cfg.icon}</Box>
+                  <Box>
+                    <Typography variant="subtitle2" fontWeight={700} color={cfg.color}>{cfg.label}</Typography>
+                    <Typography variant="caption" color="text.secondary">{cfg.description}</Typography>
+                  </Box>
+                </Box>
+
+                {/* Taux d'absence avec barre */}
+                <Box sx={{ mb: 3 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body2" fontWeight={600}>Taux d'absence</Typography>
+                    <Typography variant="body2" fontWeight={700} color={absColor}>{pct(absRate)}</Typography>
+                  </Box>
+                  <LinearProgress
+                    variant="determinate"
+                    value={Math.min(absRate * 100, 100)}
+                    sx={{
+                      height: 10, borderRadius: 5,
+                      bgcolor: alpha(absColor, 0.15),
+                      '& .MuiLinearProgress-bar': { bgcolor: absColor, borderRadius: 5 },
+                    }}
+                  />
+                </Box>
+
+                {/* Compteurs */}
+                <Grid container spacing={2}>
+                  {[
+                    { label: 'Total séances', value: statsStudent.totalSessions, color: '#3B82F6' },
+                    { label: 'Présent', value: statsStudent.presentCount, color: '#10B981' },
+                    { label: 'Absent', value: statsStudent.absentCount, color: '#EF4444' },
+                    { label: 'Retard', value: statsStudent.lateCount, color: '#F59E0B' },
+                    { label: 'Excusé', value: statsStudent.excusedCount, color: '#6366F1' },
+                  ].map((stat) => (
+                    <Grid size={{ xs: 4 }} key={stat.label}>
+                      <Box sx={{ textAlign: 'center', p: 1.5, borderRadius: 2, bgcolor: alpha(stat.color, 0.07), border: `1px solid ${alpha(stat.color, 0.15)}` }}>
+                        <Typography variant="h5" fontWeight={700} color={stat.color}>{stat.value}</Typography>
+                        <Typography variant="caption" color="text.secondary">{stat.label}</Typography>
+                      </Box>
+                    </Grid>
+                  ))}
+                </Grid>
+              </DialogContent>
+              <DialogActions sx={{ px: 3, py: 2 }}>
+                <UPFButton variant="outlined" onClick={() => setStatsStudent(null)}>Fermer</UPFButton>
+              </DialogActions>
+            </>
+          );
+        })()}
+      </Dialog>
     </Box>
   );
 };

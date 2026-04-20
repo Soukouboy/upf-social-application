@@ -101,18 +101,24 @@ const AdminAttendanceSessionPage: React.FC = () => {
     const fetch = async () => {
       setLoading(true);
       try {
-        const [reportData, allStudents] = await Promise.all([
-          getCourseAttendanceReport(courseId),
-          getStudents()
-        ]);
-        
+        // Le backend retourne déjà firstName/lastName/major dans le rapport
+        // (cf. QUICK_START_TESTS.md Scénario 6 & 3). On fait confiance aux données du rapport en priorité.
+        const reportData = await getCourseAttendanceReport(courseId);
+        const hasMissingNames = reportData.some(e => !e.firstName || e.firstName === '');
+        let studentMap: Record<string, { firstName: string; lastName: string; major: string }> = {};
+        if (hasMissingNames) {
+          const allStudents = await getStudents();
+          allStudents.forEach(s => {
+            studentMap[s.id] = { firstName: s.firstName, lastName: s.lastName, major: s.major };
+          });
+        }
         const enrichedData = reportData.map((entry) => {
-          const studentProfile = allStudents.find((s) => s.id === entry.studentId);
+          const fallback = studentMap[entry.studentId];
           return {
             ...entry,
-            firstName: studentProfile?.firstName || entry.firstName || 'Inconnu',
-            lastName: studentProfile?.lastName || entry.lastName || '',
-            major: studentProfile?.major || entry.major || 'N/A',
+            firstName: entry.firstName || fallback?.firstName || 'Inconnu',
+            lastName: entry.lastName || fallback?.lastName || '',
+            major: entry.major || fallback?.major || 'N/A',
           };
         });
 
