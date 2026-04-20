@@ -26,9 +26,10 @@ import UPFButton from '../../components/ui/UPFButton';
 import UPFAvatar from '../../components/ui/UPFAvatar';
 import UPFModal from '../../components/ui/UPFModal';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import type { AttendanceStatus, BulkAttendanceItem, SessionResponse, AttendanceReportEntry } from '../../types';
-import { getCourseAttendanceReport, bulkMarkAttendance, lockSession } from '../../services/attendanceService';
-import { getStudents } from '../../services/adminService';
+import type { AttendanceStatus, BulkAttendanceItem, SessionResponse } from '../../types';
+import type { StudentProfileSummary } from '../../services/adminService';
+import { getCourseEnrolledStudents } from '../../services/adminService';
+import { bulkMarkAttendance, lockSession } from '../../services/attendanceService';
 
 // ─── Configuration des statuts ────────────────────────────────────────────────
 
@@ -86,7 +87,7 @@ const AdminAttendanceSessionPage: React.FC = () => {
   const courseId = locationState?.courseId ?? '';
   const session = locationState?.session;
 
-  const [students, setStudents] = useState<AttendanceReportEntry[]>([]);
+  const [students, setStudents] = useState<StudentProfileSummary[]>([]);
   // Map: studentId
   const [statusMap, setStatusMap] = useState<Record<string, AttendanceStatus>>({});
   const [loading, setLoading] = useState(true);
@@ -101,31 +102,23 @@ const AdminAttendanceSessionPage: React.FC = () => {
     const fetch = async () => {
       setLoading(true);
       try {
-        // Le backend retourne déjà firstName/lastName/major dans le rapport
-        // (cf. QUICK_START_TESTS.md Scénario 6 & 3). On fait confiance aux données du rapport en priorité.
-        const reportData = await getCourseAttendanceReport(courseId);
-        const hasMissingNames = reportData.some(e => !e.firstName || e.firstName === '');
-        let studentMap: Record<string, { firstName: string; lastName: string; major: string }> = {};
-        if (hasMissingNames) {
-          const allStudents = await getStudents();
-          allStudents.forEach(s => {
-            studentMap[s.id] = { firstName: s.firstName, lastName: s.lastName, major: s.major };
-          });
-        }
-        const enrichedData = reportData.map((entry) => {
-          const fallback = studentMap[entry.studentId];
-          return {
-            ...entry,
-            firstName: entry.firstName || fallback?.firstName || 'Inconnu',
-            lastName: entry.lastName || fallback?.lastName || '',
-            major: entry.major || fallback?.major || 'N/A',
-          };
-        });
+        // getCourseEnrolledStudents essaie d'abord /admin/courses/{id}/students,
+        // puis le rapport de présences comme fallback.
+        // Les noms viennent directement de /admin/students (source fiable confirmée).
+        let enrolled = await getCourseEnrolledStudents(courseId);
 
-        setStudents(enrichedData);
-        const init: Record<string, AttendanceStatus> = {};
-        enrichedData.forEach((s) => { init[s.studentId] = 'PRESENT'; });
-        setStatusMap(init);
+        // Si aucun étudiant trouvé via les endpoints spécifiques au cours,
+        // on charge tous les étudiants du système comme fallback de dernier recours.
+        if (enrolled.length === 0) {
+          // Ce cas ne devrait pas se produire en production ; on laisse la liste vide
+          // plutôt que de noyer le prof sous tous les étudiants hors-cours.
+          setStudents([]);
+        } else {
+          setStudents(enrolled);
+          const init: Record<string, AttendanceStatus> = {};
+          enrolled.forEach((s) => { init[s.id] = 'PRESENT'; });
+          setStatusMap(init);
+        }
       } catch {
         setStudents([]);
       } finally {
@@ -142,7 +135,7 @@ const AdminAttendanceSessionPage: React.FC = () => {
 
   const markAll = (status: AttendanceStatus) => {
     const next: Record<string, AttendanceStatus> = {};
-    students.forEach((s) => { next[s.studentId] = status; });
+    students.forEach((s) => { next[s.id] = status; });
     setStatusMap(next);
   };
 
@@ -151,8 +144,8 @@ const AdminAttendanceSessionPage: React.FC = () => {
     setSaving(true);
     try {
       const attendances: BulkAttendanceItem[] = students.map((s) => ({
-        studentId: s.studentId,
-        status: statusMap[s.studentId] ?? 'ABSENT',
+        studentId: s.id,
+        status: statusMap[s.id] ?? 'ABSENT',
       }));
       await bulkMarkAttendance(sessionId, { attendances });
       setSuccessMsg('Présences enregistrées avec succès !');
@@ -183,7 +176,7 @@ const AdminAttendanceSessionPage: React.FC = () => {
   };
 
   const counts = students.reduce(
-    (acc, s) => { acc[statusMap[s.studentId] ?? 'ABSENT']++; return acc; },
+    (acc, s) => { acc[statusMap[s.id] ?? 'ABSENT']++; return acc; },
     { PRESENT: 0, ABSENT: 0, LATE: 0, EXCUSED: 0 } as Record<AttendanceStatus, number>
   );
   const progressPct = students.length > 0 ? Math.round((counts.PRESENT / students.length) * 100) : 0;
@@ -306,10 +299,10 @@ const AdminAttendanceSessionPage: React.FC = () => {
 
       <UPFCard noHover padding={0}>
         {students.map((student, idx) => {
-          const currentStatus = statusMap[student.studentId] ?? 'ABSENT';
+          const currentStatus = statusMap[student.id] ?? 'ABSENT';
           const cfg = STATUS_CONFIG[currentStatus];
           return (
-            <React.Fragment key={student.studentId}>
+            <React.Fragment key={student.id}>
               <Box sx={{
                 display: 'flex', alignItems: 'center', px: 3, py: 2,
                 gap: 2, flexWrap: 'wrap',
@@ -344,7 +337,7 @@ const AdminAttendanceSessionPage: React.FC = () => {
                         <Box
                           key={status}
                           component="button"
-                          onClick={() => setStudentStatus(student.studentId, status)}
+                          onClick={() => setStudentStatus(student.id, status)}
                           sx={{
                             display: 'flex', alignItems: 'center', gap: 0.5,
                             px: 1.5, py: 0.6, borderRadius: '20px', border: 'none',

@@ -163,26 +163,34 @@ const AdminAttendancePage: React.FC = () => {
       setLoadingReport(true);
       setErrorMsg(null);
       try {
-        // Le backend retourne firstName/lastName/major directement dans le rapport
-        // (cf. QUICK_START_TESTS.md Scénario 6). On se fie aux données du rapport.
-        // On n'appelle getStudents() qu'en fallback si les noms sont vraiment manquants.
-        const reportData = await getCourseAttendanceReport(selectedCourseId);
-        const hasMissingNames = reportData.some(e => !e.firstName || e.firstName === '');
-        let studentMap: Record<string, { firstName: string; lastName: string; major: string }> = {};
-        if (hasMissingNames) {
-          const students = await getStudents();
-          students.forEach(s => {
-            // On tente les deux clés possibles (id = profileId, userId)
-            studentMap[s.id] = { firstName: s.firstName, lastName: s.lastName, major: s.major };
-          });
-        }
+        // On charge en parallèle le rapport ET la liste complète des étudiants admin.
+        // La liste /admin/students retourne { id (= studentProfileId), firstName, lastName, major }
+        // Le rapport retourne { studentId (= même UUID), firstName?, lastName?, major? }
+        // On construit une map id → noms depuis /admin/students pour garantir les noms corrects.
+        const [reportData, allStudents] = await Promise.all([
+          getCourseAttendanceReport(selectedCourseId),
+          getStudents(),
+        ]);
+
+        // Map keyed by student profile id → toutes les infos de nom
+        const studentMap: Record<string, { firstName: string; lastName: string; major: string }> = {};
+        allStudents.forEach(s => {
+          studentMap[s.id] = {
+            firstName: s.firstName,
+            lastName: s.lastName,
+            major: s.major,
+          };
+        });
+
         const enrichedReport = reportData.map((entry) => {
-          const fallback = studentMap[entry.studentId];
+          // On cherche d'abord dans notre map fiable
+          const matched = studentMap[entry.studentId];
           return {
             ...entry,
-            firstName: entry.firstName || fallback?.firstName || 'Inconnu',
-            lastName: entry.lastName || fallback?.lastName || '',
-            major: entry.major || fallback?.major || 'N/A',
+            // matched prend la priorité ; si l'id ne correspond pas, le rapport lui-même comme fallback
+            firstName: matched?.firstName || entry.firstName || 'Inconnu',
+            lastName: matched?.lastName || entry.lastName || '',
+            major: matched?.major || entry.major || 'N/A',
           };
         });
         setReport(enrichedReport);

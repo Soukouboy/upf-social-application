@@ -178,6 +178,53 @@ export const getStudents = async (): Promise<StudentProfileSummary[]> => {
   return arr.map(item => ({ ...item, isActive: item.isActive ?? item.is_active ?? item.active ?? true }));
 };
 
+/**
+ * Obtenir les étudiants inscrits à un cours spécifique (pour la prise d'appel admin).
+ * Essaie plusieurs endpoints dans l'ordre :
+ *   1. /admin/courses/{courseId}/students  (endpoint direct si disponible)
+ *   2. /attendance/courses/{courseId}/report  (étudiants ayant au moins 1 présence)
+ * Fallback : renvoie une liste vide si aucun ne fonctionne.
+ */
+export const getCourseEnrolledStudents = async (courseId: string): Promise<StudentProfileSummary[]> => {
+  // Tentative 1 : endpoint admin direct
+  try {
+    const { data } = await api.get<any[]>(`/admin/courses/${courseId}/students`);
+    if (Array.isArray(data) && data.length > 0) {
+      return data.map(item => ({
+        id: item.id || item.studentId,
+        firstName: item.firstName || '',
+        lastName: item.lastName || '',
+        email: item.email || '',
+        major: item.major || '',
+        currentYear: item.currentYear || 0,
+        profilePictureUrl: item.profilePictureUrl,
+      }));
+    }
+  } catch {
+    // Endpoint non disponible, on essaie le suivant
+  }
+
+  // Tentative 2 : rapport de présences (contient les étudiants inscrits qui ont au moins une séance)
+  try {
+    const { data } = await api.get<any[]>(`/attendance/courses/${courseId}/report`);
+    if (Array.isArray(data) && data.length > 0) {
+      return data.map(item => ({
+        id: item.studentId,
+        firstName: item.firstName || '',
+        lastName: item.lastName || '',
+        email: item.email || '',
+        major: item.major || '',
+        currentYear: item.currentYear || 0,
+        profilePictureUrl: item.profilePictureUrl,
+      }));
+    }
+  } catch {
+    // Fallback final
+  }
+
+  return [];
+};
+
 /** Inscrire un étudiant à un cours */
 export const enrollStudent = async (
   studentId: string,
