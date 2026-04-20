@@ -52,7 +52,6 @@ public class Course {
     private String prerequisites="À définir";
 
     @NotNull(message = "La filière est obligatoire")
-    @Size(max = 100)
     @Column(name = "major", nullable = false, length = 100)
     private Major major;
 
@@ -60,7 +59,7 @@ public class Course {
     @Column(name = "year", nullable = false)
     private int year=3;
 
-    @Min(1) @Max(2)
+    @Min(1) @Max(10)
     @Column(name = "semester", nullable = false)
     private int semester;
 
