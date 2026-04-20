@@ -101,10 +101,28 @@ export const lockSession = async (sessionId: string): Promise<SessionResponse> =
 export const getCourseAttendanceReport = async (
   courseId: string
 ): Promise<AttendanceReportEntry[]> => {
-  const { data } = await api.get<AttendanceReportEntry[]>(
+  const { data } = await api.get<any[]>(
     `/attendance/courses/${courseId}/report`
   );
-  return Array.isArray(data) ? data : [];
+  const arr = Array.isArray(data) ? data : [];
+  // Normalisation des noms de champs backend → frontend
+  // Le backend retourne studentProfileId / studentFirstName / studentLastName / studentMajor
+  // mais le type AttendanceReportEntry attend studentId / firstName / lastName / major
+  return arr.map((item) => ({
+    studentId:     item.studentId     ?? item.studentProfileId ?? '',
+    firstName:     item.firstName     ?? item.studentFirstName ?? '',
+    lastName:      item.lastName      ?? item.studentLastName  ?? '',
+    major:         item.major         ?? item.studentMajor     ?? '',
+    courseId:      item.courseId      ?? '',
+    courseTitle:   item.courseTitle   ?? '',
+    totalSessions: item.totalSessions ?? 0,
+    presentCount:  item.presentCount  ?? 0,
+    absentCount:   item.absentCount   ?? 0,
+    lateCount:     item.lateCount     ?? 0,
+    excusedCount:  item.excusedCount  ?? 0,
+    absenceRate:   item.absenceRate   ?? 0,
+    eligibility:   item.eligibility   ?? 'ELIGIBLE',
+  }));
 };
 
 /**

@@ -36,7 +36,7 @@ import UPFModal from '../../components/ui/UPFModal';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import type { CourseSummary, AttendanceReportEntry, AttendanceEligibility, SessionResponse } from '../../types';
 import { getCourseAttendanceReport, getCourseSessions, createSession } from '../../services/attendanceService';
-import { getAdminCourses, getStudents } from '../../services/adminService';
+import { getAdminCourses } from '../../services/adminService';
 import { useNavigate } from 'react-router-dom';
 
 // ─── Config éligibilité ───────────────────────────────────────────────────────
@@ -64,24 +64,6 @@ const ELIGIBILITY_CONFIG: Record<AttendanceEligibility, { label: string; color: 
     description: 'Taux d\'absence ≥ 50% — exclu des examens',
   },
 };
-
-// ─── Données mock ─────────────────────────────────────────────────────────────
-
-const MOCK_COURSES: CourseSummary[] = [
-  { id: 'course-001', code: 'INF301', title: 'Algorithmique avancée', major: 'Génie Informatique', year: 3, semester: 5, credits: 4, professorName: 'Pr. Chraibi', isActive: true },
-  { id: 'course-002', code: 'INF302', title: 'Programmation Web', major: 'Génie Informatique', year: 3, semester: 5, credits: 3, professorName: 'Pr. Chraibi', isActive: true },
-  { id: 'course-003', code: 'MKT201', title: 'Marketing Digital', major: 'Marketing', year: 2, semester: 3, credits: 3, professorName: 'Pr. Bennis', isActive: true },
-];
-
-const MOCK_REPORT: AttendanceReportEntry[] = [
-  { studentId: 's1', firstName: 'Amine', lastName: 'Benali', major: 'Génie Informatique', courseId: 'course-001', courseTitle: 'Algorithmique avancée', totalSessions: 10, presentCount: 9, absentCount: 1, lateCount: 0, excusedCount: 0, absenceRate: 0.1, eligibility: 'ELIGIBLE' },
-  { studentId: 's2', firstName: 'Sarah', lastName: 'Alaoui', major: 'Génie Informatique', courseId: 'course-001', courseTitle: 'Algorithmique avancée', totalSessions: 10, presentCount: 5, absentCount: 4, lateCount: 1, excusedCount: 0, absenceRate: 0.4, eligibility: 'RATTRAPAGE_ONLY' },
-  { studentId: 's3', firstName: 'Youssef', lastName: 'Errami', major: 'Génie Informatique', courseId: 'course-001', courseTitle: 'Algorithmique avancée', totalSessions: 10, presentCount: 4, absentCount: 5, lateCount: 0, excusedCount: 1, absenceRate: 0.5, eligibility: 'EXCLUDED' },
-  { studentId: 's4', firstName: 'Nadia', lastName: 'Chafik', major: 'Génie Informatique', courseId: 'course-001', courseTitle: 'Algorithmique avancée', totalSessions: 10, presentCount: 8, absentCount: 2, lateCount: 0, excusedCount: 0, absenceRate: 0.2, eligibility: 'ELIGIBLE' },
-  { studentId: 's5', firstName: 'Omar', lastName: 'Tazi', major: 'Génie Informatique', courseId: 'course-001', courseTitle: 'Algorithmique avancée', totalSessions: 10, presentCount: 7, absentCount: 3, lateCount: 0, excusedCount: 0, absenceRate: 0.3, eligibility: 'RATTRAPAGE_ONLY' },
-  { studentId: 's6', firstName: 'Fatima', lastName: 'Moussaoui', major: 'Génie Informatique', courseId: 'course-001', courseTitle: 'Algorithmique avancée', totalSessions: 10, presentCount: 10, absentCount: 0, lateCount: 0, excusedCount: 0, absenceRate: 0.0, eligibility: 'ELIGIBLE' },
-  { studentId: 's7', firstName: 'Karim', lastName: 'Belkadi', major: 'Génie Informatique', courseId: 'course-001', courseTitle: 'Algorithmique avancée', totalSessions: 10, presentCount: 2, absentCount: 7, lateCount: 0, excusedCount: 1, absenceRate: 0.7, eligibility: 'EXCLUDED' },
-];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -135,20 +117,21 @@ const AdminAttendancePage: React.FC = () => {
   const [sessionNumber, setSessionNumber] = useState(1);
   const [sessionDescription, setSessionDescription] = useState('');
 
-  // Chargement des cours via adminService (stats → liste via admin/courses)
+  // Chargement des cours via adminService
   useEffect(() => {
     const fetch = async () => {
       setLoadingCourses(true);
       try {
-        // On essaie de récupérer la liste des cours via l'endpoint admin
         const data = await getAdminCourses(0, 100);
         if (data && data.content && Array.isArray(data.content)) {
           setCourses(data.content);
           if (data.content.length > 0) setSelectedCourseId(String(data.content[0].id));
-        } else throw new Error('fallback');
-      } catch {
-        setCourses(MOCK_COURSES);
-        setSelectedCourseId('course-001');
+        } else {
+          setCourses([]);
+        }
+      } catch (err: any) {
+        setCourses([]);
+        setErrorMsg('Impossible de charger la liste des cours.');
       } finally {
         setLoadingCourses(false);
       }
@@ -163,39 +146,13 @@ const AdminAttendancePage: React.FC = () => {
       setLoadingReport(true);
       setErrorMsg(null);
       try {
-        // On charge en parallèle le rapport ET la liste complète des étudiants admin.
-        // La liste /admin/students retourne { id (= studentProfileId), firstName, lastName, major }
-        // Le rapport retourne { studentId (= même UUID), firstName?, lastName?, major? }
-        // On construit une map id → noms depuis /admin/students pour garantir les noms corrects.
-        const [reportData, allStudents] = await Promise.all([
-          getCourseAttendanceReport(selectedCourseId),
-          getStudents(),
-        ]);
-
-        // Map keyed by student profile id → toutes les infos de nom
-        const studentMap: Record<string, { firstName: string; lastName: string; major: string }> = {};
-        allStudents.forEach(s => {
-          studentMap[s.id] = {
-            firstName: s.firstName,
-            lastName: s.lastName,
-            major: s.major,
-          };
-        });
-
-        const enrichedReport = reportData.map((entry) => {
-          // On cherche d'abord dans notre map fiable
-          const matched = studentMap[entry.studentId];
-          return {
-            ...entry,
-            // matched prend la priorité ; si l'id ne correspond pas, le rapport lui-même comme fallback
-            firstName: matched?.firstName || entry.firstName || 'Inconnu',
-            lastName: matched?.lastName || entry.lastName || '',
-            major: matched?.major || entry.major || 'N/A',
-          };
-        });
-        setReport(enrichedReport);
-      } catch {
-        setReport(MOCK_REPORT);
+        // getCourseAttendanceReport normalise maintenant les champs backend
+        // (studentProfileId → studentId, studentFirstName → firstName, etc.)
+        const reportData = await getCourseAttendanceReport(selectedCourseId);
+        setReport(reportData);
+      } catch (err: any) {
+        setReport([]);
+        setErrorMsg('Impossible de charger le rapport de présences.');
       } finally {
         setLoadingReport(false);
       }
